@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FRC PitBeacon</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo">
+        <h1 class="title">Pit<span class="beacon">Beacon</span></h1>
+        <p class="frc7250">By FRC 7250</p>
+        <p class="version">Version 1.0.0</p>
+      </div>
+      <div class="time-display" id="time-display">--:--:--</div>
+      <div class="buttons">
+        <img class="settings" src="settings.webp" alt="Settings" id="settings"></img>
+      </div>
+    </div>
+    <div class="settingscontainer" id="settingscontainer">
+        <h2 class="settings-title">Settings</h2>
+        <label for="teamNumber">Team Number:</label>
+        <input class="teaminput" type="text" id="teamNumber" name="teamNumber" value="7250"></input>
+        <label for="tbaapikey">TBA Key :</label>
+        <input type="text" id="tbaapikey" name="tbaapikey" value="TBA Key"></input>
+        <label for="testMode">Test Mode:</label>
+        <input type="checkbox" id="testMode" name="testMode"></input>
+        <label for="testDate">Test Date (YYYY-MM-DD):</label>
+        <input type="text" id="testDate" name="testDate" placeholder="2026-04-26" style="display: none;"></input>
+        <button class="savebutton" id="savebutton">Save</button>
+    </div>
+    <div class="errorcontainer" id="errorcontainer"></div>
+    <div class="container" id="container"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

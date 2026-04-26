@@ -1,0 +1,520 @@
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Rubik:wght@400;500;700&display=swap");
+
+:root {
+  --bg-base: rgb(22, 22, 22);
+  --bg-surface: rgb(30, 30, 30);
+  --bg-raised: rgb(40, 40, 40);
+  --bg-input: rgb(50, 50, 50);
+  --accent: rgb(47, 48, 112);
+  --accent-hover: rgb(60, 62, 140);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-accent: rgba(47, 48, 112, 0.6);
+  --text-primary: rgb(240, 240, 240);
+  --text-muted: rgb(160, 155, 155);
+  --text-dim: rgb(100, 98, 98);
+  --scrollbar-track: rgba(255,255,255,0.03);
+  --scrollbar-thumb: rgba(255,255,255,0.12);
+  --scrollbar-thumb-hover: rgba(255,255,255,0.22);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+html {
+  background-color: var(--bg-base);
+  overflow: hidden;
+  color: var(--text-primary);
+}
+
+/* ── Header ── */
+.header {
+  width: 100%;
+  height: 4.5rem;
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-surface);
+  padding: 0 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.title {
+  font-family: "Quicksand", sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #f5d800;
+  margin: 0 10px;
+  letter-spacing: -0.5px;
+}
+
+.beacon {
+  font-family: "Rubik", sans-serif;
+  color: royalblue;
+}
+
+.time-display {
+  flex: 1;
+  text-align: center;
+  font-family: "Rubik", sans-serif;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.frc7250 {
+  font-size: 0.8rem;
+  font-family: "Rubik", sans-serif;
+  color: var(--text-dim);
+  margin: 0 8px;
+}
+
+.version {
+  font-size: 0.6rem;
+  font-family: "Rubik", sans-serif;
+  color: var(--text-dim);
+  margin: 0 8px;
+}
+
+.settings {
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: 0 10px;
+  opacity: 0.35;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  filter: invert(1);
+}
+
+.settings:hover {
+  opacity: 0.65;
+}
+
+/* ── Settings Modal ── */
+.settingscontainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 12px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  padding: 0 0 20px 0;
+  width: 260px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: "Rubik", sans-serif;
+  color: var(--text-muted);
+  z-index: 100;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+.settings-title {
+  background-color: var(--bg-raised);
+  width: 100%;
+  border-radius: 12px 12px 0 0;
+  padding: 14px 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+input {
+  padding: 6px 10px;
+  margin: 6px 8px;
+  border-radius: 6px;
+  text-align: center;
+  border: 2px solid var(--accent);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+}
+
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin: 10px;
+  border-radius: 4px;
+  border: 2px solid var(--accent);
+  background-color: var(--bg-input);
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.teaminput { width: 90px; }
+#testDate  { width: 160px; }
+
+.savebutton {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  margin: 12px 0 0 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.savebutton:hover { background-color: var(--accent-hover); }
+
+/* ── Toasts ── */
+.errorcontainer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 16px;
+  z-index: 50;
+  gap: 4px;
+}
+
+.error,
+.message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.error {
+  background-color: rgb(80, 25, 25);
+  border: 1px solid rgba(200, 60, 60, 0.25);
+}
+
+.message {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+}
+
+.error-exit {
+  color: var(--text-dim);
+  cursor: pointer;
+  margin: 0;
+  font-size: 0.75rem;
+  transition: color 0.15s;
+}
+
+.error-exit:hover { color: var(--text-primary); }
+
+/* ── Main layout ── */
+.container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: start;
+  padding: 12px;
+  gap: 12px;
+  height: calc(100vh - 4.5rem);
+  overflow: hidden;
+}
+
+/* All direct grid children must have min-height: 0 or they
+   ignore max-height and overflow into adjacent columns */
+.container > * {
+  min-height: 0;
+}
+
+#left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden; /* webcast stays fixed, notes scrolls internally */
+}
+
+/* ── Webcast ── */
+.webcast-card {
+  background-color: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border-accent);
+  overflow: hidden;
+  flex-shrink: 0; /* never squish the video */
+}
+
+.webcast-card iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+/* ── Notes ── */
+#notes-section {
+  flex: 1; /* fills remaining height below the webcast */
+  min-height: 0;
+  background-color: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  font-family: "Rubik", sans-serif;
+  color: var(--text-primary);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.notes-title {
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+}
+
+.add-note-btn {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.add-note-btn:hover { background-color: var(--accent-hover); }
+
+.notes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.notes-table th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  padding: 4px 8px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-surface); /* stay visible while scrolling */
+}
+
+.note-row td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.note-row:last-child td {
+  border-bottom: none;
+}
+
+.note-input {
+  background-color: var(--bg-raised);
+  border: 1px solid transparent !important;
+  color: var(--text-primary);
+  border-radius: 4px;
+  padding: 4px 8px !important;
+  width: 100%;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.85rem;
+  resize: none;
+  overflow: hidden;
+  min-height: 30px;
+  line-height: 1.45;
+  transition: border-color 0.15s;
+}
+
+.note-input:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+}
+
+.priority-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+  cursor: text;
+  outline: none;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background-color 0.25s;
+}
+
+.delete-note-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.delete-note-btn:hover { color: rgb(200, 80, 80); }
+
+/* ── Leaderboard ── */
+#leaderboard-section {
+  height: 100%;
+  min-height: 0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: "Rubik", sans-serif;
+  color: var(--text-primary);
+  overflow-y: auto;
+  align-self: stretch;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.leaderboard-table thead th {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  padding: 4px 8px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-surface);
+}
+
+.leaderboard-table tbody td {
+  text-align: center;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.leaderboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.leaderboard-table tbody tr:hover td {
+  background-color: var(--bg-raised);
+}
+
+.my-team td {
+  background-color: rgba(47, 48, 112, 0.3) !important;
+  color: var(--text-primary) !important;
+  font-weight: 700;
+}
+
+.my-team td:first-child { border-radius: 6px 0 0 6px; }
+.my-team td:last-child  { border-radius: 0 6px 6px 0; }
+
+/* ── Match cards ── */
+#match-section {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 2px 2px 12px 2px;
+  overflow-y: auto;
+  align-self: stretch;
+}
+
+.match-card,
+.upcomingmatch-card {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: "Rubik", sans-serif;
+  flex-shrink: 0;
+}
+
+.match-card {
+  border-color: var(--border-accent);
+  background-color: rgba(47, 48, 112, 0.12);
+}
+
+.match-card p,
+.upcomingmatch-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.match-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
