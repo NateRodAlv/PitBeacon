@@ -57,6 +57,7 @@ function loadSettings() {
 }
 
 async function getData() {
+  let inactiveCount = 0;
   try {
     const headers = {
       "X-TBA-Auth-Key": config.tbaapikey,
@@ -113,6 +114,7 @@ async function getData() {
       console.log(
         `Date is between: ${fullDate > eventStart} && ${fullDate < eventEnd}`,
       );
+
       if (fullDate >= eventStart && fullDate <= eventEnd) {
         const matchesUrl = `https://www.thebluealliance.com/api/v3/team/frc${config.teamNumber}/event/${data[i].key}/matches/simple`;
         const matchesHeaders = {
@@ -163,6 +165,16 @@ async function getData() {
         currentEventData = data[i];
         updateMatchDisplay();
         break; // Only show first active event
+      } else {
+        inactiveCount++;
+        console.log(`Event ${data[i].name} is not active today.`, "message");
+      }
+      if (inactiveCount === data.length - 1) {
+        currentMatches = null;
+        currentEventData = null;
+        updateMatchDisplay();
+        displayMessage("No active events today.", "message");
+        container.innerHTML = `<p class="inactive">No active events today, please try test mode and set the date to a prior event, or make sure the correct team number is selected.</p>`;
       }
     }
   } catch (error) {
@@ -576,7 +588,8 @@ function updateMatchDisplay() {
   if (!check) {
     const upcoming = matches.filter((m) => m.predicted_time > currentTime);
     if (upcoming.length === 0) {
-      container.innerHTML = "<p>No upcoming matches today.</p>";
+      container.innerHTML =
+        "<p class='inactive'>No event. Try test mode or a different team number.</p>";
     }
     for (const match of upcoming) {
       const card = document.createElement("div");

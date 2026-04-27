@@ -510,7 +510,14 @@ input[type="checkbox"] {
   font-size: 0.88rem;
   color: var(--text-muted);
 }
-
+.inactive {
+  text-align: center;
+  color: var(--text-dim);
+  font-style: italic;
+  width: 100vw;
+  font-family: "Rubik", sans-serif;
+  padding: 20px;
+}
 .match-title {
   font-size: 1rem;
   font-weight: 700;
