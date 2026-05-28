@@ -8,6 +8,8 @@ const etagCache = {
   matches: {},
 };
 
+const alarm1 = new Audio("alarm1.mp3");
+
 let pollingInterval = null;
 let timeUpdateInterval = null;
 let currentMatches = null;
@@ -420,8 +422,13 @@ function setupListeners() {
   savebutton.addEventListener("click", () => {
     config.teamNumber = document.getElementById("teamNumber").value;
     config.tbaapikey = document.getElementById("tbaapikey").value;
+    config.alarmToggle = document.getElementById("alarmToggle").checked;
+    config.alarmThreshold =
+      parseInt(document.getElementById("alarmThreshold").value) || 10;
     localStorage.setItem("teamNumber", config.teamNumber);
     localStorage.setItem("tbaapikey", config.tbaapikey);
+    localStorage.setItem("alarmToggle", config.alarmToggle);
+    localStorage.setItem("alarmThreshold", config.alarmThreshold);
 
     // Save test mode settings
     const isTestMode = testModeCheckbox.checked;
@@ -547,6 +554,7 @@ function updateMatchDisplay() {
   // Sort matches by predicted_time to show closest to farthest
   const matches = [...currentMatches]; // Make a copy to avoid mutating
   matches.sort((a, b) => a.predicted_time - b.predicted_time);
+  console.log("Sorted matches:", matches);
 
   // Check if team is currently in a match
   // Use test date if test mode is enabled, otherwise use current time
@@ -576,9 +584,18 @@ function updateMatchDisplay() {
       for (let k = j + 1; k < matches.length; k++) {
         const upcomingCard = document.createElement("div");
         upcomingCard.className = "upcomingmatch-card";
-        upcomingCard.innerHTML = `<h1 class="match-title">Upcoming Match</h1><p>Match: ${matches[k].comp_level.toUpperCase()} ${matches[k].match_number}</p>                <p>Est: ${new Date(matches[k].predicted_time * 1000).toLocaleTimeString()}</p>
-              <p>Time Until: ${Math.max(0, Math.floor((matches[k].predicted_time - currentTime) / 60))} min ${Math.max(0, Math.floor((matches[k].predicted_time - currentTime) % 60))} sec</p>
-             `;
+        upcomingCard.innerHTML = `
+        <div class="upcoming-basicinfo">
+          <h1 class="match-title">Upcoming Match</h1>
+          <p>Match: ${matches[k].comp_level.toUpperCase()} ${matches[k].match_number}</p>                
+          <p>Est: ${new Date(matches[k].predicted_time * 1000).toLocaleTimeString()}</p>
+          <p>Time Until: ${Math.max(0, Math.floor((matches[k].predicted_time - currentTime) / 60))} min ${Math.max(0, Math.floor((matches[k].predicted_time - currentTime) % 60))} sec</p>
+        </div>
+        <div class="upcoming-teams">
+          <p class="red">Red: ${matches[k].alliances.red.team_keys.map((t) => t.replace("frc", "")).join(", ")}</p>
+          <p class="blue">Blue: ${matches[k].alliances.blue.team_keys.map((t) => t.replace("frc", "")).join(", ")}</p>
+        </div>
+      `;
         matchSection.appendChild(upcomingCard);
       }
       check = true;
@@ -595,10 +612,16 @@ function updateMatchDisplay() {
       const card = document.createElement("div");
       card.className = "upcomingmatch-card";
       card.innerHTML = `
-      <h1 class="match-title">Upcoming Match</h1>
-      <p>Match: ${match.comp_level.toUpperCase()} ${match.match_number}</p>
-      <p>Est: ${new Date(match.predicted_time * 1000).toLocaleTimeString()}</p>
-      <p>Time Until: ${Math.max(0, Math.floor((match.predicted_time - currentTime) / 60))} min ${Math.max(0, (match.predicted_time - currentTime) % 60)} sec</p>
+      <div class="upcoming-basicinfo">
+        <h1 class="match-title">Upcoming Match</h1>
+        <p>Match: ${match.comp_level.toUpperCase()} ${match.match_number}</p>
+        <p>Est: ${new Date(match.predicted_time * 1000).toLocaleTimeString()}</p>
+        <p>Time Until: ${Math.max(0, Math.floor((match.predicted_time - currentTime) / 60))} min ${Math.max(0, Math.floor((match.predicted_time - currentTime) % 60))} sec</p>
+      </div>
+      <div class="upcoming-teams">
+        <p class="red">Red: ${match.alliances.red.team_keys.map((t) => t.replace("frc", "")).join(", ")}</p>
+        <p class="blue">Blue: ${match.alliances.blue.team_keys.map((t) => t.replace("frc", "")).join(", ")}</p>
+      </div>
     `;
       matchSection.appendChild(card);
     }
@@ -614,7 +637,6 @@ timeUpdateInterval = setInterval(updateTimeDisplay, 1000);
 // Get initial data
 getData();
 
-// Set up polling every 30-60 seconds (randomized to avoid thundering herd)
 const pollInterval = () => {
   const randomDelay = 30000 + Math.random() * 30000; // 30-60 seconds
   pollingInterval = setTimeout(() => {
@@ -622,6 +644,29 @@ const pollInterval = () => {
     pollInterval();
   }, randomDelay);
 };
+
+const updateInterval = () => {
+  const intervalId = setInterval(() => {
+    const tbody = document.getElementById("notes-tbody");
+    const notes = loadNotes();
+    notes.sort((a, b) => b.priority - a.priority); // highest priority first
+
+    tbody.innerHTML = ""; // Clear old rows
+    notes.forEach((note, index) => addNoteRow(tbody, note, index));
+    for (const note of notes) {
+      if (note.priority >= config.alarmThreshold) {
+        if (config.alarmToggle) {
+          alarm1.play();
+          break; // Only need to play once per update
+        }
+      }
+    }
+  }, 10000);
+  return intervalId; // Store the interval ID for later cleanup
+};
+
+updateInterval();
+
 pollInterval();
 
 setupListeners();

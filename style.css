@@ -66,17 +66,21 @@ html {
   font-size: 1.8rem;
   font-weight: 700;
   color: #f5d800;
-  margin: 0 10px;
+  margin: 0;
+  width: max-content;
   letter-spacing: -0.5px;
 }
 
 .beacon {
   font-family: "Rubik", sans-serif;
   color: royalblue;
+  margin: 0;
+  margin-left: -7px;
 }
 
 .time-display {
-  flex: 1;
+  display:block;
+  width: 100%;
   text-align: center;
   font-family: "Rubik", sans-serif;
   font-size: 1.1rem;
@@ -96,14 +100,14 @@ html {
   font-size: 0.8rem;
   font-family: "Rubik", sans-serif;
   color: var(--text-dim);
-  margin: 0 8px;
+  margin: 0;
 }
 
 .version {
   font-size: 0.6rem;
   font-family: "Rubik", sans-serif;
   color: var(--text-dim);
-  margin: 0 8px;
+  margin: 0;
 }
 
 .settings {
@@ -129,71 +133,152 @@ html {
   border-radius: 12px;
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
-  padding: 0 0 20px 0;
-  width: 260px;
+  padding: 0;
+  width: 320px;
   display: none;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
   font-family: "Rubik", sans-serif;
   color: var(--text-muted);
   z-index: 100;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .settings-title {
   background-color: var(--bg-raised);
   width: 100%;
   border-radius: 12px 12px 0 0;
-  padding: 14px 0;
+  padding: 16px 20px;
   font-size: 1.2rem;
   font-weight: 500;
-  margin: 0 0 8px 0;
+  margin: 0;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.settingsdiv {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settingsdiv:last-of-type {
+  border-bottom: none;
+}
+
+.settings-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.settings-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.settings-field label {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-align: left;
 }
 
 input {
   padding: 6px 10px;
-  margin: 6px 8px;
   border-radius: 6px;
-  text-align: center;
-  border: 2px solid var(--accent);
+  border: 1px solid var(--border);
   background-color: var(--bg-input);
   color: var(--text-primary);
   font-family: "Rubik", sans-serif;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
 }
 
+input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+input[type="text"],
+input[type="number"] {
+  padding: 8px 10px;
+  min-width: 120px;
+  text-align: left;
+}
+
+.teaminput {
+  width: 100px;
+}
+
+#testDate {
+  width: 160px;
+}
+
+/* ── Toggle Switch ── */
 input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  margin: 10px;
-  border-radius: 4px;
-  border: 2px solid var(--accent);
-  background-color: var(--bg-input);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
   cursor: pointer;
-  accent-color: var(--accent);
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
 }
 
-.teaminput { width: 90px; }
-#testDate  { width: 160px; }
+input[type="checkbox"]::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--text-primary);
+  top: 1px;
+  left: 1px;
+  transition: all 0.3s ease;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked::before {
+  left: 21px;
+}
 
 .savebutton {
   background-color: var(--accent);
   color: white;
   border: none;
-  padding: 10px 24px;
-  margin: 12px 0 0 0;
+  padding: 12px 24px;
+  margin: 20px;
   border-radius: 6px;
   cursor: pointer;
   font-family: "Rubik", sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
   transition: background-color 0.2s;
+  width: calc(100% - 40px);
 }
 
 .savebutton:hover { background-color: var(--accent-hover); }
+
 
 /* ── Toasts ── */
 .errorcontainer {
@@ -492,8 +577,8 @@ input[type="checkbox"] {
   padding: 14px 16px;
   border-radius: 8px;
   border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
   gap: 4px;
   font-family: "Rubik", sans-serif;
   flex-shrink: 0;
@@ -524,4 +609,24 @@ input[type="checkbox"] {
   margin: 0 0 4px 0;
   color: var(--text-primary);
   letter-spacing: -0.2px;
+}
+
+.upcoming-basicinfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upcoming-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.red {
+  color: rgb(200, 80, 80) !important;
+}
+.blue {
+  color: rgb(80, 80, 200) !important;
 }
