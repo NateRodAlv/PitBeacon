@@ -17,7 +17,7 @@
                     <span class="beacon">Beacon</span>
                 </h1>
                 <p class="frc7250">By FRC 7250</p>
-                <p class="version">Version 1.1</p>
+                <p class="version">Version 1.2</p>
             </div>
             <div class="time-display" id="time-display">--:--:--</div>
             <div class="buttons">
@@ -52,23 +52,64 @@
                         value="TBA Key"
                     ></input>
                 </div>
+                <div class="settings-field">
+                    <label for="themeSelect">Theme</label>
+                    <select id="themeSelect" name="themeSelect">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="high-contrast">High Contrast</option>
+                    </select>
+                </div>
             </div>
             <div class="settingsdiv">
                 <div class="settings-section-title">Alerts</div>
                 <div class="settings-field">
-                    <label for="alarmToggle">Alarm</label>
-                    <input type="checkbox" id="alarmToggle" name="alarmToggle"></input>
+                    <label for="noteAlarmToggle">Note Priority Alarm</label>
+                    <input type="checkbox" id="noteAlarmToggle" name="noteAlarmToggle"></input>
                 </div>
                 <div class="settings-field">
-                    <label for="alarmThreshold">Threshold</label>
+                    <label for="noteAlarmThreshold">Note Threshold</label>
                     <input
                         type="number"
-                        id="alarmThreshold"
-                        name="alarmThreshold"
-                        min="0"
+                        id="noteAlarmThreshold"
+                        name="noteAlarmThreshold"
+                        min="1"
                         max="10"
-                        value="10"
+                        value="8"
                     ></input>
+                </div>
+                <div class="settings-field">
+                    <label for="noteAlarmSound">Note Sound</label>
+                    <select id="noteAlarmSound" name="noteAlarmSound">
+                        <option value="alarm1">Alarm 1</option>
+                        <option value="alarm2">Alarm 2</option>
+                        <option value="alarm3">Alarm 3</option>
+                        <option value="beep">Beep</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="matchAlarmToggle">Match Alert</label>
+                    <input type="checkbox" id="matchAlarmToggle" name="matchAlarmToggle" checked></input>
+                </div>
+                <div class="settings-field">
+                    <label for="matchAlertThreshold">Match Alert (seconds before)</label>
+                    <input
+                        type="number"
+                        id="matchAlertThreshold"
+                        name="matchAlertThreshold"
+                        min="30"
+                        max="600"
+                        value="300"
+                    ></input>
+                </div>
+                <div class="settings-field">
+                    <label for="matchAlarmSound">Match Sound</label>
+                    <select id="matchAlarmSound" name="matchAlarmSound">
+                        <option value="alarm1">Alarm 1</option>
+                        <option value="alarm2">Alarm 2</option>
+                        <option value="alarm3">Alarm 3</option>
+                        <option value="beep">Beep</option>
+                    </select>
                 </div>
             </div>
             <div class="settingsdiv">
@@ -89,6 +130,9 @@
                 </div>
             </div>
             <button class="savebutton" id="savebutton">Save</button>
+            <button class="savebutton" id="layoutEditorBtn" style="background-color: rgb(100, 100, 150);">Layout Editor</button>
+        </div>
+        <div class="layout-editor-modal" id="layoutEditorModal">
         </div>
         <div class="errorcontainer" id="errorcontainer"></div>
         <div class="container" id="container"></div>
