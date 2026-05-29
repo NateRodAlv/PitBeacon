@@ -364,7 +364,7 @@ input[type="checkbox"]:checked::before {
   z-index: 50;
   gap: 4px;
 }
-/* test to see if css updates*/
+
 .error,
 .message {
   display: flex;
@@ -442,7 +442,7 @@ input[type="checkbox"]:checked::before {
 
 /* ── Notes ── */
 #notes-section {
-  flex: 1; /* fills remaining height below the webcast */
+  flex: 1; 
   min-height: 0;
   height: 100%;
   background-color: var(--bg-surface);

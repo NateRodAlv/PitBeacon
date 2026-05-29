@@ -9,6 +9,8 @@ const audioFiles = {
   alarm3: new Audio("alarm3.mp3"),
   beep: new Audio("beep.mp3"),
 };
+const popups = {};
+let popupCounter = 0;
 
 // Set error handling for audio files that don't exist
 Object.values(audioFiles).forEach((audio) => {
@@ -246,7 +248,30 @@ async function getData() {
 }
 function displayMessage(message, type) {
   const errorContainer = document.getElementById("errorcontainer");
-  errorContainer.innerHTML = `${errorContainer.innerHTML}<div class="${type}"><p class="error-exit">X</p><p>${message}</p></div>`;
+  popupCounter++;
+  const popupId = popupCounter;
+  const divId = `popup-${popupId}`;
+  errorContainer.innerHTML = `${errorContainer.innerHTML}<div class="${type}" id="${divId}"><p class="error-exit">X</p><p>${message}</p></div>`;
+
+  const element = document.getElementById(divId);
+  if (element) {
+    // Set individual timeout for automatic deletion
+    // The global error container click handler will manage manual dismissal
+    const timeout = setTimeout(() => {
+      try {
+        // Find the element again in case DOM changed
+        const msg = document.getElementById(divId);
+        if (msg && msg.parentNode) {
+          msg.remove();
+        }
+      } catch (e) {
+        console.log("Message already removed:", divId);
+      }
+      delete popups[popupId];
+    }, 3000);
+
+    popups[popupId] = { element: element, timeout: timeout };
+  }
 }
 function updateLeaderboardDisplay() {
   const leaderboardSection = document.getElementById("leaderboard-section");
@@ -573,9 +598,14 @@ class LayoutEditor {
     this.startHeight = 0;
 
     this.ITEMS = [
-      { id: "webcast-section",     label: "Webcasts",    icon: "device-tv",   lockedAspect: 16/9 },
-      { id: "notes-section",       label: "Pit Notes",   icon: "notes" },
-      { id: "match-section",       label: "Matches",     icon: "tournament" },
+      {
+        id: "webcast-section",
+        label: "Webcasts",
+        icon: "device-tv",
+        lockedAspect: 16 / 9,
+      },
+      { id: "notes-section", label: "Pit Notes", icon: "notes" },
+      { id: "match-section", label: "Matches", icon: "tournament" },
       { id: "leaderboard-section", label: "Leaderboard", icon: "trophy" },
     ];
   }
@@ -593,7 +623,7 @@ class LayoutEditor {
     const rect = grid.getBoundingClientRect();
     // Subtract gap contributions: there are (n-1) gaps of 8px inside the grid
     const gapPx = 8;
-    const cellW = (rect.width  - gapPx * (this.gridCols - 1)) / this.gridCols;
+    const cellW = (rect.width - gapPx * (this.gridCols - 1)) / this.gridCols;
     const cellH = (rect.height - gapPx * (this.gridRows - 1)) / this.gridRows;
     return { cellW, cellH };
   }
@@ -604,22 +634,22 @@ class LayoutEditor {
    * cell dimensions. Returns the integer row span.
    */
   _idealRowSpan(id, cellW, cellH) {
-    const item = this.ITEMS.find(i => i.id === id);
+    const item = this.ITEMS.find((i) => i.id === id);
     if (!item?.lockedAspect || !cellH) return null;
     const p = this.layout[id];
-    const pixelW    = p.width * cellW + Math.max(0, p.width - 1) * 8; // include inner gaps
-    const idealH    = pixelW / item.lockedAspect;
+    const pixelW = p.width * cellW + Math.max(0, p.width - 1) * 8; // include inner gaps
+    const idealH = pixelW / item.lockedAspect;
     const idealRows = idealH / (cellH + 8); // account for row gaps too
     // Round to nearest, clamped to what fits
-    const snapped = Math.max(1, Math.min(
-      Math.round(idealRows),
-      this.gridRows - p.y
-    ));
+    const snapped = Math.max(
+      1,
+      Math.min(Math.round(idealRows), this.gridRows - p.y),
+    );
     return snapped;
   }
 
   _snapAspect(id, cellW, cellH) {
-    const item = this.ITEMS.find(i => i.id === id);
+    const item = this.ITEMS.find((i) => i.id === id);
     if (!item?.lockedAspect) return;
     const rows = this._idealRowSpan(id, cellW, cellH);
     if (rows !== null) this.layout[id].height = rows;
@@ -635,8 +665,8 @@ class LayoutEditor {
 
   _overlaps(a, b) {
     return (
-      a.x < b.x + b.width  &&
-      a.x + a.width  > b.x &&
+      a.x < b.x + b.width &&
+      a.x + a.width > b.x &&
       a.y < b.y + b.height &&
       a.y + a.height > b.y
     );
@@ -647,32 +677,32 @@ class LayoutEditor {
     const rows = this.gridRows;
 
     const m = this.layout[movedId];
-    m.width  = Math.max(1, Math.min(m.width,  cols - m.x));
+    m.width = Math.max(1, Math.min(m.width, cols - m.x));
     m.height = Math.max(1, Math.min(m.height, rows - m.y));
     m.x = Math.max(0, Math.min(m.x, cols - m.width));
     m.y = Math.max(0, Math.min(m.y, rows - m.height));
 
-    const others = this.ITEMS.map(i => i.id).filter(id => id !== movedId);
+    const others = this.ITEMS.map((i) => i.id).filter((id) => id !== movedId);
     let changed = true;
     let iterations = 0;
     while (changed && iterations < 20) {
       changed = false;
       iterations++;
-      others.forEach(otherId => {
+      others.forEach((otherId) => {
         const o = this.layout[otherId];
-        o.width  = Math.max(1, Math.min(o.width,  cols));
+        o.width = Math.max(1, Math.min(o.width, cols));
         o.height = Math.max(1, Math.min(o.height, rows));
 
-        const allIds = [movedId, ...others.filter(id => id !== otherId)];
-        allIds.forEach(fixedId => {
+        const allIds = [movedId, ...others.filter((id) => id !== otherId)];
+        allIds.forEach((fixedId) => {
           const f = this.layout[fixedId];
           if (this._overlaps(o, f)) {
             const pushRight = f.x + f.width;
-            const pushDown  = f.y + f.height;
-            const rightFits = pushRight + o.width  <= cols;
-            const downFits  = pushDown  + o.height <= rows;
+            const pushDown = f.y + f.height;
+            const rightFits = pushRight + o.width <= cols;
+            const downFits = pushDown + o.height <= rows;
 
-            if (rightFits && (!downFits || (pushRight - o.x) <= (pushDown - o.y))) {
+            if (rightFits && (!downFits || pushRight - o.x <= pushDown - o.y)) {
               o.x = pushRight;
             } else if (downFits) {
               o.y = pushDown;
@@ -695,7 +725,7 @@ class LayoutEditor {
     this.ITEMS.forEach(({ id }) => {
       const p = this.layout[id];
       if (!p) return;
-      p.width  = Math.max(1, Math.min(p.width,  this.gridCols));
+      p.width = Math.max(1, Math.min(p.width, this.gridCols));
       p.height = Math.max(1, Math.min(p.height, this.gridRows));
       p.x = Math.max(0, Math.min(p.x, this.gridCols - p.width));
       p.y = Math.max(0, Math.min(p.y, this.gridRows - p.height));
@@ -714,6 +744,25 @@ class LayoutEditor {
           <div class="layout-editor-controls">
             <label>Columns <input type="number" id="gridColsInput" min="2" max="12" value="${this.gridCols}" style="width:52px"></label>
             <label>Rows    <input type="number" id="gridRowsInput" min="2" max="12" value="${this.gridRows}" style="width:52px"></label>
+            <label for="colorPicker">Choose a color:<input type="color" id="colorPicker" value="#ff0000"></label>
+            <label>Selected Hex: <span id="hexValue">#ff0000</span></label>
+            <label for="colorSelect">Choose a element:            <select id="colorSelected" name="colorSelected">
+                          <option value="--bg-base">BG base</option>
+                          <option value="--bg-surface">BG surface</option>
+                          <option value="--bg-raised">BG raised</option>
+                          <option value="--bg-input">BG input</option>
+                          <option value="--accent">Accent</option>
+                          <option value="--accent-hover">Accent hover</option>
+                          <option value="--border">Border</option>
+                          <option value="--border-accent">Border accent</option>
+                          <option value="--text-primary">Text primary</option>
+                          <option value="--text-muted">Text muted</option>
+                          <option value="--text-dim">Text dim</option>
+                          <option value="--scrollbar-track">Scrollbar track</option>
+                          <option value="--scrollbar-thumb">Scrollbar thumb</option>
+                          <option value="--scrollbar-thumb-hover">Scrollbar thumb hover</option>
+                        </select>
+            </label>
           </div>
           <div class="layout-editor-buttons">
             <button class="btn-export" id="exportLayoutBtn">Export</button>
@@ -744,16 +793,62 @@ class LayoutEditor {
       this._clampAll();
       this.renderGrid();
     });
+    const picker = document.getElementById("colorPicker");
+    const colorSelect = document.getElementById("colorSelected");
+    const hexDisplay = document.getElementById("hexValue");
+function rgbToHex(rgb) {
+  // Handle both rgb(r, g, b) and rgba(r, g, b, a) formats
+  const match = rgb.match(/\d+/g);
+  if (!match || match.length < 3) return rgb;
+  
+  const r = parseInt(match[0]);
+  const g = parseInt(match[1]);
+  const b = parseInt(match[2]);
+  
+  return "#" + [r, g, b].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? "0" + hex : hex;
+  }).join("").toUpperCase();
+}
 
-    document.getElementById("exportLayoutBtn").addEventListener("click", () => this.exportLayout());
-    document.getElementById("importLayoutBtn").addEventListener("click", () =>
-      document.getElementById("layoutImportInput").click()
-    );
-    document.getElementById("resetLayoutBtn").addEventListener("click", () => this.resetLayout());
-    document.getElementById("closeLayoutBtn").addEventListener("click", () => this.close());
-    document.getElementById("layoutImportInput").addEventListener("change", (e) =>
-      this.importLayout(e.target.files[0])
-    );
+    colorSelect.addEventListener("change", function () {
+      const selectedElement = this.value;
+      let colorValue = getComputedStyle(document.documentElement).getPropertyValue(selectedElement).trim();
+      
+      // Convert RGB/RGBA to hex if needed
+      if (colorValue.startsWith("rgb")) {
+        colorValue = rgbToHex(colorValue);
+      }
+      
+      hexDisplay.textContent = colorValue || "N/A";
+      // Update color picker to match current element's color
+      if (colorValue.startsWith("#")) {
+        picker.value = colorValue;
+      }
+    });
+    picker.addEventListener("input", function () {
+      const color = this.value; // Gets the hex code (e.g., #ff0000)
+      hexDisplay.textContent = color;
+      const selectedElement = document.getElementById("colorSelected").value;
+      document.documentElement.style.setProperty(selectedElement, color);
+    });
+    document
+      .getElementById("exportLayoutBtn")
+      .addEventListener("click", () => this.exportLayout());
+    document
+      .getElementById("importLayoutBtn")
+      .addEventListener("click", () =>
+        document.getElementById("layoutImportInput").click(),
+      );
+    document
+      .getElementById("resetLayoutBtn")
+      .addEventListener("click", () => this.resetLayout());
+    document
+      .getElementById("closeLayoutBtn")
+      .addEventListener("click", () => this.close());
+    document
+      .getElementById("layoutImportInput")
+      .addEventListener("change", (e) => this.importLayout(e.target.files[0]));
   }
 
   _ensureDefaults() {
@@ -777,9 +872,8 @@ class LayoutEditor {
 
     // Apply grid CSS first so getBoundingClientRect gives correct dims
     grid.style.gridTemplateColumns = `repeat(${this.gridCols}, 1fr)`;
-    grid.style.gridTemplateRows    = `repeat(${this.gridRows}, 1fr)`;
-    grid.style.backgroundSize =
-      `calc((100% + 8px) / ${this.gridCols}) calc((100% + 8px) / ${this.gridRows})`;
+    grid.style.gridTemplateRows = `repeat(${this.gridRows}, 1fr)`;
+    grid.style.backgroundSize = `calc((100% + 8px) / ${this.gridCols}) calc((100% + 8px) / ${this.gridRows})`;
 
     // Now measure real cell sizes and snap aspect-locked items
     const { cellW, cellH } = this._cellSize();
@@ -810,33 +904,50 @@ class LayoutEditor {
           </div>
         </div>
         <div class="layout-item-hint">
-          ${lockedAspect
-            ? "Drag to move \u00b7 right edge to resize width \u00b7 height auto-locks 16:9"
-            : "Drag to move \u00b7 corner handle to resize"}
+          ${
+            lockedAspect
+              ? "Drag to move \u00b7 right edge to resize width \u00b7 height auto-locks 16:9"
+              : "Drag to move \u00b7 corner handle to resize"
+          }
         </div>
-        ${lockedAspect
-          ? '<div class="resize-handle-width" title="Drag to resize width"></div>'
-          : '<div class="resize-handle" title="Resize"></div>'}
+        ${
+          lockedAspect
+            ? '<div class="resize-handle-width" title="Drag to resize width"></div>'
+            : '<div class="resize-handle" title="Resize"></div>'
+        }
       `;
 
       elem.addEventListener("mousedown", (e) => {
-        if (e.target.closest(".resize-handle") || e.target.closest(".resize-handle-width")) {
+        if (
+          e.target.closest(".resize-handle") ||
+          e.target.closest(".resize-handle-width")
+        ) {
           this.startResize(e, id);
         } else {
           this.startDrag(e, id);
         }
       });
 
-      elem.addEventListener("touchstart", (e) => {
-        const touch = e.touches[0];
-        const fakeE = { clientX: touch.clientX, clientY: touch.clientY,
-                        preventDefault: () => e.preventDefault() };
-        if (e.target.closest(".resize-handle") || e.target.closest(".resize-handle-width")) {
-          this.startResize(fakeE, id);
-        } else {
-          this.startDrag(fakeE, id);
-        }
-      }, { passive: false });
+      elem.addEventListener(
+        "touchstart",
+        (e) => {
+          const touch = e.touches[0];
+          const fakeE = {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            preventDefault: () => e.preventDefault(),
+          };
+          if (
+            e.target.closest(".resize-handle") ||
+            e.target.closest(".resize-handle-width")
+          ) {
+            this.startResize(fakeE, id);
+          } else {
+            this.startDrag(fakeE, id);
+          }
+        },
+        { passive: false },
+      );
 
       grid.appendChild(elem);
     });
@@ -844,7 +955,7 @@ class LayoutEditor {
 
   _applyGridStyle(elem, p) {
     elem.style.gridColumn = `${p.x + 1} / span ${p.width}`;
-    elem.style.gridRow    = `${p.y + 1} / span ${p.height}`;
+    elem.style.gridRow = `${p.y + 1} / span ${p.height}`;
     const sizeEl = elem.querySelector(".layout-item-size");
     if (sizeEl) sizeEl.textContent = `${p.width}×${p.height}`;
   }
@@ -886,7 +997,7 @@ class LayoutEditor {
     const grid = document.getElementById("layoutGrid");
     if (!grid) return;
     const rect = grid.getBoundingClientRect();
-    const cellW = (rect.width  - 8 * (this.gridCols - 1)) / this.gridCols;
+    const cellW = (rect.width - 8 * (this.gridCols - 1)) / this.gridCols;
     const cellH = (rect.height - 8 * (this.gridRows - 1)) / this.gridRows;
 
     const p = this.layout[this.draggingItem];
@@ -894,7 +1005,7 @@ class LayoutEditor {
     const unitW = cellW + 8;
     const unitH = cellH + 8;
     let newX = Math.floor((e.clientX - rect.left) / unitW);
-    let newY = Math.floor((e.clientY - rect.top)  / unitH);
+    let newY = Math.floor((e.clientY - rect.top) / unitH);
     newX = Math.max(0, Math.min(newX, this.gridCols - p.width));
     newY = Math.max(0, Math.min(newY, this.gridRows - p.height));
 
@@ -909,7 +1020,9 @@ class LayoutEditor {
 
   onDragEnd() {
     if (this.draggingItem) {
-      document.getElementById(`layout-${this.draggingItem}`)?.classList.remove("dragging");
+      document
+        .getElementById(`layout-${this.draggingItem}`)
+        ?.classList.remove("dragging");
       this.draggingItem = null;
     }
   }
@@ -921,7 +1034,7 @@ class LayoutEditor {
     this.resizingItem = itemId;
     this.startX = e.clientX;
     this.startY = e.clientY;
-    this.startWidth  = this.layout[itemId].width;
+    this.startWidth = this.layout[itemId].width;
     this.startHeight = this.layout[itemId].height;
     document.getElementById(`layout-${itemId}`)?.classList.add("resizing");
 
@@ -944,11 +1057,11 @@ class LayoutEditor {
 
   onResizeMove(e) {
     if (!this.resizingItem) return;
-    const item = this.ITEMS.find(i => i.id === this.resizingItem);
+    const item = this.ITEMS.find((i) => i.id === this.resizingItem);
     const grid = document.getElementById("layoutGrid");
     if (!grid) return;
     const rect = grid.getBoundingClientRect();
-    const cellW = (rect.width  - 8 * (this.gridCols - 1)) / this.gridCols;
+    const cellW = (rect.width - 8 * (this.gridCols - 1)) / this.gridCols;
     const cellH = (rect.height - 8 * (this.gridRows - 1)) / this.gridRows;
     const unitW = cellW + 8;
     const unitH = cellH + 8;
@@ -956,7 +1069,10 @@ class LayoutEditor {
     const deltaX = Math.round((e.clientX - this.startX) / unitW);
     const p = this.layout[this.resizingItem];
 
-    const newW = Math.max(1, Math.min(this.startWidth + deltaX, this.gridCols - p.x));
+    const newW = Math.max(
+      1,
+      Math.min(this.startWidth + deltaX, this.gridCols - p.x),
+    );
 
     if (newW !== p.width) {
       p.width = newW;
@@ -964,7 +1080,10 @@ class LayoutEditor {
         this._snapAspect(this.resizingItem, cellW, cellH);
       } else {
         const deltaY = Math.round((e.clientY - this.startY) / unitH);
-        p.height = Math.max(1, Math.min(this.startHeight + deltaY, this.gridRows - p.y));
+        p.height = Math.max(
+          1,
+          Math.min(this.startHeight + deltaY, this.gridRows - p.y),
+        );
       }
       this._resolveOverlaps(this.resizingItem);
       this._refreshAllItems();
@@ -973,7 +1092,9 @@ class LayoutEditor {
 
   onResizeEnd() {
     if (this.resizingItem) {
-      document.getElementById(`layout-${this.resizingItem}`)?.classList.remove("resizing");
+      document
+        .getElementById(`layout-${this.resizingItem}`)
+        ?.classList.remove("resizing");
       this.resizingItem = null;
     }
   }
@@ -981,16 +1102,30 @@ class LayoutEditor {
   // ── Export / Import / Reset ───────────────────────────────────────────────
 
   exportLayout() {
+    // Capture all CSS custom properties from root
+    const rootStyles = getComputedStyle(document.documentElement);
+    const customColors = {};
+    
+    for (let i = 0; i < rootStyles.length; i++) {
+      const prop = rootStyles[i];
+      if (prop.startsWith("--")) {
+        customColors[prop] = rootStyles.getPropertyValue(prop).trim();
+      }
+    }
+    
     const data = {
       version: "1.2",
       gridCols: this.gridCols,
       gridRows: this.gridRows,
       layout: this.layout,
       theme: config.theme,
+      customColors: customColors,
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
     a.href = url;
     a.download = `pitbeacon-layout-${new Date().toISOString().split("T")[0]}.json`;
     a.click();
@@ -1006,9 +1141,17 @@ class LayoutEditor {
         const data = JSON.parse(e.target.result);
         this.gridCols = data.gridCols || data.gridSize || 3;
         this.gridRows = data.gridRows || data.gridSize || 3;
-        this.layout   = data.layout || {};
+        this.layout = data.layout || {};
         document.getElementById("gridColsInput").value = this.gridCols;
         document.getElementById("gridRowsInput").value = this.gridRows;
+        
+        // Restore custom colors if they exist in the file
+        if (data.customColors) {
+          Object.entries(data.customColors).forEach(([prop, value]) => {
+            document.documentElement.style.setProperty(prop, value);
+          });
+        }
+        
         this._ensureDefaults();
         this.renderGrid();
         displayMessage("Layout imported successfully!", "message");
@@ -1024,9 +1167,9 @@ class LayoutEditor {
     this.gridCols = 3;
     this.gridRows = 3;
     this.layout = {
-      "webcast-section":     { x: 0, y: 0, width: 1, height: 1 },
-      "notes-section":       { x: 0, y: 2, width: 1, height: 1 },
-      "match-section":       { x: 1, y: 0, width: 2, height: 2 },
+      "webcast-section": { x: 0, y: 0, width: 1, height: 1 },
+      "notes-section": { x: 0, y: 2, width: 1, height: 1 },
+      "match-section": { x: 1, y: 0, width: 2, height: 2 },
       "leaderboard-section": { x: 1, y: 2, width: 2, height: 1 },
     };
     document.getElementById("gridColsInput").value = 3;
@@ -1041,11 +1184,11 @@ class LayoutEditor {
     config.gridCols = this.gridCols;
     config.gridRows = this.gridRows;
     config.gridSize = this.gridCols;
-    config.layout   = this.layout;
+    config.layout = this.layout;
     localStorage.setItem("gridCols", this.gridCols);
     localStorage.setItem("gridRows", this.gridRows);
     localStorage.setItem("gridSize", this.gridCols);
-    localStorage.setItem("layout",   JSON.stringify(this.layout));
+    localStorage.setItem("layout", JSON.stringify(this.layout));
 
     document.getElementById("layoutEditorModal").classList.remove("active");
     applyLayout();
@@ -1061,19 +1204,29 @@ function applyLayout() {
   const cols = config.gridCols || config.gridSize || 3;
   const rows = config.gridRows || config.gridSize || 3;
 
-  container.style.display             = "grid";
+  container.style.display = "grid";
   container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  container.style.gridTemplateRows    = `repeat(${rows}, 1fr)`;
-  container.style.gap                 = "12px";
-  container.style.height              = "calc(100vh - 4.5rem)";
-  container.style.padding             = "12px";
+  container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  container.style.gap = "12px";
+  container.style.height = "calc(100vh - 4.5rem)";
+  container.style.padding = "12px";
 
-  ["webcast-section", "notes-section", "match-section", "leaderboard-section"].forEach((itemId) => {
+  [
+    "webcast-section",
+    "notes-section",
+    "match-section",
+    "leaderboard-section",
+  ].forEach((itemId) => {
     const elem = document.getElementById(itemId);
     if (!elem) return;
-    const pos = (config.layout && config.layout[itemId]) || { x: 0, y: 0, width: 1, height: 1 };
+    const pos = (config.layout && config.layout[itemId]) || {
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+    };
     elem.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
-    elem.style.gridRow    = `${pos.y + 1} / span ${pos.height}`;
+    elem.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
   });
 }
 
@@ -1417,6 +1570,7 @@ const updateInterval = () => {
   }, 10000);
   return intervalId; // Store the interval ID for later cleanup
 };
+// Removed centralized interval in favor of individual timeouts per message
 
 updateInterval();
 
