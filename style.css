@@ -444,6 +444,7 @@ input[type="checkbox"]:checked::before {
 #notes-section {
   flex: 1; /* fills remaining height below the webcast */
   min-height: 0;
+  height: 100%;
   background-color: var(--bg-surface);
   border-radius: 8px;
   border: 1px solid var(--border);
