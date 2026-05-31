@@ -14,9 +14,9 @@
   --text-primary: rgb(240, 240, 240);
   --text-muted: rgb(160, 155, 155);
   --text-dim: rgb(100, 98, 98);
-  --scrollbar-track: rgba(255,255,255,0.03);
-  --scrollbar-thumb: rgba(255,255,255,0.12);
-  --scrollbar-thumb-hover: rgba(255,255,255,0.22);
+  --scrollbar-track: rgba(255, 255, 255, 0.03);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
 }
 
 /* Light Theme */
@@ -32,9 +32,9 @@
   --text-primary: rgb(20, 20, 22);
   --text-muted: rgb(80, 85, 90);
   --text-dim: rgb(130, 135, 140);
-  --scrollbar-track: rgba(0,0,0,0.05);
-  --scrollbar-thumb: rgba(0,0,0,0.15);
-  --scrollbar-thumb-hover: rgba(0,0,0,0.25);
+  --scrollbar-track: rgba(0, 0, 0, 0.05);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
 }
 
 /* High Contrast Theme */
@@ -50,9 +50,9 @@
   --text-primary: rgb(255, 255, 255);
   --text-muted: rgb(200, 200, 200);
   --text-dim: rgb(150, 150, 150);
-  --scrollbar-track: rgba(0,255,255,0.05);
-  --scrollbar-thumb: rgba(0,255,255,0.2);
-  --scrollbar-thumb-hover: rgba(0,255,255,0.4);
+  --scrollbar-track: rgba(0, 255, 255, 0.05);
+  --scrollbar-thumb: rgba(0, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(0, 255, 255, 0.4);
 }
 
 * {
@@ -125,7 +125,7 @@ html {
 }
 
 .time-display {
-  display:block;
+  display: block;
   width: 100%;
   text-align: center;
   font-family: "Rubik", sans-serif;
@@ -185,7 +185,7 @@ html {
   flex-direction: column;
   font-family: "Rubik", sans-serif;
   color: var(--text-muted);
-  z-index: 100;
+  z-index: 200;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
   max-height: 80vh;
   overflow-y: auto;
@@ -311,7 +311,7 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]::before {
-  content: '';
+  content: "";
   position: absolute;
   width: 20px;
   height: 20px;
@@ -346,8 +346,9 @@ input[type="checkbox"]:checked::before {
   width: calc(100% - 40px);
 }
 
-.savebutton:hover { background-color: var(--accent-hover); }
-
+.savebutton:hover {
+  background-color: var(--accent-hover);
+}
 
 /* ── Toasts ── */
 .errorcontainer {
@@ -396,7 +397,9 @@ input[type="checkbox"]:checked::before {
   transition: color 0.15s;
 }
 
-.error-exit:hover { color: var(--text-primary); }
+.error-exit:hover {
+  color: var(--text-primary);
+}
 
 /* ── Main layout ── */
 .container {
@@ -425,156 +428,977 @@ input[type="checkbox"]:checked::before {
 }
 
 /* ── Webcast ── */
-.webcast-card {
-  background-color: var(--bg-surface);
-  border-radius: 8px;
-  border: 1px solid var(--border-accent);
-  overflow: hidden;
-  flex-shrink: 0; /* never squish the video */
-}
+/* =============================================================================
+   FULL STYLE REPLACEMENT
+   In style.css:
+   - Replace the "#notes-section, [id^=notes-] {" block and everything after it
+     (all pit-section and layout-editor CSS) with this file.
+   ============================================================================= */
 
-.webcast-card iframe {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-}
+/* ── Shared pit-section shell ─────────────────────────────────────────────── */
 
-/* ── Notes ── */
-#notes-section {
-  flex: 1; 
-  min-height: 0;
+#notes-section,
+[id^="notes-"] {
   height: 100%;
+  min-height: 0;
   background-color: var(--bg-surface);
   border-radius: 8px;
   border: 1px solid var(--border);
-  padding: 12px 14px;
+  padding: 10px 12px;
   font-family: "Rubik", sans-serif;
   color: var(--text-primary);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0;
+  box-sizing: border-box;
 }
 
-.notes-header {
+.pit-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
   flex-shrink: 0;
+  margin-bottom: 8px;
+  gap: 6px;
+  min-width: 0;
 }
 
-.notes-title {
+.pit-title {
   font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pit-title i {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  flex-shrink: 0;
 }
 
-.add-note-btn {
+.pit-add-btn {
   background-color: var(--accent);
   color: white;
   border: none;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 5px;
   cursor: pointer;
   font-family: "Rubik", sans-serif;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pit-add-btn:hover {
+  background-color: var(--accent-hover);
 }
 
-.add-note-btn:hover { background-color: var(--accent-hover); }
-
-.notes-table {
-  width: 100%;
-  border-collapse: collapse;
+.pit-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 2px;
+  min-height: 0;
 }
 
-.notes-table th {
-  text-align: left;
-  font-size: 0.68rem;
-  font-weight: 500;
+.pit-empty {
   color: var(--text-dim);
-  padding: 4px 8px 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  background-color: var(--bg-surface); /* stay visible while scrolling */
+  font-size: 0.8rem;
+  font-style: italic;
+  padding: 12px 4px;
+  margin: 0;
+  text-align: center;
 }
 
-.note-row td {
-  padding: 5px 8px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
+/* ── Shared card base ──────────────────────────────────────────────────────── */
 
-.note-row:last-child td {
-  border-bottom: none;
-}
-
-.note-input {
+.pit-card {
   background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 9px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.pit-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pit-card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Inputs ────────────────────────────────────────────────────────────────── */
+
+.pit-input {
+  background-color: var(--bg-input);
   border: 1px solid transparent !important;
   color: var(--text-primary);
   border-radius: 4px;
-  padding: 4px 8px !important;
+  padding: 4px 7px !important;
   width: 100%;
   font-family: "Rubik", sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   resize: none;
-  overflow: hidden;
-  min-height: 30px;
-  line-height: 1.45;
-  transition: border-color 0.15s;
+  line-height: 1.4;
+  transition: border-color 0.12s;
+  box-sizing: border-box;
+  min-width: 0;
 }
-
-.note-input:focus {
+.pit-input:focus {
   outline: none;
   border-color: var(--accent) !important;
 }
+.pit-input::placeholder {
+  color: var(--text-dim);
+}
+.pit-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
 
-.priority-cell {
+/* ── Delete ────────────────────────────────────────────────────────────────── */
+
+/* ── Delete buttons — always visible, not just on hover ─────────────────────── */
+.pit-del-btn {
+  /* Override the dim color with a soft but always-visible red tint */
+  background: rgba(180, 50, 50, 0.1);
+  border: 1px solid rgba(180, 50, 50, 0.2);
+  color: rgb(200, 90, 90);
+  cursor: pointer;
+  font-size: 0.88rem;
+  padding: 4px 7px;
+  border-radius: 5px;
+  line-height: 1;
+  transition:
+    color 0.12s,
+    background 0.12s,
+    border-color 0.12s;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 28px;
+  height: 28px;
+}
+.pit-del-btn:hover {
+  background: rgba(200, 50, 50, 0.25);
+  border-color: rgba(200, 50, 50, 0.45);
+  color: rgb(240, 100, 100);
+} /* Slightly smaller in tight spots */
+.part-card .pit-del-btn,
+.checkin-row .pit-del-btn {
+  min-width: 24px;
+  height: 24px;
+  font-size: 0.8rem;
+  padding: 2px 5px;
 }
 
-.priority-badge {
-  display: inline-flex;
+/* ── Status chips ──────────────────────────────────────────────────────────── */
+
+.pit-status-row {
+  display: flex;
+  gap: 4px;
+}
+
+.pit-chip {
+  flex: 1;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 3px;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  opacity: 0.32;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+  text-align: center;
+}
+.pit-chip.chip-active {
+  opacity: 1;
+}
+
+.chip-ok {
+  background: rgba(40, 160, 90, 0.25);
+  color: rgb(80, 200, 120);
+  border-color: rgba(40, 160, 90, 0.3);
+}
+.chip-warn {
+  background: rgba(220, 160, 20, 0.25);
+  color: rgb(240, 190, 60);
+  border-color: rgba(220, 160, 20, 0.3);
+}
+.chip-info {
+  background: rgba(50, 130, 210, 0.25);
+  color: rgb(100, 170, 240);
+  border-color: rgba(50, 130, 210, 0.3);
+}
+.chip-err {
+  background: rgba(200, 50, 50, 0.25);
+  color: rgb(240, 110, 110);
+  border-color: rgba(200, 50, 50, 0.3);
+}
+
+/* ── Battery ───────────────────────────────────────────────────────────────── */
+
+/* ── Battery — fix input widths in the top row ─────────────────────────────── */
+.batt-top-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  flex-wrap: wrap; /* fallback for very narrow tiles */
+}
+.batt-id {
+  flex: 1;
+  min-width: 0;
+  width: 0; /* flex sizing */
+}
+.batt-volt-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.batt-volt-block .pit-input {
+  width: 64px;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.batt-volt-block .pit-input::-webkit-inner-spin-button,
+.batt-volt-block .pit-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.volt-track {
+  width: 64px;
+}
+.batt-cycles {
+  width: 60px !important;
+  flex-shrink: 0;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.batt-cycles::-webkit-inner-spin-button,
+.batt-cycles::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+} /* When section is XS, let battery fields stack */
+.pit-xs .batt-top-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+.pit-xs .batt-id,
+.pit-xs .batt-cycles {
+  width: 100% !important;
+  flex: unset;
+}
+.pit-xs .batt-volt-block {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.pit-xs .batt-volt-block .pit-input {
+  width: 100%;
+  flex: 1;
+}
+.pit-xs .volt-track {
+  flex: 1;
+  width: auto;
+}
+
+/* ── Parts ─────────────────────────────────────────────────────────────────── */
+
+.parts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 6px;
+}
+/* XS: single column */
+.pit-xs .parts-grid {
+  grid-template-columns: 1fr;
+}
+
+/* ── Parts inventory — fix input overflow ──────────────────────────────────── */ /* The card itself must not let children overflow */
+.part-card {
+  overflow: hidden;
+  min-width: 0;
+} /* Name input row: stop the delete button from being squeezed */
+.part-card-top {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.part-card-top .pit-input {
+  flex: 1;
+  min-width: 0;
+  width: 0; /* let flex do the sizing, not the input's natural width */
+} /* Qty/Min input row: equal columns, no overflow */
+/* Qty/Min input row: equal columns, no overflow */
+.part-inputs-row {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+.part-micro-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.part-micro-label .pit-input {
+  width: 100%;
+  min-width: 0;
+  font-size: 0.8rem;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.part-micro-label .pit-input::-webkit-inner-spin-button,
+.part-micro-label .pit-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.part-qty-row {
+  display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+}
+
+.part-qty-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.part-qty-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  font-family: "Rubik", sans-serif;
+}
+.qty-ok {
+  color: rgb(70, 185, 105);
+}
+.qty-low {
+  color: rgb(215, 75, 75);
+}
+.part-qty-min {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+/* In XS columns, shrink the big number */
+.pit-xs .part-qty-num {
+  font-size: 1.1rem;
+}
+
+.part-qty-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+.part-divider {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+.part-low-badge,
+.part-ok-badge {
+  text-align: center;
+  border-radius: 4px;
+  padding: 3px 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.part-low-badge {
+  background: rgba(200, 50, 50, 0.2);
+  color: rgb(235, 95, 95);
+  border: 1px solid rgba(200, 50, 50, 0.3);
+}
+.part-ok-badge {
+  background: rgba(40, 160, 80, 0.15);
+  color: rgb(70, 195, 105);
+  border: 1px solid rgba(40, 160, 80, 0.25);
+}
+
+/* ── Check-In ──────────────────────────────────────────────────────────────── */
+
+.checkin-progress {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.checkin-prog-track {
+  flex: 1;
+  height: 5px;
+  background: var(--bg-input);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.checkin-prog-fill {
+  height: 100%;
+  background: rgb(55, 185, 95);
+  border-radius: 99px;
+  transition: width 0.25s;
+}
+.checkin-prog-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Check-in delete button alignment ─────────────────────────────────────── */
+.checkin-row {
+  position: relative;
+} /* Already in the row flex layout, just make sure it stays on the right */
+.checkin-row .pit-del-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.checkin-done {
+  opacity: 0.48;
+}
+
+.checkin-check {
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  border: 2px solid var(--border);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition:
+    border-color 0.12s,
+    color 0.12s,
+    background 0.12s;
+}
+.checkin-check:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.check-done {
+  background: rgb(45, 160, 80);
+  border-color: rgb(45, 160, 80);
+  color: white;
+}
+
+.checkin-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* In XS, hide the "who" field to save space */
+.pit-xs .checkin-who {
+  display: none;
+}
+
+/* ── Pit Notes ─────────────────────────────────────────────────────────────── */
+
+/* ── Note cards — make del button always on right, not floating in priority col */
+.note-priority-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  width: 46px;
+} /* Move delete OUT of the priority block — it's awkward there.   Instead put it as a top-right corner button on the card itself. */
+.note-card {
+  position: relative;
+}
+.note-card .pit-del-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 22px;
+  height: 22px;
+  font-size: 0.72rem;
+  padding: 2px 4px;
+} /* Shrink inner layout to not overlap the abs-positioned button */
+.note-card-inner {
+  padding-right: 32px;
+}
+
+.note-pri-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: white;
   cursor: text;
   outline: none;
-  white-space: nowrap;
   overflow: hidden;
-  transition: background-color 0.25s;
+  transition: background-color 0.2s;
+  font-family: "Rubik", sans-serif;
 }
 
-.delete-note-btn {
+/* In XS, shrink the priority badge inline instead of column */
+.pit-xs .note-card-inner {
+  gap: 5px;
+}
+.pit-xs .note-pri-badge {
+  width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
+}
+.pit-xs .note-issue {
+  font-size: 0.78rem;
+}
+
+.note-pri-label {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* ── Layout Editor ─────────────────────────────────────────────────────────── */
+
+.layout-editor-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.78);
+  display: none;
+  z-index: 1000;
+}
+.layout-editor-modal.active {
+  display: flex;
+}
+
+.le-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 40px);
+  margin: 20px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ── Layout editor title font ──────────────────────────────────────────────── */
+.le-title {
+  font-family: "Rubik", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+} /* Keep header from wrapping into a mess on mid-size screens */
+.le-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  background-color: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+} /* On narrow screens collapse to stacked rows */
+@media (max-width: 760px) {
+  .le-header {
+    grid-template-columns: 1fr;
+  }
+}
+.le-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  min-width: 0;
+  font-family: "Rubik", sans-serif;
+  color: var(--text-muted);
+}
+.le-btns {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.le-btns button {
+  padding: 5px 11px;
+  border: none;
+  border-radius: 5px;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.13s;
+  white-space: nowrap;
+}
+.btn-export {
+  background: rgb(48, 102, 48);
+  color: #fff;
+}
+.btn-export:hover {
+  background: rgb(62, 122, 62);
+}
+.btn-import {
+  background: rgb(98, 80, 46);
+  color: #fff;
+}
+.btn-import:hover {
+  background: rgb(118, 98, 58);
+}
+.btn-reset {
+  background: rgb(102, 54, 54);
+  color: #fff;
+}
+.btn-reset:hover {
+  background: rgb(122, 70, 70);
+}
+.btn-close {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-close:hover {
+  background: var(--accent-hover);
+}
+
+.le-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Palette */
+.le-palette {
+  width: 155px;
+  flex-shrink: 0;
+  background-color: var(--bg-base);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.le-palette-title {
+  font-size: 0.63rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-dim);
+  padding: 9px 11px 7px;
+  font-family: "Rubik", sans-serif;
+  font-weight: 500;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.le-palette-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.le-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.78rem;
+  cursor: grab;
+  user-select: none;
+  transition:
+    border-color 0.12s,
+    color 0.12s;
+}
+.le-palette-item:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+.le-palette-item:active {
+  cursor: grabbing;
+}
+.le-palette-item i {
+  font-size: 0.88rem;
+  opacity: 0.6;
+}
+/* ── Palette items — add a subtle drag affordance ──────────────────────────── */
+.le-palette-item::before {
+  content: "⠿";
+  opacity: 0.3;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  letter-spacing: 0;
+}
+.le-palette-empty {
+  color: var(--text-dim);
+  font-size: 0.73rem;
+  font-family: "Rubik", sans-serif;
+  padding: 8px 2px;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Canvas & grid */
+.le-canvas {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+  background-color: var(--bg-base);
+}
+
+.layout-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  background-image:
+    linear-gradient(to right, rgba(47, 48, 112, 0.14) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(47, 48, 112, 0.14) 1px, transparent 1px);
+  border: 1px solid rgba(47, 48, 112, 0.2);
+  border-radius: 6px;
+}
+
+/* Grid items */
+.layout-item {
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-accent);
+  border-radius: 7px;
+  padding: 8px 10px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+  min-height: 0;
+  overflow: hidden;
+}
+.layout-item:hover {
+  border-color: rgba(90, 92, 210, 0.75);
+  box-shadow: 0 0 0 3px rgba(47, 48, 112, 0.1);
+}
+.layout-item.dragging {
+  cursor: grabbing;
+  opacity: 0.82;
+  border-color: rgb(90, 92, 200);
+  box-shadow: 0 4px 18px rgba(47, 48, 112, 0.38);
+  z-index: 50;
+}
+.layout-item.resizing {
+  opacity: 0.82;
+  border-color: rgb(90, 92, 200);
+}
+
+.layout-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "Rubik", sans-serif;
+  font-weight: 500;
+  font-size: 0.83rem;
+  color: var(--text-primary);
+  flex-shrink: 0;
+  gap: 5px;
+}
+.layout-item-header i {
+  margin-right: 4px;
+  opacity: 0.65;
+}
+
+.layout-item-size {
+  font-size: 0.67rem;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  padding: 2px 5px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.layout-item-hint {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  font-family: "Rubik", sans-serif;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.le-remove-btn {
   background: none;
   border: none;
   color: var(--text-dim);
+  font-size: 1.05rem;
+  line-height: 1;
   cursor: pointer;
-  font-size: 0.8rem;
-  padding: 2px 6px;
+  padding: 1px 3px;
   border-radius: 4px;
-  transition: color 0.15s;
+  transition:
+    color 0.12s,
+    background 0.12s;
+  flex-shrink: 0;
+}
+.le-remove-btn:hover {
+  color: rgb(215, 75, 75);
+  background: rgba(200, 60, 60, 0.1);
 }
 
-.delete-note-btn:hover { color: rgb(200, 80, 80); }
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 19px;
+  height: 19px;
+  cursor: nwse-resize;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 3px;
+  opacity: 0.28;
+  transition: opacity 0.12s;
+}
+.resize-handle::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  border-radius: 0 0 3px 0;
+}
+.layout-item:hover .resize-handle {
+  opacity: 0.72;
+}
+.layout-item.resizing .resize-handle {
+  opacity: 1;
+}
+
+.resize-handle-width {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.22;
+  transition: opacity 0.12s;
+  border-radius: 0 7px 7px 0;
+}
+.resize-handle-width::before {
+  content: "";
+  display: block;
+  width: 3px;
+  height: 22px;
+  background: var(--text-muted);
+  border-radius: 2px;
+}
+.layout-item:hover .resize-handle-width {
+  opacity: 0.68;
+}
+.layout-item.resizing .resize-handle-width {
+  opacity: 1;
+}
+
+/* Locked-aspect (webcast) */
+.layout-item--locked-aspect {
+  border-color: rgba(55, 95, 175, 0.48);
+}
+.layout-item--locked-aspect:hover {
+  border-color: rgba(80, 130, 220, 0.82);
+  box-shadow: 0 0 0 3px rgba(60, 100, 180, 0.1);
+}
+.layout-item--locked-aspect.dragging {
+  border-color: rgb(80, 130, 220);
+}
+
+.layout-item-aspect-badge {
+  font-size: 0.62rem;
+  font-family: "Rubik", sans-serif;
+  font-weight: 500;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(60, 100, 180, 0.16);
+  color: rgb(115, 155, 225);
+  border: 1px solid rgba(60, 100, 180, 0.28);
+}
+/* ── Robot health delete — already in .pit-card-row, just ensure visibility ── */ /* (covered by the global .pit-del-btn override above) */
+/* ── General number inputs — remove spinners globally inside pit sections ──── */
+#notes-section input[type="number"],
+[id^="notes-"] input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+#notes-section input[type="number"]::-webkit-inner-spin-button,
+#notes-section input[type="number"]::-webkit-outer-spin-button,
+[id^="notes-"] input[type="number"]::-webkit-inner-spin-button,
+[id^="notes-"] input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* =============================================================================
+   MISSING STYLES PATCH
+   Append this entire block to the bottom of your style.css.
+   These are the leaderboard, match cards, and inactive message styles
+   that were present in the original CSS but got dropped.
+   ============================================================================= */
 
 /* ── Leaderboard ── */
+
 #leaderboard-section {
   height: 100%;
   min-height: 0;
@@ -586,6 +1410,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-primary);
   overflow-y: auto;
   align-self: stretch;
+  box-sizing: border-box;
 }
 
 .leaderboard-table {
@@ -632,7 +1457,8 @@ input[type="checkbox"]:checked::before {
 .my-team td:first-child { border-radius: 6px 0 0 6px; }
 .my-team td:last-child  { border-radius: 0 6px 6px 0; }
 
-/* ── Match cards ── */
+/* ── Match section shell ── */
+
 #match-section {
   height: 100%;
   min-height: 0;
@@ -642,7 +1468,10 @@ input[type="checkbox"]:checked::before {
   padding: 2px 2px 12px 2px;
   overflow-y: auto;
   align-self: stretch;
+  box-sizing: border-box;
 }
+
+/* ── Match cards ── */
 
 .match-card,
 .upcomingmatch-card {
@@ -663,6 +1492,21 @@ input[type="checkbox"]:checked::before {
   background-color: rgba(47, 48, 112, 0.12);
 }
 
+.match-card p,
+.upcomingmatch-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.match-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
 .countdown-warning {
   color: rgb(255, 200, 0);
   font-weight: 600;
@@ -677,35 +1521,11 @@ input[type="checkbox"]:checked::before {
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
 }
 
-.match-card p,
-.upcomingmatch-card p {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-}
-.inactive {
-  text-align: center;
-  color: var(--text-dim);
-  font-style: italic;
-  width: 100vw;
-  font-family: "Rubik", sans-serif;
-  padding: 20px;
-}
-.match-title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  letter-spacing: -0.2px;
-}
+/* ── Upcoming match layout ── */
 
 .upcoming-basicinfo {
   display: flex;
@@ -720,17 +1540,20 @@ input[type="checkbox"]:checked::before {
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
+
 .alliance-row {
   display: flex;
   flex-direction: row;
   gap: 4px;
   flex-wrap: wrap;
 }
+
 .user-team {
   justify-content: center;
   padding: 8px 0;
   border-bottom: 2px solid var(--border);
 }
+
 .red {
   color: rgb(200, 80, 80) !important;
   border: 1px solid rgba(200, 80, 80, 0.25);
@@ -742,6 +1565,7 @@ input[type="checkbox"]:checked::before {
   justify-content: center;
   margin: 0;
 }
+
 .blue {
   color: rgb(80, 80, 200) !important;
   border: 1px solid rgba(80, 80, 200, 0.25);
@@ -753,292 +1577,44 @@ input[type="checkbox"]:checked::before {
   justify-content: center;
   margin: 0;
 }
-.red.highlight {
-  background-color: rgba(200, 80, 80, 0.3) !important;
-}
-.blue.highlight {
-  background-color: rgba(80, 80, 200, 0.3) !important;
-}
 
-/* ── Layout Editor Modal ── (replace the existing layout editor block) ── */
+.red.highlight  { background-color: rgba(200, 80, 80, 0.3) !important; }
+.blue.highlight { background-color: rgba(80, 80, 200, 0.3) !important; }
 
-.layout-editor-modal {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.75);
-  display: none;
-  flex-direction: column;
-  z-index: 1000;
-}
+/* ── Inactive / no event message ── */
 
-.layout-editor-modal.active {
-  display: flex;
-}
-
-.layout-editor-container {
-  display: flex;
-  flex-direction: column;
-  height: calc(100% - 40px);
-  margin: 20px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.layout-editor-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  background-color: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.layout-editor-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.layout-editor-controls {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.layout-editor-controls label {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-family: "Rubik", sans-serif;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.layout-editor-controls input[type="number"] {
-  width: 52px;
-  padding: 5px 7px;
+.inactive {
   text-align: center;
-}
-
-.layout-editor-buttons {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.layout-editor-buttons button {
-  padding: 7px 14px;
-  border: none;
-  border-radius: 6px;
+  color: var(--text-dim);
+  font-style: italic;
+  width: 100vw;
   font-family: "Rubik", sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s, opacity 0.15s;
-}
-
-.btn-export  { background-color: rgb(55, 110, 55);  color: #fff; }
-.btn-export:hover  { background-color: rgb(70, 130, 70); }
-.btn-import  { background-color: rgb(110, 90, 55);  color: #fff; }
-.btn-import:hover  { background-color: rgb(130, 110, 70); }
-.btn-reset   { background-color: rgb(110, 60, 60);  color: #fff; }
-.btn-reset:hover   { background-color: rgb(130, 80, 80); }
-.btn-close   { background-color: var(--bg-input);   color: var(--text-primary); }
-.btn-close:hover   { background-color: var(--accent); color: #fff; }
-
-/* ── Canvas & Grid ── */
-
-.layout-editor-canvas {
-  flex: 1;
-  overflow: auto;
   padding: 20px;
-  background-color: var(--bg-base);
 }
 
-.layout-grid {
-  display: grid;
-  gap: 8px;
-  width: 100%;
-  height: 100%;
-  min-height: 400px;
-  position: relative;
+/* ── Webcast iframe (ensure it stays styled) ── */
 
-  /* Dotted background grid — updates via inline backgroundSize */
-  background-image:
-    linear-gradient(to right,  rgba(47, 48, 112, 0.18) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(47, 48, 112, 0.18) 1px, transparent 1px);
-  /* backgroundSize is set dynamically in JS */
-  border: 1px solid rgba(47, 48, 112, 0.25);
-  border-radius: 6px;
-}
-
-/* ── Layout items ── */
-
-.layout-item {
+.webcast-card {
   background-color: var(--bg-surface);
-  border: 2px solid var(--border-accent);
   border-radius: 8px;
-  padding: 10px 12px;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  min-height: 0;
+  border: 1px solid var(--border-accent);
   overflow: hidden;
-}
-
-.layout-item:hover {
-  border-color: rgba(90, 92, 200, 0.8);
-  box-shadow: 0 0 0 3px rgba(47, 48, 112, 0.15);
-}
-
-.layout-item.dragging {
-  cursor: grabbing;
-  opacity: 0.85;
-  border-color: rgb(90, 92, 200);
-  box-shadow: 0 4px 20px rgba(47, 48, 112, 0.45);
-  z-index: 50;
-}
-
-.layout-item.resizing {
-  opacity: 0.85;
-  border-color: rgb(90, 92, 200);
-  box-shadow: 0 4px 20px rgba(47, 48, 112, 0.45);
-}
-
-.layout-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: "Rubik", sans-serif;
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: var(--text-primary);
   flex-shrink: 0;
 }
 
-.layout-item-header i {
-  margin-right: 5px;
-  opacity: 0.7;
-  font-size: 1rem;
-  vertical-align: -2px;
-}
-
-.layout-item-size {
-  font-size: 0.75rem;
-  font-weight: 400;
-  color: var(--text-dim);
-  background: var(--bg-raised);
-  padding: 2px 7px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  font-family: "Rubik", sans-serif;
-}
-
-.layout-item-hint {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-}
-
-/* ── Resize handle ── */
-
-.resize-handle {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 22px;
-  height: 22px;
-  cursor: nwse-resize;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  padding: 3px;
-  opacity: 0.35;
-  transition: opacity 0.15s;
-}
-
-.resize-handle::before {
-  content: "";
+.webcast-card iframe {
   display: block;
-  width: 12px;
-  height: 12px;
-  border-right: 2px solid var(--text-muted);
-  border-bottom: 2px solid var(--text-muted);
-  border-radius: 0 0 4px 0;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
 }
 
-.layout-item:hover .resize-handle { opacity: 0.8; }
-.layout-item.resizing .resize-handle { opacity: 1; }
+/* ── le-controls label inputs need font for the hex span ── */
 
-/* ── Locked-aspect (webcast) item ── */
-
-.layout-item--locked-aspect {
-  cursor: grab;
-  border-color: rgba(60, 100, 180, 0.55);
-}
-
-.layout-item--locked-aspect:hover {
-  border-color: rgba(80, 130, 220, 0.85);
-  box-shadow: 0 0 0 3px rgba(60, 100, 180, 0.15);
-}
-
-.layout-item--locked-aspect.dragging {
-  border-color: rgb(80, 130, 220);
-  box-shadow: 0 4px 20px rgba(60, 100, 180, 0.4);
-}
-
-.layout-item-aspect-badge {
-  font-size: 0.7rem;
+#leHex {
   font-family: "Rubik", sans-serif;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(60, 100, 180, 0.2);
-  color: rgb(120, 160, 230);
-  border: 1px solid rgba(60, 100, 180, 0.35);
-  letter-spacing: 0.03em;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  min-width: 58px;
 }
-
-/* ── Right-edge width-only resize handle (locked-aspect items) ── */
-
-.resize-handle-width {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 10px;
-  cursor: ew-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.3;
-  transition: opacity 0.15s, background 0.15s;
-  border-radius: 0 8px 8px 0;
-}
-
-.resize-handle-width::before {
-  content: "";
-  display: block;
-  width: 3px;
-  height: 28px;
-  background: var(--text-muted);
-  border-radius: 2px;
-}
-
-.layout-item:hover .resize-handle-width { opacity: 0.75; }
-.layout-item.resizing .resize-handle-width { opacity: 1; background: rgba(47, 48, 112, 0.15); }
