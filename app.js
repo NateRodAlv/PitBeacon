@@ -64,8 +64,7 @@ function loadSettings() {
 
   // Apply theme
   config.theme = savedTheme;
-  document.documentElement.setAttribute("data-theme", savedTheme);
-  document.getElementById("themeSelect").value = savedTheme;
+
 
   loadCustomColors();
   // Load note alarm settings
@@ -1049,7 +1048,6 @@ function setupListeners() {
   savebutton.addEventListener("click", () => {
     config.teamNumber = document.getElementById("teamNumber").value;
     config.tbaapikey = document.getElementById("tbaapikey").value;
-    config.theme = document.getElementById("themeSelect").value;
     config.noteAlarmToggle = document.getElementById("noteAlarmToggle").checked;
     config.noteAlarmThreshold =
       parseInt(document.getElementById("noteAlarmThreshold").value) || 8;
@@ -1830,7 +1828,7 @@ class LayoutEditor {
       [
         JSON.stringify(
           {
-            version: "1.5",
+            version: "1.5.1",
             gridCols: this.gridCols,
             gridRows: this.gridRows,
             layout: this.layout,
