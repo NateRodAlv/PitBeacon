@@ -2,6 +2,8 @@ import { config } from "./config.js";
 const year = new Date().getFullYear();
 let fullDate = new Date(); // Will be updated with test date if enabled
 
+const version = "26.6.7"
+
 // Audio files for different sounds
 const audioFiles = {
   alarm1: new Audio("alarm1.mp3"),
@@ -71,8 +73,12 @@ function loadSettings() {
   config.noteAlarmToggle = savedNoteAlarmToggle;
   config.noteAlarmThreshold = parseInt(savedNoteAlarmThreshold);
   config.noteAlarmSound = savedNoteAlarmSound;
-  document.getElementById("noteAlarmToggle").checked = savedNoteAlarmToggle;
-  document.getElementById("noteAlarmThreshold").value = savedNoteAlarmThreshold;
+  
+  const noteAlarmToggleBtn = document.getElementById("noteAlarmToggle");
+  if (noteAlarmToggleBtn) {
+    noteAlarmToggleBtn.classList.toggle("active", savedNoteAlarmToggle);
+  }
+  
   document.getElementById("noteAlarmSound").value = savedNoteAlarmSound;
 
   // Load match alarm settings
@@ -117,6 +123,24 @@ function loadSettings() {
       now.getSeconds(),
     );
   }
+
+  // Load layout profiles
+  try {
+    const savedProfiles = localStorage.getItem("layoutProfiles");
+    if (savedProfiles) config.layoutProfiles = JSON.parse(savedProfiles);
+  } catch(e) { config.layoutProfiles = {}; }
+  config.activeProfileName = localStorage.getItem("activeProfileName") || "Default";
+
+  // Load auto-swap settings
+  config.autoSwapEnabled = localStorage.getItem("autoSwapEnabled") === "true";
+  config.autoSwapInterval = parseInt(localStorage.getItem("autoSwapInterval") || "30");
+
+  const autoSwapEl = document.getElementById("autoSwapEnabled");
+  const autoSwapIntervalEl = document.getElementById("autoSwapInterval");
+  if (autoSwapEl) autoSwapEl.checked = config.autoSwapEnabled;
+  if (autoSwapIntervalEl) autoSwapIntervalEl.value = config.autoSwapInterval;
+
+  refreshProfileUI();
 
   // Load note type and hidden sections
   const savedAdditionalSections = localStorage.getItem(
@@ -425,7 +449,7 @@ function setupRobotHealthLog(section) {
   render();
   addBtn.addEventListener("click", () => {
     const data = loadNoteData("robot-health");
-    data.push({ task: "", component: "", status: "pending" });
+    data.push({ task: "", component: "", status: "pending", flagged: false });
     saveNoteData("robot-health", data);
     render();
   });
@@ -439,10 +463,12 @@ const RH_STATUS = {
 
 function _rhCard(entry, index, render) {
   const card = document.createElement("div");
-  card.className = "pit-card";
+  card.className = "pit-card" + (entry.flagged ? " flagged" : "");
   card.innerHTML = `
     <div class="pit-card-row">
-      <div class="pit-card-fields">
+      <input type="checkbox" class="rh-flag flag-toggle" ${entry.flagged ? "checked" : ""} title="Flag for alert">
+      </input>
+      <div class="pit-card-fields" style="flex:1">
         <input class="pit-input pit-task" placeholder="Task…" value="${_esc(entry.task)}">
         <input class="pit-input pit-sub"  placeholder="Component (e.g. intake)" value="${_esc(entry.component)}">
       </div>
@@ -459,6 +485,17 @@ function _rhCard(entry, index, render) {
   `;
   const taskEl = card.querySelector(".pit-task");
   const subEl = card.querySelector(".pit-sub");
+  const flagEl = card.querySelector(".rh-flag");
+  
+  flagEl.addEventListener("change", () => {
+    const data = loadNoteData("robot-health");
+    if (data[index]) {
+      data[index].flagged = flagEl.checked;
+      saveNoteData("robot-health", data);
+    }
+    render();
+  });
+  
   const save = () => {
     const data = loadNoteData("robot-health");
     if (data[index]) {
@@ -508,7 +545,7 @@ function setupBatteryManager(section) {
   render();
   addBtn.addEventListener("click", () => {
     const data = loadNoteData("battery-manager");
-    data.push({ id: "", voltage: "", cycles: "0", status: "ready" });
+    data.push({ id: "", voltage: "", cycles: "0", status: "ready", flagged: false });
     saveNoteData("battery-manager", data);
     render();
   });
@@ -522,7 +559,7 @@ const BATT_STATUS = {
 
 function _battCard(entry, index, render) {
   const card = document.createElement("div");
-  card.className = "pit-card";
+  card.className = "pit-card" + (entry.flagged ? " flagged" : "");
   const v = parseFloat(entry.voltage) || 0;
   const pct = Math.min(100, Math.max(0, ((v - 10) / 3) * 100));
   const barCls =
@@ -530,6 +567,7 @@ function _battCard(entry, index, render) {
 
   card.innerHTML = `
     <div class="pit-card-row">
+      <input type="checkbox" class="batt-flag flag-toggle" ${entry.flagged ? "checked" : ""} title="Flag for alert">
       <div class="pit-card-fields" style="flex:1;min-width:0">
         <div class="batt-top-row">
           <input class="pit-input batt-id" placeholder="Battery ID" value="${_esc(entry.id)}">
@@ -555,6 +593,7 @@ function _battCard(entry, index, render) {
   const idEl = card.querySelector(".batt-id");
   const voltEl = card.querySelector(".batt-volt");
   const cyclesEl = card.querySelector(".batt-cycles");
+  const flagEl = card.querySelector(".batt-flag");
   const bar = card.querySelector(".volt-bar");
 
   const save = () => {
@@ -572,6 +611,15 @@ function _battCard(entry, index, render) {
       (np >= 70 ? "volt-bar-ok" : np >= 40 ? "volt-bar-warn" : "volt-bar-err");
   };
   [idEl, voltEl, cyclesEl].forEach((el) => el.addEventListener("input", save));
+  
+  flagEl.addEventListener("change", () => {
+    const data = loadNoteData("battery-manager");
+    if (data[index]) {
+      data[index].flagged = flagEl.checked;
+      saveNoteData("battery-manager", data);
+    }
+    render();
+  });
   card.querySelectorAll("[data-val]").forEach((btn) =>
     btn.addEventListener("click", () => {
       const data = loadNoteData("battery-manager");
@@ -613,7 +661,7 @@ function setupPartsInventory(section) {
   render();
   addBtn.addEventListener("click", () => {
     const data = loadNoteData("parts-inventory");
-    data.push({ name: "", quantity: "0", minStock: "0" });
+    data.push({ name: "", quantity: "0", minStock: "0", flagged: false });
     saveNoteData("parts-inventory", data);
     render();
   });
@@ -624,11 +672,12 @@ function _partCard(entry, index, render) {
   const min = parseInt(entry.minStock) || 0;
   const low = qty <= min;
   const card = document.createElement("div");
-  card.className = "pit-card part-card" + (low ? " part-card-low" : "");
+  card.className = "pit-card part-card" + (low ? " part-card-low" : "") + (entry.flagged ? " flagged" : "");
 
   card.innerHTML = `
     <div class="part-card-top">
-      <input class="pit-input part-name" placeholder="Part name…" value="${_esc(entry.name)}">
+      <input type="checkbox" class="part-flag flag-toggle" ${entry.flagged ? "checked" : ""} title="Flag for alert">
+      <input class="pit-input part-name" placeholder="Part name…" value="${_esc(entry.name)}" style="flex:1">
       <button class="pit-del-btn" aria-label="Delete" title="Delete part">✕</button>
     </div>
     <div class="part-qty-row">
@@ -652,6 +701,16 @@ function _partCard(entry, index, render) {
   const nameEl = card.querySelector(".part-name");
   const qtyIn = card.querySelector(".part-qty-in");
   const minIn = card.querySelector(".part-min-in");
+  const flagEl = card.querySelector(".part-flag");
+
+  flagEl.addEventListener("change", () => {
+    const data = loadNoteData("parts-inventory");
+    if (data[index]) {
+      data[index].flagged = flagEl.checked;
+      saveNoteData("parts-inventory", data);
+    }
+    render();
+  });
 
   nameEl.addEventListener("input", () => {
     const data = loadNoteData("parts-inventory");
@@ -709,7 +768,7 @@ function setupPitCheckIn(section) {
   render();
   addBtn.addEventListener("click", () => {
     const data = loadNoteData("pit-checkin");
-    data.push({ task: "", assignedTo: "", completed: false });
+    data.push({ task: "", assignedTo: "", completed: false, flagged: false });
     saveNoteData("pit-checkin", data);
     render();
   });
@@ -717,11 +776,12 @@ function setupPitCheckIn(section) {
 
 function _checkRow(entry, index, render) {
   const row = document.createElement("div");
-  row.className = "checkin-row" + (entry.completed ? " checkin-done" : "");
+  row.className = "checkin-row" + (entry.completed ? " checkin-done" : "") + (entry.flagged ? " flagged" : "");
   row.innerHTML = `
     <button class="checkin-check ${entry.completed ? "check-done" : ""}" aria-label="Toggle complete">
       <i class="ti ${entry.completed ? "ti-check" : "ti-circle"}" aria-hidden="true"></i>
     </button>
+    <input type="checkbox" class="checkin-flag flag-toggle" ${entry.flagged ? "checked" : ""} title="Flag for alert">
     <div class="checkin-text">
       <input class="pit-input checkin-task" placeholder="Task…" value="${_esc(entry.task)}" ${entry.completed ? "disabled" : ""}>
       <input class="pit-input checkin-who pit-sub" placeholder="Who?" value="${_esc(entry.assignedTo)}" ${entry.completed ? "disabled" : ""}>
@@ -730,6 +790,17 @@ function _checkRow(entry, index, render) {
   `;
   const taskEl = row.querySelector(".checkin-task");
   const whoEl = row.querySelector(".checkin-who");
+  const flagEl = row.querySelector(".checkin-flag");
+  
+  flagEl.addEventListener("change", () => {
+    const data = loadNoteData("pit-checkin");
+    if (data[index]) {
+      data[index].flagged = flagEl.checked;
+      saveNoteData("pit-checkin", data);
+    }
+    render();
+  });
+  
   const save = () => {
     const data = loadNoteData("pit-checkin");
     if (data[index]) {
@@ -787,7 +858,6 @@ function setupPitNotesSection(section) {
   );
   const render = () => {
     const notes = loadNotes();
-    notes.sort((a, b) => b.priority - a.priority);
     body.innerHTML = "";
     notes.forEach((note, i) => body.appendChild(_noteCard(note, i, render)));
     if (!notes.length)
@@ -796,32 +866,37 @@ function setupPitNotesSection(section) {
   render();
   addBtn.addEventListener("click", () => {
     const notes = loadNotes();
-    notes.push({ issue: "", location: "", priority: 5 });
+    notes.push({ issue: "", location: "", flagged: false });
     saveNotes(notes);
     render();
   });
 }
 
 function _noteCard(note, index, render) {
-  const hue = 120 - ((note.priority - 1) / 9) * 120;
   const card = document.createElement("div");
-  card.className = "pit-card note-card";
+  card.className = "pit-card note-card" + (note.flagged ? " flagged" : "");
   card.innerHTML = `
-    <button class="pit-del-btn" aria-label="Delete" title="Delete issue">✕</button>
-    <div class="note-card-inner">
-      <div class="note-card-fields">
+    <div class="pit-card-row">
+      <input type="checkbox" class="note-flag-check flag-toggle" ${note.flagged ? "checked" : ""} title="Flag for alert">
+      <div class="pit-card-fields" style="flex:1">
         <textarea class="pit-input note-issue" placeholder="Describe issue…" rows="2">${_esc(note.issue)}</textarea>
         <input class="pit-input pit-sub note-loc" placeholder="Location (e.g. intake)" value="${_esc(note.location)}">
       </div>
-      <div class="note-priority-block">
-        <span class="note-pri-badge" style="background:hsl(${hue},80%,38%)" contenteditable="true" title="Priority 1–10">${note.priority}</span>
-        <span class="note-pri-label">priority</span>
-      </div>
+      <button class="pit-del-btn" aria-label="Delete" title="Delete issue">✕</button>
     </div>
   `;
   const issueEl = card.querySelector(".note-issue");
   const locEl = card.querySelector(".note-loc");
-  const badge = card.querySelector(".note-pri-badge");
+  const flagEl = card.querySelector(".note-flag-check");
+
+  flagEl.addEventListener("change", () => {
+    const n = loadNotes();
+    if (n[index]) {
+      n[index].flagged = flagEl.checked;
+      saveNotes(n);
+    }
+    render();
+  });
 
   issueEl.addEventListener("input", () => {
     const n = loadNotes();
@@ -830,6 +905,7 @@ function _noteCard(note, index, render) {
       saveNotes(n);
     }
   });
+
   locEl.addEventListener("input", () => {
     const n = loadNotes();
     if (n[index]) {
@@ -837,29 +913,7 @@ function _noteCard(note, index, render) {
       saveNotes(n);
     }
   });
-  badge.addEventListener("keypress", (e) => {
-    if (!/[0-9]/.test(e.key)) e.preventDefault();
-  });
-  badge.addEventListener("input", () => {
-    const p = Math.min(10, Math.max(1, parseInt(badge.textContent) || 1));
-    badge.style.background = `hsl(${120 - ((p - 1) / 9) * 120},80%,38%)`;
-    const n = loadNotes();
-    if (n[index]) {
-      n[index].priority = p;
-      saveNotes(n);
-    }
-  });
-  badge.addEventListener("blur", () => {
-    const p = Math.min(10, Math.max(1, parseInt(badge.textContent) || 1));
-    badge.textContent = p;
-    badge.style.background = `hsl(${120 - ((p - 1) / 9) * 120},80%,38%)`;
-    const n = loadNotes();
-    if (n[index]) {
-      n[index].priority = p;
-      saveNotes(n);
-    }
-    render();
-  });
+
   card.querySelector(".pit-del-btn").addEventListener("click", () => {
     const n = loadNotes();
     n.splice(index, 1);
@@ -912,12 +966,9 @@ function addNoteRow(tbody, note, index) {
   row.dataset.index = index;
 
   row.innerHTML = `
+    <td><input type="checkbox" class="note-flag flag-toggle" ${note.flagged ? "checked" : ""} title="Flag for alert"></td>
     <td><textarea class="note-input note-issue" placeholder="Describe issue…" rows="1">${note.issue}</textarea></td>
     <td><textarea class="note-input note-location" placeholder="e.g. intake, drive" rows="1">${note.location}</textarea></td>
-    <td class="priority-cell">
-      <span class="priority-badge" contenteditable="true" 
-        style="background:${priorityColor(note.priority)}">${note.priority}</span>
-    </td>
     <td><button class="delete-note-btn">✕</button></td>
   `;
 
@@ -929,13 +980,19 @@ function addNoteRow(tbody, note, index) {
 
   const issueEl = row.querySelector(".note-issue");
   const locationEl = row.querySelector(".note-location");
-  const badge = row.querySelector(".priority-badge");
+  const flagEl = row.querySelector(".note-flag");
 
   // Trigger initial resize
   setTimeout(() => {
     autoResize(issueEl);
     autoResize(locationEl);
   }, 0);
+
+  flagEl.addEventListener("change", () => {
+    const notes = loadNotes();
+    notes[index].flagged = flagEl.checked;
+    saveNotes(notes);
+  });
 
   issueEl.addEventListener("input", (e) => {
     autoResize(e.target);
@@ -951,39 +1008,11 @@ function addNoteRow(tbody, note, index) {
     saveNotes(notes);
   });
 
-  // Only allow digits in the badge
-  badge.addEventListener("keypress", (e) => {
-    if (!/[0-9]/.test(e.key)) e.preventDefault();
-  });
-
-  badge.addEventListener("input", () => {
-    const p = Math.min(10, Math.max(1, parseInt(badge.textContent) || 1));
-    badge.style.background = priorityColor(p);
-    const notes = loadNotes();
-    notes[index].priority = p;
-    saveNotes(notes);
-  });
-
-  // Clamp and clean up display on blur
-  badge.addEventListener("blur", () => {
-    const p = Math.min(10, Math.max(1, parseInt(badge.textContent) || 1));
-    badge.textContent = p;
-    badge.style.background = priorityColor(p);
-    const notes = loadNotes();
-    notes[index].priority = p;
-    saveNotes(notes);
-    // re-sort display
-    tbody.innerHTML = "";
-    notes.sort((a, b) => b.priority - a.priority);
-    notes.forEach((n, i) => addNoteRow(tbody, n, i));
-  });
-
   row.querySelector(".delete-note-btn").addEventListener("click", () => {
     const notes = loadNotes();
     notes.splice(index, 1);
     saveNotes(notes);
     tbody.innerHTML = "";
-    notes.sort((a, b) => b.priority - a.priority); // keep sorted after delete
     notes.forEach((n, i) => addNoteRow(tbody, n, i));
   });
 
@@ -1039,6 +1068,14 @@ function setupListeners() {
   const savebutton = document.getElementById("savebutton");
   const testModeCheckbox = document.getElementById("testMode");
   const testDateInput = document.getElementById("testDate");
+  const noteAlarmToggleBtn = document.getElementById("noteAlarmToggle");
+
+  // Handle flag toggle button
+  if (noteAlarmToggleBtn) {
+    noteAlarmToggleBtn.addEventListener("click", () => {
+      noteAlarmToggleBtn.classList.toggle("active");
+    });
+  }
 
   // Toggle test date input visibility
   testModeCheckbox.addEventListener("change", () => {
@@ -1050,7 +1087,7 @@ function setupListeners() {
     config.tbaapikey = document.getElementById("tbaapikey").value;
     config.noteAlarmToggle = document.getElementById("noteAlarmToggle").checked;
     config.noteAlarmThreshold =
-      parseInt(document.getElementById("noteAlarmThreshold").value) || 8;
+      parseInt(document.getElementById("noteAlarmThreshold")?.value) || 8;
     config.noteAlarmSound = document.getElementById("noteAlarmSound").value;
     config.matchAlarmToggle =
       document.getElementById("matchAlarmToggle").checked;
@@ -1062,10 +1099,10 @@ function setupListeners() {
     localStorage.setItem("teamNumber", config.teamNumber);
     localStorage.setItem("tbaapikey", config.tbaapikey);
     localStorage.setItem("theme", config.theme);
-    localStorage.setItem("noteAlarmToggle", config.noteAlarmToggle);
+    localStorage.setItem("noteAlarmToggle", config.noteAlarmToggle ? "true" : "false");
     localStorage.setItem("noteAlarmThreshold", config.noteAlarmThreshold);
     localStorage.setItem("noteAlarmSound", config.noteAlarmSound);
-    localStorage.setItem("matchAlarmToggle", config.matchAlarmToggle);
+    localStorage.setItem("matchAlarmToggle", config.matchAlarmToggle ? "true" : "false");
     localStorage.setItem("matchAlertThreshold", config.matchAlertThreshold);
     localStorage.setItem("matchAlarmSound", config.matchAlarmSound);
 
@@ -1094,6 +1131,13 @@ function setupListeners() {
       fullDate = new Date();
     }
 
+    // Save auto-swap settings
+    config.autoSwapEnabled = document.getElementById("autoSwapEnabled").checked;
+    config.autoSwapInterval = parseInt(document.getElementById("autoSwapInterval").value) || 30;
+    localStorage.setItem("autoSwapEnabled", config.autoSwapEnabled ? "true" : "false");
+    localStorage.setItem("autoSwapInterval", config.autoSwapInterval);
+    restartAutoSwap();
+
     displayMessage("Settings saved successfully!", "message");
     settingscontainer.style.display = "none";
     // Clear ETag cache when settings change
@@ -1104,6 +1148,35 @@ function setupListeners() {
   });
   settings.addEventListener("click", () => {
     openSettings();
+  });
+
+  // ── Profile management listeners ──
+  document.getElementById("saveProfileBtn")?.addEventListener("click", () => {
+    const nameInput = document.getElementById("newProfileName");
+    const typedName = nameInput.value.trim();
+    // If no name typed, override the currently active profile (including Default)
+    const name = typedName || config.activeProfileName || "Default";
+    saveCurrentAsProfile(name);
+    nameInput.value = "";
+  });
+
+  document.getElementById("deleteProfileBtn")?.addEventListener("click", () => {
+    const sel = document.getElementById("profileSelect");
+    const name = sel.value;
+    if (!name || name === "Default") { displayMessage("Cannot delete the Default profile.", "error"); return; }
+    if (!confirm(`Delete profile "${name}"?`)) return;
+    delete config.layoutProfiles[name];
+    localStorage.setItem("layoutProfiles", JSON.stringify(config.layoutProfiles));
+    if (config.activeProfileName === name) {
+      config.activeProfileName = "Default";
+      localStorage.setItem("activeProfileName", "Default");
+    }
+    refreshProfileUI();
+    displayMessage(`Profile "${name}" deleted.`, "message");
+  });
+
+  document.getElementById("profileSelect")?.addEventListener("change", (e) => {
+    switchToProfile(e.target.value);
   });
 
   const layoutEditorBtn = document.getElementById("layoutEditorBtn");
@@ -1162,13 +1235,17 @@ class LayoutEditor {
       icon: "checklist",
       noteType: "pit-checkin",
     },
+    {
+      id: "statbotics-section",
+      label: "Statbotics",
+      icon: "chart-bar",
+    },
   ];
 
   constructor() {
     this.gridCols = config.gridCols || config.gridSize || 3;
     this.gridRows = config.gridRows || config.gridSize || 3;
     this.layout = JSON.parse(JSON.stringify(config.layout || {}));
-    this.activeSections = new Set(config.additionalNoteSections || []);
     this.hiddenSections = new Set(config.hiddenSections || []);
 
     // Drag state
@@ -1196,7 +1273,7 @@ class LayoutEditor {
   get activeItems() {
     return [
       ...LayoutEditor.CORE,
-      ...LayoutEditor.ADDABLE.filter((a) => this.activeSections.has(a.id)),
+      ...LayoutEditor.ADDABLE.filter((a) => this.layout.hasOwnProperty(a.id)),
     ].filter((item) => !this.hiddenSections.has(item.id));
   }
 
@@ -1402,7 +1479,7 @@ class LayoutEditor {
     const list = document.getElementById("lePaletteList");
     list.innerHTML = "";
     const available = LayoutEditor.ADDABLE.filter(
-      (a) => !this.activeSections.has(a.id),
+      (a) => !this.layout.hasOwnProperty(a.id),
     );
     const hiddenCore = LayoutEditor.CORE.filter((c) =>
       this.hiddenSections.has(c.id),
@@ -1476,8 +1553,6 @@ class LayoutEditor {
     const x = Math.max(0, Math.min(gx, this.gridCols - 1));
     const y = Math.max(0, Math.min(gy, this.gridRows - 1));
     if (this.hiddenSections.has(item.id)) this.hiddenSections.delete(item.id);
-    else if (!this.activeSections.has(item.id))
-      this.activeSections.add(item.id);
     this.layout[item.id] = { x, y, width: 1, height: 1 };
     this._snapshot = {};
     this.activeItems.forEach(({ id }) => {
@@ -1601,7 +1676,6 @@ class LayoutEditor {
     if (LayoutEditor.CORE.some((c) => c.id === id)) {
       this.hiddenSections.add(id);
     } else {
-      this.activeSections.delete(id);
       delete this.layout[id];
     }
     this._renderPalette();
@@ -1828,12 +1902,12 @@ class LayoutEditor {
       [
         JSON.stringify(
           {
-            version: "1.5.1",
+            version: version,
             gridCols: this.gridCols,
             gridRows: this.gridRows,
             layout: this.layout,
             hiddenSections: [...this.hiddenSections],
-            additionalNoteSections: [...this.activeSections],
+            // Active sections determined by layout
             theme: config.theme,
             customColors,
           },
@@ -1860,7 +1934,7 @@ class LayoutEditor {
         this.gridRows = data.gridRows || data.gridSize || 3;
         this.layout = data.layout || {};
         this.hiddenSections = new Set(data.hiddenSections || []);
-        this.activeSections = new Set(data.additionalNoteSections || []);
+        // Active sections determined by layout presence
         document.getElementById("leGridCols").value = this.gridCols;
         document.getElementById("leGridRows").value = this.gridRows;
         if (data.customColors) {
@@ -1891,7 +1965,6 @@ class LayoutEditor {
       "leaderboard-section": { x: 1, y: 2, width: 2, height: 1 },
     };
     this.hiddenSections = new Set();
-    this.activeSections = new Set();
     document.getElementById("leGridCols").value = 3;
     document.getElementById("leGridRows").value = 3;
     this._renderPalette();
@@ -1907,7 +1980,7 @@ class LayoutEditor {
     config.gridSize = this.gridCols;
     config.layout = this.layout;
     config.hiddenSections = this.hiddenSections;
-    config.additionalNoteSections = [...this.activeSections];
+    config.additionalNoteSections = Object.keys(this.layout).filter(id => LayoutEditor.ADDABLE.some(a => a.id === id));
     localStorage.setItem("gridCols", this.gridCols);
     localStorage.setItem("gridRows", this.gridRows);
     localStorage.setItem("gridSize", this.gridCols);
@@ -1915,10 +1988,6 @@ class LayoutEditor {
     localStorage.setItem(
       "hiddenSections",
       JSON.stringify([...this.hiddenSections]),
-    );
-    localStorage.setItem(
-      "additionalNoteSections",
-      JSON.stringify([...this.activeSections]),
     );
     // Save current color overrides
     saveCustomColors();
@@ -1947,17 +2016,18 @@ function applyLayout() {
     "notes-section",
     "match-section",
     "leaderboard-section",
-    ...(config.additionalNoteSections || []),
+    ...Object.keys(config.layout || {}),
   ];
   sectionIds.forEach((itemId) => {
     const elem = document.getElementById(itemId);
     if (!elem) return;
-    if (config.hiddenSections?.has(itemId)) {
+    // Hide if explicitly hidden or if not in the current layout
+    if (config.hiddenSections?.has(itemId) || !config.layout?.[itemId]) {
       elem.style.display = "none";
       return;
     }
     elem.style.display = "";
-    const pos = config.layout?.[itemId] || { x: 0, y: 0, width: 1, height: 1 };
+    const pos = config.layout[itemId];
     elem.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
     elem.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
   });
@@ -2078,15 +2148,20 @@ function updateMatchDisplay() {
     "notes-checkin": "pit-checkin",
   };
 
-  config.additionalNoteSections?.forEach((sectionId) => {
+  // Create any sections that are in the layout but don't exist in DOM
+  Object.keys(config.layout || {}).forEach((sectionId) => {
     let section = document.getElementById(sectionId);
     if (!section) {
       section = document.createElement("div");
       section.id = sectionId;
       section.style.overflow = "auto";
       container.appendChild(section);
-      const noteType = noteTypeMap[sectionId];
-      setupNotesSection(section, noteType);
+      if (sectionId === "statbotics-section") {
+        setupStatboticsSection(section);
+      } else {
+        const noteType = noteTypeMap[sectionId];
+        setupNotesSection(section, noteType);
+      }
     }
   });
 
@@ -2284,6 +2359,281 @@ function updateMatchDisplay() {
     }
   }
 }
+// ── Statbotics Section ──────────────────────────────────────────────────────
+async function setupStatboticsSection(section) {
+  section.innerHTML = `
+    <div class="statbotics-shell">
+      <div class="pit-header">
+        <span class="pit-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Statbotics</span>
+        <button class="pit-add-btn" id="statboticsRefreshBtn">↻ Refresh</button>
+      </div>
+      <div class="statbotics-body" id="statboticsBody">
+        <div class="statbotics-loading">Loading…</div>
+      </div>
+    </div>
+  `;
+  _observeSection(section);
+  await loadStatboticsData(section);
+  section.querySelector("#statboticsRefreshBtn")?.addEventListener("click", () => {
+    loadStatboticsData(section);
+  });
+}
+
+async function loadStatboticsData(section) {
+  const body = section.querySelector("#statboticsBody") || section.querySelector(".statbotics-body");
+  if (!body) return;
+  body.innerHTML = `<div class="statbotics-loading">Loading…</div>`;
+  try {
+    // Fetch current year team stats
+    const teamRes = await fetch(`https://api.statbotics.io/v3/team_year/${config.teamNumber}/${year}`);
+    if (!teamRes.ok) throw new Error(`HTTP ${teamRes.status}`);
+    const teamData = await teamRes.json();
+
+    // Also try to get event-level data if we have a current event
+    let eventData = null;
+    if (currentEventData?.key) {
+      try {
+        const evRes = await fetch(`https://api.statbotics.io/v3/team_event/${config.teamNumber}/${currentEventData.key}`);
+        if (evRes.ok) eventData = await evRes.json();
+      } catch (_) {}
+    }
+
+    body.innerHTML = renderStatboticsHTML(teamData, eventData);
+  } catch (err) {
+    body.innerHTML = `<div class="statbotics-error">
+      <p>⚠ Could not load Statbotics data.</p>
+      <p class="statbotics-hint">${err.message}</p>
+    </div>`;
+  }
+}
+
+function renderStatboticsHTML(team, event) {
+  const epa = team?.epa?.total_points;
+  const epaRank = team?.epa?.ranks?.total?.rank;
+  const epaPercentile = team?.epa?.ranks?.total?.percentile;
+  const wins = team?.record?.wins ?? "–";
+  const losses = team?.record?.losses ?? "–";
+  const ties = team?.record?.ties ?? "–";
+  const winrate = team?.record?.count > 0
+    ? ((team.record.wins / team.record.count) * 100).toFixed(1) + "%"
+    : "–";
+
+  const autoEpa = team?.epa?.breakdown?.auto_points;
+  const teleopEpa = team?.epa?.breakdown?.teleop_points;
+  const endgameEpa = team?.epa?.breakdown?.endgame_points;
+
+  const fmtEpa = (v) => v != null ? Number(v).toFixed(1) : "–";
+  const fmtPct = (p) => p != null ? (p * 100).toFixed(0) + "th %ile" : "";
+
+  // Event-level block
+  let eventBlock = "";
+  if (event) {
+    const eRank = event?.epa?.ranks?.total?.rank ?? "–";
+    const eTotal = event?.epa?.total_points;
+    eventBlock = `
+      <div class="sb-divider"></div>
+      <div class="sb-section-title">This Event</div>
+      <div class="sb-stat-row">
+        <span class="sb-label">EPA</span>
+        <span class="sb-value sb-accent">${fmtEpa(eTotal)}</span>
+      </div>
+      <div class="sb-stat-row">
+        <span class="sb-label">Event Rank</span>
+        <span class="sb-value">${eRank}</span>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="sb-header-team">
+      <span class="sb-team-num">${config.teamNumber}</span>
+      <span class="sb-year-badge">${year}</span>
+    </div>
+    <div class="sb-section-title">Season EPA</div>
+    <div class="sb-epa-row">
+      <div class="sb-epa-block">
+        <div class="sb-epa-val">${fmtEpa(epa?.mean ?? epa)}</div>
+        <div class="sb-epa-label">Total EPA</div>
+        ${epaRank != null ? `<div class="sb-epa-sub">Rank #${epaRank} ${fmtPct(epaPercentile)}</div>` : ""}
+      </div>
+    </div>
+    <div class="sb-breakdown">
+      <div class="sb-breakdown-item">
+        <span class="sb-breakdown-val auto">${fmtEpa(autoEpa?.mean ?? autoEpa)}</span>
+        <span class="sb-breakdown-label">Auto</span>
+      </div>
+      <div class="sb-breakdown-item">
+        <span class="sb-breakdown-val teleop">${fmtEpa(teleopEpa?.mean ?? teleopEpa)}</span>
+        <span class="sb-breakdown-label">Teleop</span>
+      </div>
+      <div class="sb-breakdown-item">
+        <span class="sb-breakdown-val endgame">${fmtEpa(endgameEpa?.mean ?? endgameEpa)}</span>
+        <span class="sb-breakdown-label">Endgame</span>
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sb-section-title">Season Record</div>
+    <div class="sb-stat-row">
+      <span class="sb-label">W / L / T</span>
+      <span class="sb-value">${wins} – ${losses} – ${ties}</span>
+    </div>
+    <div class="sb-stat-row">
+      <span class="sb-label">Win Rate</span>
+      <span class="sb-value sb-accent">${winrate}</span>
+    </div>
+    ${eventBlock}
+    <div class="sb-footer">
+      <a href="https://statbotics.io/team/${config.teamNumber}" target="_blank" class="sb-link">View on Statbotics ↗</a>
+    </div>
+  `;
+}
+
+// ── Layout Profiles ──────────────────────────────────────────────────────────
+function captureCurrentLayoutSnapshot() {
+  return {
+    gridCols: config.gridCols || config.gridSize || 3,
+    gridRows: config.gridRows || config.gridSize || 3,
+    layout: JSON.parse(JSON.stringify(config.layout || {})),
+    hiddenSections: [...(config.hiddenSections || [])],
+    // Sections determined by layout
+  };
+}
+
+function saveCurrentAsProfile(name) {
+  const snapshot = captureCurrentLayoutSnapshot();
+  // Always store in layoutProfiles, including "Default", so overrides persist
+  config.layoutProfiles[name] = snapshot;
+  config.activeProfileName = name;
+  localStorage.setItem("layoutProfiles", JSON.stringify(config.layoutProfiles));
+  localStorage.setItem("activeProfileName", name);
+  refreshProfileUI();
+  displayMessage(`Profile "${name}" saved!`, "message");
+}
+
+function switchToProfile(name) {
+  let profile = null;
+  if (name === "Default" && !config.layoutProfiles["Default"]) {
+    // Use hardcoded factory default only if Default has never been customised
+    profile = {
+      gridCols: 3, gridRows: 3,
+    layout: {
+        'webcast-section': { x: 0, y: 0, width: 1, height: 2 },
+        'notes-section': { x: 0, y: 2, width: 1, height: 1 },
+        'match-section': { x: 1, y: 0, width: 2, height: 2 },
+        'leaderboard-section': { x: 1, y: 2, width: 2, height: 1 },
+    },
+  "hiddenSections": [
+  ],
+  "additionalNoteSections": [
+  ]
+    };
+  } else {
+    profile = config.layoutProfiles[name];
+  }
+  if (!profile) { displayMessage(`Profile "${name}" not found.`, "error"); return; }
+
+  config.gridCols = profile.gridCols;
+  config.gridRows = profile.gridRows;
+  config.gridSize = profile.gridCols;
+  config.layout = JSON.parse(JSON.stringify(profile.layout));
+  config.hiddenSections = new Set(profile.hiddenSections || []);
+  // Sections now tracked by layout presence
+  config.activeProfileName = name;
+
+  localStorage.setItem("gridCols", config.gridCols);
+  localStorage.setItem("gridRows", config.gridRows);
+  localStorage.setItem("gridSize", config.gridCols);
+  localStorage.setItem("layout", JSON.stringify(config.layout));
+  localStorage.setItem("hiddenSections", JSON.stringify([...config.hiddenSections]));
+  // Sections tracked by layout, no need to save separately
+  localStorage.setItem("activeProfileName", name);
+
+  // Remove any sections that aren't in the new layout
+  const container = document.getElementById("container");
+  const newLayoutIds = new Set(Object.keys(config.layout || {}));
+  const coreIds = new Set(["webcast-section", "notes-section", "match-section", "leaderboard-section"]);
+  
+  // Remove sections that are no longer in the layout
+  Array.from(container.children).forEach((child) => {
+    if (!coreIds.has(child.id) && !newLayoutIds.has(child.id)) {
+      child.remove();
+    }
+  });
+
+  // Re-create any sections the new profile needs
+  const noteTypeMap = {
+    "notes-robot-health": "robot-health",
+    "notes-battery": "battery-manager",
+    "notes-parts": "parts-inventory",
+    "notes-checkin": "pit-checkin",
+  };
+  Object.keys(config.layout || {}).forEach((sectionId) => {
+    if (!document.getElementById(sectionId)) {
+      const sec = document.createElement("div");
+      sec.id = sectionId;
+      sec.style.overflow = "auto";
+      container.appendChild(sec);
+      if (sectionId === "statbotics-section") {
+        setupStatboticsSection(sec);
+      } else {
+        setupNotesSection(sec, noteTypeMap[sectionId]);
+      }
+    }
+  });
+
+  applyLayout();
+  refreshProfileUI();
+  displayMessage(`Switched to "${name}"`, "message");
+}
+
+function refreshProfileUI() {
+  // Update settings panel dropdown
+  const sel = document.getElementById("profileSelect");
+  if (sel) {
+    const current = sel.value || config.activeProfileName;
+    sel.innerHTML = `<option value="Default">Default</option>`;
+    Object.keys(config.layoutProfiles).forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+    sel.value = config.activeProfileName || "Default";
+  }
+
+  // Update the header switcher
+  const switcher = document.getElementById("profileSwitcher");
+  if (!switcher) return;
+  const names = ["Default", ...Object.keys(config.layoutProfiles)];
+  if (names.length <= 1) {
+    switcher.innerHTML = "";
+    return;
+  }
+  switcher.innerHTML = names.map(name =>
+    `<button class="profile-btn${name === config.activeProfileName ? " profile-btn-active" : ""}" data-profile="${name}">${name}</button>`
+  ).join("");
+  switcher.querySelectorAll(".profile-btn").forEach(btn => {
+    btn.addEventListener("click", () => switchToProfile(btn.dataset.profile));
+  });
+}
+
+// ── Auto-Swap ────────────────────────────────────────────────────────────────
+let _autoSwapTimer = null;
+
+function restartAutoSwap() {
+  if (_autoSwapTimer) { clearInterval(_autoSwapTimer); _autoSwapTimer = null; }
+  if (!config.autoSwapEnabled) return;
+  const names = ["Default", ...Object.keys(config.layoutProfiles)];
+  if (names.length < 2) return;
+  _autoSwapTimer = setInterval(() => {
+    const names = ["Default", ...Object.keys(config.layoutProfiles)];
+    if (names.length < 2) return;
+    const idx = names.indexOf(config.activeProfileName);
+    const next = names[(idx + 1) % names.length];
+    switchToProfile(next);
+  }, config.autoSwapInterval * 1000);
+}
+
 // Load saved settings first
 loadSettings();
 
@@ -2304,32 +2654,230 @@ const pollInterval = () => {
 
 const updateInterval = () => {
   const intervalId = setInterval(() => {
-    const tbody = document.getElementById("notes-tbody");
+    // Collect all flagged items across all sections
+    const flaggedItems = [];
+    
+    // Notes
     const notes = loadNotes();
-    notes.sort((a, b) => b.priority - a.priority); // highest priority first
-
-    tbody.innerHTML = ""; // Clear old rows
-    notes.forEach((note, index) => addNoteRow(tbody, note, index));
-    for (const note of notes) {
-      if (note.priority >= config.noteAlarmThreshold) {
-        if (config.noteAlarmToggle) {
-          const sound = audioFiles[config.noteAlarmSound] || audioFiles.alarm1;
-          sound.currentTime = 0;
-          sound.play().catch((err) => console.log("Audio play failed:", err));
-          break; // Only need to play once per update
-        }
+    notes.forEach((note) => {
+      if (note.flagged) {
+        flaggedItems.push({
+          section: "Pit Notes",
+          title: note.issue,
+          description: `Location: ${note.location}`,
+          type: "note"
+        });
       }
+    });
+    
+    // Robot Health
+    const robotHealth = loadNoteData("robot-health");
+    robotHealth.forEach((task) => {
+      if (task.flagged) {
+        flaggedItems.push({
+          section: "Robot Health",
+          title: task.task,
+          description: `Component: ${task.component}`,
+          type: "health"
+        });
+      }
+    });
+    
+    // Batteries
+    const batteries = loadNoteData("battery-manager");
+    batteries.forEach((batt) => {
+      if (batt.flagged) {
+        flaggedItems.push({
+          section: "Batteries",
+          title: `Battery ${batt.id || "(unnamed)"}`,
+          description: `Status: ${batt.status} | Voltage: ${batt.voltage}V`,
+          type: "battery"
+        });
+      }
+    });
+    
+    // Parts Inventory
+    const parts = loadNoteData("parts-inventory");
+    parts.forEach((part) => {
+      if (part.flagged) {
+        flaggedItems.push({
+          section: "Parts",
+          title: part.name,
+          description: `Qty: ${part.quantity} / Min: ${part.minStock}`,
+          type: "part"
+        });
+      }
+    });
+    
+    // Pit Check-In
+    const checkin = loadNoteData("pit-checkin");
+    checkin.forEach((task) => {
+      if (task.flagged && !task.completed) {
+        flaggedItems.push({
+          section: "Pit Check-In",
+          title: task.task,
+          description: `Assigned to: ${task.assignedTo}`,
+          type: "checkin"
+        });
+      }
+    });
+    
+    // Show modal and play alarm if there are flagged items
+    if (flaggedItems.length > 0 && config.noteAlarmToggle) {
+      const sound = audioFiles[config.noteAlarmSound] || audioFiles.alarm1;
+      sound.currentTime = 0;
+      sound.play().catch((err) => console.log("Audio play failed:", err));
+      showFlaggedItemsModal(flaggedItems);
     }
   }, 10000);
-  return intervalId; // Store the interval ID for later cleanup
+  return intervalId;
 };
+
+// ── Flagged Items Modal ────────────────────────────────────────────────────────
+function showFlaggedItemsModal(flaggedItems) {
+  // Remove existing modal if any
+  const existing = document.getElementById("flaggedItemsModal");
+  if (existing) existing.remove();
+  
+  const modal = document.createElement("div");
+  modal.id = "flaggedItemsModal";
+  modal.className = "flagged-modal";
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  `;
+  
+  const modalContent = document.createElement("div");
+  modalContent.style.cssText = `
+    background: var(--bg-raised);
+    border: 2px solid var(--border-accent);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    font-family: 'Rubik', sans-serif;
+  `;
+  
+  const title = document.createElement("h2");
+  title.textContent = `⚠ ${flaggedItems.length} Item${flaggedItems.length !== 1 ? 's' : ''} Flagged`;
+  title.style.cssText = `
+    margin: 0 0 16px 0;
+    color: #ff6b6b;
+    font-size: 1.2rem;
+    font-weight: 600;
+    font-family: 'Rubik', sans-serif;
+    letter-spacing: -0.01em;
+  `;
+  
+  const itemsList = document.createElement("div");
+  itemsList.style.cssText = `
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: 'Rubik', sans-serif;
+    margin-bottom: 20px;
+  `;
+  
+  flaggedItems.forEach((item) => {
+    const itemDiv = document.createElement("div");
+    itemDiv.style.cssText = `
+      background: var(--bg-surface);
+      border-left: 4px solid #ff6b6b;
+      padding: 10px 12px;
+      border-radius: 6px;
+    `;
+    
+    const section = document.createElement("span");
+    section.textContent = item.section;
+    section.style.cssText = `
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: 'Rubik', sans-serif;
+      font-weight: 500;
+      margin-bottom: 3px;
+    `;
+    
+    const itemTitle = document.createElement("div");
+    itemTitle.textContent = item.title;
+    itemTitle.style.cssText = `
+      font-weight: 500;
+      font-size: 0.88rem;
+      font-family: 'Rubik', sans-serif;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    `;
+    
+    const itemDesc = document.createElement("div");
+    itemDesc.textContent = item.description;
+    itemDesc.style.cssText = `
+      font-size: 0.8rem;
+      font-family: 'Rubik', sans-serif;
+      color: var(--text-muted);
+    `;
+    
+    itemDiv.appendChild(section);
+    itemDiv.appendChild(itemTitle);
+    itemDiv.appendChild(itemDesc);
+    itemsList.appendChild(itemDiv);
+  });
+  
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "Dismiss";
+  closeBtn.style.cssText = `
+    width: 100%;
+    padding: 9px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-family: 'Rubik', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  `;
+  closeBtn.onmouseover = () => closeBtn.style.background = "var(--accent-hover)";
+  closeBtn.onmouseout = () => closeBtn.style.background = "var(--accent)";
+  closeBtn.addEventListener("click", () => modal.remove());
+  
+  // Close on background click
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.remove();
+  });
+  
+  modalContent.appendChild(title);
+  modalContent.appendChild(itemsList);
+  modalContent.appendChild(closeBtn);
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+}
 // Removed centralized interval in favor of individual timeouts per message
 
+addEventListener("DOMContentLoaded", () => {
+    versionTag = getElementById("version");
+    versionTag.innerHTML = version;
+  }
+);
 updateInterval();
 
 pollInterval();
 
 setupListeners();
+restartAutoSwap();
 
 // Apply custom layout after everything is set up
 

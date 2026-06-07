@@ -239,6 +239,38 @@ html {
   text-align: left;
 }
 
+.flag-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px !important;
+  height: 20px !important;
+  border: 2px solid var(--border);
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  border-radius: 3px !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.2rem;
+}
+
+.flag-toggle:hover {
+  border-color: var(--accent);
+  background-color: var(--bg-surface);
+}
+
+.flag-toggle:checked {
+  background-color: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+}
+
+.flag-toggle:checked:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
 input {
   padding: 6px 10px;
   border-radius: 6px;
@@ -329,6 +361,65 @@ input[type="checkbox"]:checked {
 
 input[type="checkbox"]:checked::before {
   left: 21px;
+}
+
+/* Flag checkboxes on pit cards */
+.rh-flag,
+.batt-flag,
+.part-flag,
+.checkin-flag,
+.note-flag-check,
+.note-flag {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--bg-input);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flag-toggle::before {
+  display: none;
+  border-radius: 4px !important;
+}
+
+.rh-flag:hover,
+.batt-flag:hover,
+.part-flag:hover,
+.checkin-flag:hover,
+.note-flag-check:hover,
+.note-flag:hover {
+  border-color: var(--accent);
+  background-color: var(--bg-surface);
+}
+
+.rh-flag:checked,
+.batt-flag:checked,
+.part-flag:checked,
+.checkin-flag:checked,
+.note-flag-check:checked,
+.note-flag:checked {
+  background-color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+.rh-flag:checked::after,
+.batt-flag:checked::after,
+.part-flag:checked::after,
+.checkin-flag:checked::after,
+.note-flag-check:checked::after,
+.note-flag:checked::after {
+  content: "🚩";
+  color: white;
+  font-size: 0.9rem;
+  font-weight: bold;
 }
 
 .savebutton {
@@ -882,21 +973,35 @@ input[type="checkbox"]:checked::before {
   white-space: nowrap;
 }
 
-/* ── Check-in delete button alignment ─────────────────────────────────────── */
+/* ── Check-In rows ─────────────────────────────────────────────────────────── */
 .checkin-row {
-  position: relative;
-} /* Already in the row flex layout, just make sure it stays on the right */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+.checkin-row.flagged {
+  border-color: rgba(255, 107, 107, 0.4);
+}
 .checkin-row .pit-del-btn {
   margin-left: auto;
   flex-shrink: 0;
 }
 .checkin-done {
-  opacity: 0.48;
+  opacity: 0.45;
+}
+.checkin-done .pit-input {
+  text-decoration: line-through;
+  color: var(--text-dim);
 }
 
 .checkin-check {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 2px solid var(--border);
   background: none;
@@ -904,7 +1009,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--text-dim);
   flex-shrink: 0;
   transition:
@@ -930,10 +1035,7 @@ input[type="checkbox"]:checked::before {
   gap: 3px;
 }
 
-/* In XS, hide the "who" field to save space */
-.pit-xs .checkin-who {
-  display: none;
-}
+/* checkin-who is always visible — stacks below task in column layout */
 
 /* ── Pit Notes ─────────────────────────────────────────────────────────────── */
 
@@ -1454,8 +1556,12 @@ input[type="checkbox"]:checked::before {
   font-weight: 700;
 }
 
-.my-team td:first-child { border-radius: 6px 0 0 6px; }
-.my-team td:last-child  { border-radius: 0 6px 6px 0; }
+.my-team td:first-child {
+  border-radius: 6px 0 0 6px;
+}
+.my-team td:last-child {
+  border-radius: 0 6px 6px 0;
+}
 
 /* ── Match section shell ── */
 
@@ -1521,8 +1627,13 @@ input[type="checkbox"]:checked::before {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 /* ── Upcoming match layout ── */
@@ -1578,8 +1689,12 @@ input[type="checkbox"]:checked::before {
   margin: 0;
 }
 
-.red.highlight  { background-color: rgba(200, 80, 80, 0.3) !important; }
-.blue.highlight { background-color: rgba(80, 80, 200, 0.3) !important; }
+.red.highlight {
+  background-color: rgba(200, 80, 80, 0.3) !important;
+}
+.blue.highlight {
+  background-color: rgba(80, 80, 200, 0.3) !important;
+}
 
 /* ── Inactive / no event message ── */
 
@@ -1617,4 +1732,248 @@ input[type="checkbox"]:checked::before {
   color: var(--text-muted);
   letter-spacing: 0.04em;
   min-width: 58px;
+}
+/* ── Profile Switcher (header) ── */
+
+.profile-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 auto 0 1rem;
+}
+
+.profile-btn {
+  font-family: "Rubik", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+  white-space: nowrap;
+}
+
+.profile-btn:hover {
+  background: var(--accent-hover);
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+}
+
+.profile-btn-active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* ── Statbotics Section ── */
+
+#statbotics-section {
+  height: 100%;
+  min-height: 0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.statbotics-shell {
+  padding: 2px 2px 12px 2px;
+  margin: 6px;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: "Rubik", sans-serif;
+}
+
+.statbotics-body {
+  flex: 1;
+  padding: 8px 12px 14px;
+  overflow-y: auto;
+  font-family: "Rubik", sans-serif;
+}
+
+.statbotics-loading {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 20px;
+}
+
+.statbotics-error {
+  color: rgb(220, 80, 80);
+  font-size: 0.85rem;
+  padding: 14px;
+  text-align: center;
+}
+
+.statbotics-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.sb-header-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sb-team-num {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  font-family: "Rubik", sans-serif;
+}
+
+.sb-year-badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 2px 7px;
+  font-family: "Rubik", sans-serif;
+}
+
+.sb-section-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.sb-epa-row {
+  margin-bottom: 10px;
+}
+
+.sb-epa-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sb-epa-val {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.sb-epa-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.sb-epa-sub {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.sb-breakdown {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sb-breakdown-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 4px;
+  gap: 3px;
+}
+
+.sb-breakdown-val {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.sb-breakdown-val.auto {
+  color: rgb(100, 180, 255);
+}
+.sb-breakdown-val.teleop {
+  color: rgb(130, 220, 140);
+}
+.sb-breakdown-val.endgame {
+  color: rgb(255, 190, 70);
+}
+
+.sb-breakdown-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sb-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0 10px;
+}
+
+.sb-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.sb-stat-row:last-of-type {
+  border-bottom: none;
+}
+
+.sb-label {
+  color: var(--text-muted);
+}
+.sb-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.sb-accent {
+  color: var(--accent);
+  filter: brightness(1.4);
+}
+
+.sb-footer {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.sb-link {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.sb-link:hover {
+  color: var(--text-primary);
+}
+
+/* ── Settings: profile button row ── */
+.settings-field > .savebutton {
+  min-width: 0;
 }

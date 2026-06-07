@@ -16,5 +16,11 @@ export const config = {
         'notes-section': { x: 0, y: 2, width: 1, height: 1 },
         'match-section': { x: 1, y: 0, width: 2, height: 2 },
         'leaderboard-section': { x: 1, y: 2, width: 2, height: 1 },
-    }
+    },
+    // ── Layout Profiles ──────────────────────────────────────────────────────
+    activeProfileName: 'Default',   // name of the currently active profile
+    layoutProfiles: {},             // { name: { gridCols, gridRows, layout, hiddenSections, additionalNoteSections } }
+    // ── Auto-Swap ────────────────────────────────────────────────────────────
+    autoSwapEnabled: false,
+    autoSwapInterval: 30,           // seconds between layout swaps
 }
