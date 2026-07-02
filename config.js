@@ -1,3 +1,4 @@
+// config.js - Extended with card and profile schemas
 export const config = {
     teamNumber: 7250,
     tbaapikey: 'YOUR_AUTH_KEY',
@@ -6,21 +7,70 @@ export const config = {
     noteAlarmThreshold: 8,
     noteAlarmSound: 'alarm1',
     matchAlarmToggle: true,
-    matchAlertThreshold: 300, // seconds before match start
+    matchAlertThreshold: 300,
     matchAlarmSound: 'alarm1',
-    gridSize: 3, // default 3x3 grid
-    additionalNoteSections: [], // Array of section IDs like ['notes-robot-health', 'notes-battery', ...]
-    hiddenSections: new Set(), // Track which sections are hidden
+    gridSize: 3,
+    gridCols: 3,
+    gridRows: 3,
+    hiddenSections: [],
     layout: {
-        'webcast-section': { x: 0, y: 0, width: 1, height: 2 },
-        'notes-section': { x: 0, y: 2, width: 1, height: 1 },
-        'match-section': { x: 1, y: 0, width: 2, height: 2 },
-        'leaderboard-section': { x: 1, y: 2, width: 2, height: 1 },
+        'webcast-card': { x: 0, y: 0, width: 1, height: 2 },
+        'pit-notes-card': { x: 0, y: 2, width: 1, height: 1 },
+        'match-card': { x: 1, y: 0, width: 2, height: 2 },
+        'leaderboard-card': { x: 1, y: 2, width: 2, height: 1 },
     },
-    // ── Layout Profiles ──────────────────────────────────────────────────────
-    activeProfileName: 'Default',   // name of the currently active profile
-    layoutProfiles: {},             // { name: { gridCols, gridRows, layout, hiddenSections, additionalNoteSections } }
-    // ── Auto-Swap ────────────────────────────────────────────────────────────
+    activeProfileName: 'Default',
+    layoutProfiles: {},
     autoSwapEnabled: false,
-    autoSwapInterval: 30,           // seconds between layout swaps
-}
+    autoSwapInterval: 30,
+    
+    // Card registry defaults - built-in cards
+    defaultCards: [
+        { id: 'webcast-card', label: 'Webcasts', icon: 'device-tv', lockedAspect: 16/11, builtin: true },
+        { id: 'pit-notes-card', label: 'Pit Notes', icon: 'notes', builtin: true },
+        { id: 'match-card', label: 'Matches', icon: 'tournament', builtin: true },
+        { id: 'leaderboard-card', label: 'Leaderboard', icon: 'trophy', builtin: true },
+        { id: 'robot-health-card', label: 'Robot Health', icon: 'tool', builtin: true },
+        { id: 'battery-card', label: 'Batteries', icon: 'battery', builtin: true },
+        { id: 'parts-card', label: 'Parts Inventory', icon: 'package', builtin: true },
+        { id: 'checkin-card', label: 'Pit Check-In', icon: 'checklist', builtin: true },
+        { id: 'statbotics-card', label: 'Statbotics', icon: 'chart-bar', builtin: true },
+    ],
+    
+    // User-registered developer cards (persisted)
+    developerCards: {},
+};
+
+// Schema for card definitions
+export const CardSchema = {
+    id: 'string',
+    label: 'string',
+    icon: 'string?',
+    lockedAspect: 'number?',
+    builtin: 'boolean?',
+    developer: 'boolean?',  // true for user-created developer cards
+    html: 'string?',        // for developer cards
+    css: 'string?',         // for developer cards
+    js: 'string?',          // for developer cards
+    render: 'function?'     // for built-in cards
+};
+
+// Schema for profile definitions
+export const ProfileSchema = {
+    name: 'string',
+    gridCols: 'number',
+    gridRows: 'number',
+    layout: 'object',       // { cardId: { x, y, width, height } }
+    hiddenCards: 'array',   // cardIds to hide
+};
+
+// Schema for runtime state
+export const StateSchema = {
+    currentMatches: 'array|null',
+    currentEventData: 'object|null',
+    currentRankings: 'array|null',
+    lastMatchAlertId: 'string|null',
+    fullDate: 'Date',
+    teamNumber: 'number',
+    isTestMode: 'boolean',
+};

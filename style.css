@@ -1,6 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Rubik:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Rubik:wght@400;500;600;700&display=swap");
 
-/* Dark Theme (Default) */
+/* ─── Themes ────────────────────────────────────────────────────────────── */
+
 :root,
 [data-theme="dark"] {
   --bg-base: rgb(22, 22, 22);
@@ -19,7 +20,6 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
 }
 
-/* Light Theme */
 [data-theme="light"] {
   --bg-base: rgb(245, 245, 247);
   --bg-surface: rgb(235, 235, 238);
@@ -37,7 +37,6 @@
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
 }
 
-/* High Contrast Theme */
 [data-theme="high-contrast"] {
   --bg-base: rgb(0, 0, 0);
   --bg-surface: rgb(15, 15, 15);
@@ -57,9 +56,10 @@
 
 * {
   box-sizing: border-box;
+  font-family: "Rubik", sans-serif;
 }
 
-/* ── Scrollbars ── */
+/* ─── Scrollbars ── */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -85,12 +85,12 @@ html {
 #container {
   overflow: hidden;
 }
-
 #container[style*="display: grid"] {
   overflow: auto;
 }
 
-/* ── Header ── */
+/* ─── Header ────────────────────────────────────────────────────────────── */
+
 .header {
   width: 100%;
   height: 4.5rem;
@@ -99,12 +99,15 @@ html {
   background-color: var(--bg-surface);
   padding: 0 1.25rem;
   border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .logo {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .title {
@@ -120,8 +123,7 @@ html {
 .beacon {
   font-family: "Rubik", sans-serif;
   color: royalblue;
-  margin: 0;
-  margin-left: -7px;
+  margin-left: -1px;
 }
 
 .time-display {
@@ -135,11 +137,72 @@ html {
   letter-spacing: 0.06em;
 }
 
+/* ─── Header Buttons ────────────────────────────────────────────────────── */
+
 .buttons {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Settings icon - keep existing style */
+.settings {
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: 0 10px;
+  opacity: 0.35;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  filter: invert(1);
+}
+.settings:hover {
+  opacity: 0.65;
+}
+
+/* Header icon buttons - match settings icon styling */
+.mheader-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  opacity: 0.35;
+  border-radius: 4px;
+}
+.mheader-btn:hover {
+  opacity: 0.65;
+  background: var(--bg-raised);
+}
+
+/* Active state for buttons when modals are open */
+.header-btn.active {
+  opacity: 0.85;
+  background: var(--accent);
+  color: white;
+}
+.header-btn.active svg {
+  stroke: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .settings {
+    width: 1.4rem;
+    height: 1.4rem;
+    margin: 0 6px;
+  }
+  .header-btn {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
 }
 
 .frc7250 {
@@ -165,14 +228,48 @@ html {
   transition: opacity 0.2s;
   filter: invert(1);
 }
-
 .settings:hover {
   opacity: 0.65;
 }
 
-/* ── Settings Modal ── */
+/* ─── Profile Switcher ──────────────────────────────────────────────────── */
+
+.profile-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 auto 0 1rem;
+}
+
+.profile-btn {
+  font-family: "Rubik", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.profile-btn:hover {
+  background: var(--accent-hover);
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+}
+.profile-btn-active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* ─── Settings ───────────────────────────────────────────────────────────── */
+
 .settingscontainer {
-  position: absolute;
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -180,7 +277,7 @@ html {
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
   padding: 0;
-  width: 320px;
+  width: 340px;
   display: none;
   flex-direction: column;
   font-family: "Rubik", sans-serif;
@@ -202,6 +299,7 @@ html {
   color: var(--text-primary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  font-family: "Rubik", sans-serif;
 }
 
 .settingsdiv {
@@ -211,7 +309,6 @@ html {
   flex-direction: column;
   gap: 14px;
 }
-
 .settingsdiv:last-of-type {
   border-bottom: none;
 }
@@ -223,6 +320,7 @@ html {
   color: var(--text-dim);
   margin: 0 0 8px 0;
   font-weight: 500;
+  font-family: "Rubik", sans-serif;
 }
 
 .settings-field {
@@ -231,101 +329,46 @@ html {
   gap: 10px;
   justify-content: space-between;
 }
-
 .settings-field label {
   flex: 1;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   text-align: left;
+  font-family: "Rubik", sans-serif;
 }
 
-.flag-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px !important;
-  height: 20px !important;
-  border: 2px solid var(--border);
-  background-color: var(--bg-input);
-  color: var(--text-secondary);
-  border-radius: 3px !important;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 1.2rem;
-}
-
-.flag-toggle:hover {
-  border-color: var(--accent);
-  background-color: var(--bg-surface);
-}
-
-.flag-toggle:checked {
-  background-color: var(--accent);
-  color: white;
-  border-color: var(--accent);
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-}
-
-.flag-toggle:checked:hover {
-  background-color: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-
-input {
+input,
+select {
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background-color: var(--bg-input);
   color: var(--text-primary);
   font-family: "Rubik", sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   transition: border-color 0.2s;
 }
-
-input:focus {
+input:focus,
+select:focus {
   outline: none;
   border-color: var(--accent);
 }
-
 input[type="text"],
 input[type="number"] {
   padding: 8px 10px;
   min-width: 120px;
   text-align: left;
 }
-
 select {
   padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background-color: var(--bg-input);
-  color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: border-color 0.2s;
   min-width: 120px;
+  cursor: pointer;
 }
-
-select:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
 select option {
   background-color: var(--bg-input);
   color: var(--text-primary);
 }
 
-.teaminput {
-  width: 100px;
-}
-
-#testDate {
-  width: 160px;
-}
-
-/* ── Toggle Switch ── */
 input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -341,7 +384,6 @@ input[type="checkbox"] {
   margin: 0;
   flex-shrink: 0;
 }
-
 input[type="checkbox"]::before {
   content: "";
   position: absolute;
@@ -353,73 +395,12 @@ input[type="checkbox"]::before {
   left: 1px;
   transition: all 0.3s ease;
 }
-
 input[type="checkbox"]:checked {
   background-color: var(--accent);
   border-color: var(--accent);
 }
-
 input[type="checkbox"]:checked::before {
   left: 21px;
-}
-
-/* Flag checkboxes on pit cards */
-.rh-flag,
-.batt-flag,
-.part-flag,
-.checkin-flag,
-.note-flag-check,
-.note-flag {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border);
-  border-radius: 4px;
-  background-color: var(--bg-input);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.flag-toggle::before {
-  display: none;
-  border-radius: 4px !important;
-}
-
-.rh-flag:hover,
-.batt-flag:hover,
-.part-flag:hover,
-.checkin-flag:hover,
-.note-flag-check:hover,
-.note-flag:hover {
-  border-color: var(--accent);
-  background-color: var(--bg-surface);
-}
-
-.rh-flag:checked,
-.batt-flag:checked,
-.part-flag:checked,
-.checkin-flag:checked,
-.note-flag-check:checked,
-.note-flag:checked {
-  background-color: #ff6b6b;
-  border-color: #ff6b6b;
-}
-
-.rh-flag:checked::after,
-.batt-flag:checked::after,
-.part-flag:checked::after,
-.checkin-flag:checked::after,
-.note-flag-check:checked::after,
-.note-flag:checked::after {
-  content: "🚩";
-  color: white;
-  font-size: 0.9rem;
-  font-weight: bold;
 }
 
 .savebutton {
@@ -436,12 +417,12 @@ input[type="checkbox"]:checked::before {
   transition: background-color 0.2s;
   width: calc(100% - 40px);
 }
-
 .savebutton:hover {
   background-color: var(--accent-hover);
 }
 
-/* ── Toasts ── */
+/* ─── Toasts ─────────────────────────────────────────────────────────────── */
+
 .errorcontainer {
   position: fixed;
   bottom: 20px;
@@ -469,81 +450,1088 @@ input[type="checkbox"]:checked::before {
   font-size: 0.82rem;
   color: var(--text-primary);
 }
-
 .error {
   background-color: rgb(80, 25, 25);
   border: 1px solid rgba(200, 60, 60, 0.25);
 }
-
 .message {
   background-color: var(--bg-raised);
   border: 1px solid var(--border);
 }
-
 .error-exit {
   color: var(--text-dim);
   cursor: pointer;
   margin: 0;
   font-size: 0.75rem;
   transition: color 0.15s;
+  font-family: "Rubik", sans-serif;
 }
-
 .error-exit:hover {
   color: var(--text-primary);
 }
 
-/* ── Main layout ── */
-.container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  align-items: start;
-  padding: 12px;
-  gap: 12px;
-  height: calc(100vh - 4.5rem);
+/* ─── Visual Card Builder ───────────────────────────────────────────────── */
+
+.visual-builder-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.78);
+  display: none;
+  z-index: 1002;
+  align-items: center;
+  justify-content: center;
+}
+.visual-builder-modal.active {
+  display: flex;
+}
+
+.vb-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 40px);
+  max-height: 90vh;
+  width: calc(100% - 40px);
+  max-width: 1400px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   overflow: hidden;
 }
 
-/* All direct grid children must have min-height: 0 or they
-   ignore max-height and overflow into adjacent columns */
-.container > * {
-  min-height: 0;
+.vb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background-color: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.vb-title {
+  font-family: "Rubik", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.vb-header-actions {
+  display: flex;
+  gap: 8px;
 }
 
-#left-column {
+.vb-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+/* ─── Visual Builder Tabs ───────────────────────────────────────────────── */
+
+.vb-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  padding: 0 16px;
+}
+
+.vb-tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.vb-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+}
+
+.vb-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+.vb-tab-content {
+  display: none;
+  flex: 1;
+  overflow: auto;
+}
+
+.vb-tab-content.active {
+  display: flex;
+}
+
+/* ─── Visual Elements in Canvas ──────────────────────────────────────────── */
+
+.vb-element {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 6px;
+}
+
+.vb-element:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.vb-element.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.vb-element-properties {
+  overflow-y: auto !important;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.vb-block-properties {
+  overflow-y: auto !important;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+/* Ensure the sidebar section containing properties can shrink */
+.vb-sidebar-section:last-of-type {
+  flex: 1;
+  overflow: hidden; /* changed from auto to hidden, let inner element scroll */
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  height: 100%;
   min-height: 0;
-  overflow: hidden; /* webcast stays fixed, notes scrolls internally */
 }
 
-/* ── Webcast ── */
-/* =============================================================================
-   FULL STYLE REPLACEMENT
-   In style.css:
-   - Replace the "#notes-section, [id^=notes-] {" block and everything after it
-     (all pit-section and layout-editor CSS) with this file.
-   ============================================================================= */
+.vb-element-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
 
-/* ── Shared pit-section shell ─────────────────────────────────────────────── */
+.vb-element-icon {
+  font-size: 0.9rem;
+}
 
-#notes-section,
-[id^="notes-"] {
-  height: 100%;
-  min-height: 0;
-  background-color: var(--bg-surface);
+.vb-element-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  flex: 1;
+  font-family: "Rubik", sans-serif;
+}
+
+.vb-element-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.vb-element-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  transition: all 0.15s;
+}
+
+.vb-element-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+.vb-element-btn.vb-element-delete:hover {
+  color: rgb(215, 75, 75);
+  background: rgba(200, 60, 60, 0.1);
+}
+
+.vb-element-preview {
+  padding: 4px 0;
+}
+
+/* ─── Logic Blocks ───────────────────────────────────────────────────────── */
+
+.vb-logic-workspace {
+  min-height: 200px;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.vb-logic-workspace.drag-over {
+  border-color: var(--accent);
+  background: rgba(47, 48, 112, 0.1);
+}
+
+.vb-logic-block {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-left: 4px solid #888;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.vb-logic-block:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.vb-logic-block.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.vb-logic-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vb-logic-icon {
+  font-size: 0.9rem;
+}
+
+.vb-logic-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+}
+
+.vb-logic-fields {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  padding: 0 8px;
+}
+
+.vb-logic-field {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: "Rubik", sans-serif;
+}
+
+.vb-logic-field-label {
+  color: var(--text-dim);
+}
+
+.vb-logic-field-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.vb-logic-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.vb-logic-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  transition: all 0.15s;
+}
+
+.vb-logic-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
+.vb-logic-btn.vb-logic-delete:hover {
+  color: rgb(215, 75, 75);
+  background: rgba(200, 60, 60, 0.1);
+}
+
+.vb-logic-children {
+  margin: 8px 0 0 24px;
+  padding: 6px;
+  border-left: 2px solid var(--border);
+  min-height: 30px;
+}
+
+.vb-logic-child-hint {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  font-style: italic;
+  text-align: center;
+  padding: 4px;
+  font-family: "Rubik", sans-serif;
+}
+
+/* ─── Preview Tab ────────────────────────────────────────────────────────── */
+
+.vb-preview-full {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  background: var(--bg-base);
+}
+
+.vb-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.vb-preview-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-family: "Rubik", sans-serif;
+}
+
+.vb-preview-body {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-surface);
   border-radius: 8px;
   border: 1px solid var(--border);
-  padding: 10px 12px;
-  font-family: "Rubik", sans-serif;
-  color: var(--text-primary);
-  overflow-y: auto;
+  padding: 16px;
+  min-height: 300px;
+}
+
+/* ─── Small Button ───────────────────────────────────────────────────────── */
+
+.vb-btn-sm {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+
+.vb-canvas-actions {
+  display: flex;
+  gap: 4px;
+}
+
+/* ─── Responsive Adjustments ────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .vb-body {
+    flex-direction: column;
+  }
+  .vb-sidebar {
+    width: 100%;
+    max-height: 40%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .vb-palette-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .vb-shell {
+    height: calc(100% - 20px);
+    width: calc(100% - 20px);
+  }
+  .vb-tabs {
+    overflow-x: auto;
+  }
+  .vb-tab {
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+}
+/* ─── Sidebar ────────────────────────────────────────────────────────────── */
+
+.vb-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: var(--bg-base);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 0;
-  box-sizing: border-box;
+  overflow: auto;
 }
+.vb-sidebar-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  height: 50%;
+  flex-shrink: 0;
+  overflow: auto;
+}
+/* For logic block properties */
+.vb-block-properties {
+  overflow-y: auto !important;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+.vb-sidebar-section:last-of-type {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+/* ─── Visual Builder / Dev Card Picker ──────────────────────────────────── */
+
+.vb-picker,
+.dc-picker {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.vb-picker-inner,
+.dc-picker-inner {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.vb-picker-divider,
+.dc-picker-divider {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-family: "Rubik", sans-serif;
+  position: relative;
+}
+.vb-picker-divider::before,
+.vb-picker-divider::after,
+.dc-picker-divider::before,
+.dc-picker-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: var(--border);
+}
+.vb-picker-divider::before,
+.dc-picker-divider::before {
+  left: 0;
+}
+.vb-picker-divider::after,
+.dc-picker-divider::after {
+  right: 0;
+}
+
+.vb-picker-list,
+.dc-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.vb-picker-item,
+.dc-picker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.vb-picker-item:hover,
+.dc-picker-item:hover {
+  border-color: var(--border-accent);
+  background: var(--accent-hover);
+}
+
+.vb-picker-item-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.vb-picker-item-disabled:hover {
+  border-color: var(--border);
+  background: var(--bg-raised);
+}
+
+.vb-picker-item-label,
+.dc-picker-item-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.85rem;
+}
+
+.vb-picker-item-id,
+.dc-picker-item-id {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.vb-picker-item-badge {
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(200, 140, 40, 0.2);
+  color: rgb(230, 175, 80);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-family: "Rubik", sans-serif;
+  white-space: nowrap;
+}
+
+.vb-picker-item,
+.dc-picker-item {
+  flex-wrap: wrap;
+}
+
+.dc-picker-empty {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-style: italic;
+  text-align: center;
+  padding: 12px 4px;
+  font-family: "Rubik", sans-serif;
+}
+
+/* ─── Header fields (Visual Builder id/label) ───────────────────────────── */
+
+.vb-header-fields {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  margin: 0 16px;
+}
+
+.vb-header-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.82rem;
+  min-width: 0;
+  flex: 1;
+}
+.vb-header-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.vb-btn-primary {
+  background: var(--accent);
+  color: white;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+}
+.vb-btn-primary:hover {
+  background: var(--accent-hover);
+}
+.vb-sidebar-title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-family: "Rubik", sans-serif;
+}
+
+.vb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+.vb-field label {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-family: "Rubik", sans-serif;
+}
+.vb-field input,
+.vb-field select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: "Rubik", sans-serif;
+}
+.vb-field input:focus,
+.vb-field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.vb-element.dragging,
+.vb-logic-block.dragging {
+  opacity: 0.4;
+}
+
+.vb-element.drop-before,
+.vb-logic-block.drop-before {
+  box-shadow: 0 -3px 0 0 var(--accent);
+}
+
+.vb-element.drop-after,
+.vb-logic-block.drop-after {
+  box-shadow: 0 3px 0 0 var(--accent);
+}
+/* ─── Block Palette ──────────────────────────────────────────────────────── */
+
+.vb-block-palette {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.vb-palette-category {
+  margin-bottom: 8px;
+}
+.vb-palette-category-title {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  font-weight: 500;
+  font-family: "Rubik", sans-serif;
+}
+.vb-palette-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 0 4px;
+}
+.vb-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-left: 3px solid #888;
+  cursor: grab;
+  transition: all 0.15s;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.vb-palette-item:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.vb-palette-item:active {
+  cursor: grabbing;
+}
+.vb-palette-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.vb-palette-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Canvas ─────────────────────────────────────────────────────────────── */
+
+.vb-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.vb-canvas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.vb-canvas-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-family: "Rubik", sans-serif;
+}
+.vb-canvas-area {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* ─── Drop Zone ──────────────────────────────────────────────────────────── */
+
+.vb-drop-zone {
+  min-height: 200px;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+  background: rgba(0, 0, 0, 0.1);
+}
+.vb-drop-zone-active {
+  border-color: var(--border-accent);
+  background: rgba(47, 48, 112, 0.05);
+}
+.vb-drop-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(47, 48, 112, 0.1);
+}
+.vb-drop-hint {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 20px;
+  font-family: "Rubik", sans-serif;
+}
+
+/* ─── Block in Canvas ────────────────────────────────────────────────────── */
+
+.vb-block {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-left: 4px solid #888;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.vb-block:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.vb-block.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.vb-block-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.vb-block-icon {
+  font-size: 0.9rem;
+}
+.vb-block-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  flex: 1;
+  font-family: "Rubik", sans-serif;
+}
+.vb-block-actions {
+  display: flex;
+  gap: 2px;
+}
+.vb-block-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  transition: all 0.15s;
+}
+.vb-block-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.vb-block-btn.vb-block-delete:hover {
+  color: rgb(215, 75, 75);
+  background: rgba(200, 60, 60, 0.1);
+}
+.vb-block-preview {
+  padding: 4px 0 2px 0;
+}
+
+/* ─── Block Settings ────────────────────────────────────────────────────── */
+
+.vb-block-settings {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.vb-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+
+.vb-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.vb-btn-save {
+  background: var(--accent);
+  color: white;
+}
+.vb-btn-save:hover {
+  background: var(--accent-hover);
+}
+.vb-btn-close {
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+}
+.vb-btn-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.vb-btn-preview {
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  padding: 4px 12px;
+}
+.vb-btn-preview:hover {
+  background: var(--accent-hover);
+  border-color: var(--border-accent);
+}
+
+/* ─── Preview Modal ──────────────────────────────────────────────────────── */
+
+.vb-preview-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: none;
+  z-index: 1003;
+  align-items: center;
+  justify-content: center;
+}
+.vb-preview-modal.active {
+  display: flex;
+}
+.vb-preview-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 80px);
+  max-height: 90vh;
+  width: calc(100% - 80px);
+  max-width: 900px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.vb-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.vb-preview-title {
+  font-family: "Rubik", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+.vb-preview-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .vb-body {
+    flex-direction: column;
+  }
+  .vb-sidebar {
+    width: 100%;
+    max-height: 40%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .vb-palette-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .vb-shell {
+    height: calc(100% - 20px);
+    width: calc(100% - 20px);
+  }
+  .vb-preview-shell {
+    height: calc(100% - 40px);
+    width: calc(100% - 40px);
+  }
+}
+/* ─── Match Cards ───────────────────────────────────────────────────────── */
+
+.match-card,
+.upcomingmatch-card {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: "Rubik", sans-serif;
+  flex-shrink: 0;
+}
+.match-card {
+  border-color: var(--border-accent);
+  background-color: rgba(47, 48, 112, 0.15);
+}
+.match-card p,
+.upcomingmatch-card p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-family: "Rubik", sans-serif;
+}
+.match-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+  font-family: "Rubik", sans-serif;
+}
+.countdown-warning {
+  color: rgb(255, 200, 0);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.countdown-urgent {
+  color: rgb(255, 80, 80);
+  font-weight: 700;
+  font-size: 1rem;
+  animation: pulse 0.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.upcoming-basicinfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.upcoming-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.alliance-row {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.user-team {
+  justify-content: center;
+  padding: 6px 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 4px;
+}
+.user-team p {
+  font-weight: 700;
+  font-size: 1rem;
+}
+.red {
+  color: rgb(200, 80, 80) !important;
+  border: 1px solid rgba(200, 80, 80, 0.25);
+  padding: 4px 8px;
+  border-radius: 5px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-family: "Rubik", sans-serif;
+}
+.blue {
+  color: rgb(80, 80, 200) !important;
+  border: 1px solid rgba(80, 80, 200, 0.25);
+  padding: 4px 8px;
+  border-radius: 5px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-family: "Rubik", sans-serif;
+}
+.red.highlight {
+  background-color: rgba(200, 80, 80, 0.3) !important;
+  border-color: rgb(200, 80, 80) !important;
+  font-weight: 700;
+}
+.blue.highlight {
+  background-color: rgba(80, 80, 200, 0.3) !important;
+  border-color: rgb(80, 80, 200) !important;
+  font-weight: 700;
+}
+
+/* ─── Pit Sections (shared) ────────────────────────────────────────────── */
 
 .pit-header {
   display: flex;
@@ -567,6 +1555,7 @@ input[type="checkbox"]:checked::before {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-family: "Rubik", sans-serif;
 }
 .pit-title i {
   font-size: 0.85rem;
@@ -609,9 +1598,10 @@ input[type="checkbox"]:checked::before {
   padding: 12px 4px;
   margin: 0;
   text-align: center;
+  font-family: "Rubik", sans-serif;
 }
 
-/* ── Shared card base ──────────────────────────────────────────────────────── */
+/* ─── Pit Cards ──────────────────────────────────────────────────────────── */
 
 .pit-card {
   background-color: var(--bg-raised);
@@ -624,6 +1614,9 @@ input[type="checkbox"]:checked::before {
   flex-shrink: 0;
   min-width: 0;
 }
+.pit-card.flagged {
+  border-color: rgba(255, 107, 107, 0.4);
+}
 
 .pit-card-row {
   display: flex;
@@ -631,7 +1624,6 @@ input[type="checkbox"]:checked::before {
   gap: 6px;
   min-width: 0;
 }
-
 .pit-card-fields {
   display: flex;
   flex-direction: column;
@@ -639,8 +1631,6 @@ input[type="checkbox"]:checked::before {
   flex: 1;
   min-width: 0;
 }
-
-/* ── Inputs ────────────────────────────────────────────────────────────────── */
 
 .pit-input {
   background-color: var(--bg-input);
@@ -669,11 +1659,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-muted);
 }
 
-/* ── Delete ────────────────────────────────────────────────────────────────── */
-
-/* ── Delete buttons — always visible, not just on hover ─────────────────────── */
 .pit-del-btn {
-  /* Override the dim color with a soft but always-visible red tint */
   background: rgba(180, 50, 50, 0.1);
   border: 1px solid rgba(180, 50, 50, 0.2);
   color: rgb(200, 90, 90);
@@ -682,37 +1668,27 @@ input[type="checkbox"]:checked::before {
   padding: 4px 7px;
   border-radius: 5px;
   line-height: 1;
-  transition:
-    color 0.12s,
-    background 0.12s,
-    border-color 0.12s;
+  transition: all 0.12s;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 28px;
   height: 28px;
+  font-family: "Rubik", sans-serif;
 }
 .pit-del-btn:hover {
   background: rgba(200, 50, 50, 0.25);
   border-color: rgba(200, 50, 50, 0.45);
   color: rgb(240, 100, 100);
-} /* Slightly smaller in tight spots */
-.part-card .pit-del-btn,
-.checkin-row .pit-del-btn {
-  min-width: 24px;
-  height: 24px;
-  font-size: 0.8rem;
-  padding: 2px 5px;
 }
 
-/* ── Status chips ──────────────────────────────────────────────────────────── */
+/* ─── Status Chips ───────────────────────────────────────────────────────── */
 
 .pit-status-row {
   display: flex;
   gap: 4px;
 }
-
 .pit-chip {
   flex: 1;
   border: 1px solid transparent;
@@ -752,20 +1728,51 @@ input[type="checkbox"]:checked::before {
   border-color: rgba(200, 50, 50, 0.3);
 }
 
-/* ── Battery ───────────────────────────────────────────────────────────────── */
+/* ─── Flag Toggles ───────────────────────────────────────────────────────── */
 
-/* ── Battery — fix input widths in the top row ─────────────────────────────── */
+.flag-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background-color: var(--bg-input);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flag-toggle:hover {
+  border-color: var(--accent);
+  background-color: var(--bg-surface);
+}
+.flag-toggle:checked {
+  background-color: #ff6b6b;
+  border-color: #ff6b6b;
+}
+.flag-toggle:checked::after {
+  content: "🚩";
+  color: white;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+/* ─── Battery ────────────────────────────────────────────────────────────── */
+
 .batt-top-row {
   display: flex;
   align-items: center;
   gap: 5px;
   min-width: 0;
-  flex-wrap: wrap; /* fallback for very narrow tiles */
+  flex-wrap: wrap;
 }
 .batt-id {
   flex: 1;
   min-width: 0;
-  width: 0; /* flex sizing */
+  width: 0;
 }
 .batt-volt-block {
   display: flex;
@@ -775,8 +1782,6 @@ input[type="checkbox"]:checked::before {
 }
 .batt-volt-block .pit-input {
   width: 64px;
-  -moz-appearance: textfield;
-  appearance: textfield;
 }
 .batt-volt-block .pit-input::-webkit-inner-spin-button,
 .batt-volt-block .pit-input::-webkit-outer-spin-button {
@@ -785,58 +1790,55 @@ input[type="checkbox"]:checked::before {
 }
 .volt-track {
   width: 64px;
+  height: 4px;
+  background: var(--bg-input);
+  border-radius: 99px;
+  overflow: hidden;
 }
+.volt-bar {
+  height: 100%;
+  transition: width 0.2s;
+  border-radius: 99px;
+}
+.volt-bar-ok {
+  background: rgb(60, 200, 100);
+}
+.volt-bar-warn {
+  background: rgb(230, 180, 40);
+}
+.volt-bar-err {
+  background: rgb(210, 70, 70);
+}
+
 .batt-cycles {
   width: 60px !important;
   flex-shrink: 0;
-  -moz-appearance: textfield;
-  appearance: textfield;
 }
 .batt-cycles::-webkit-inner-spin-button,
 .batt-cycles::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
-} /* When section is XS, let battery fields stack */
-.pit-xs .batt-top-row {
-  flex-direction: column;
-  align-items: stretch;
-}
-.pit-xs .batt-id,
-.pit-xs .batt-cycles {
-  width: 100% !important;
-  flex: unset;
-}
-.pit-xs .batt-volt-block {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-}
-.pit-xs .batt-volt-block .pit-input {
-  width: 100%;
-  flex: 1;
-}
-.pit-xs .volt-track {
-  flex: 1;
-  width: auto;
 }
 
-/* ── Parts ─────────────────────────────────────────────────────────────────── */
+/* ─── Parts ──────────────────────────────────────────────────────────────── */
 
 .parts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 6px;
 }
-/* XS: single column */
 .pit-xs .parts-grid {
   grid-template-columns: 1fr;
 }
 
-/* ── Parts inventory — fix input overflow ──────────────────────────────────── */ /* The card itself must not let children overflow */
 .part-card {
   overflow: hidden;
   min-width: 0;
-} /* Name input row: stop the delete button from being squeezed */
+}
+.part-card-low {
+  border-color: rgba(215, 75, 75, 0.3);
+}
+
 .part-card-top {
   display: flex;
   align-items: center;
@@ -846,35 +1848,7 @@ input[type="checkbox"]:checked::before {
 .part-card-top .pit-input {
   flex: 1;
   min-width: 0;
-  width: 0; /* let flex do the sizing, not the input's natural width */
-} /* Qty/Min input row: equal columns, no overflow */
-/* Qty/Min input row: equal columns, no overflow */
-.part-inputs-row {
-  display: flex;
-  gap: 4px;
-  min-width: 0;
-}
-.part-micro-label {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.part-micro-label .pit-input {
-  width: 100%;
-  min-width: 0;
-  font-size: 0.8rem;
-  text-align: center;
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-.part-micro-label .pit-input::-webkit-inner-spin-button,
-.part-micro-label .pit-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+  width: 0;
 }
 
 .part-qty-row {
@@ -883,14 +1857,12 @@ input[type="checkbox"]:checked::before {
   justify-content: center;
   gap: 6px;
 }
-
 .part-qty-block {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
 }
-
 .part-qty-num {
   font-size: 1.5rem;
   font-weight: 700;
@@ -907,12 +1879,6 @@ input[type="checkbox"]:checked::before {
   color: var(--text-muted);
   font-size: 1.05rem;
 }
-
-/* In XS columns, shrink the big number */
-.pit-xs .part-qty-num {
-  font-size: 1.1rem;
-}
-
 .part-qty-label {
   font-size: 0.62rem;
   text-transform: uppercase;
@@ -933,6 +1899,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.05em;
+  font-family: "Rubik", sans-serif;
 }
 .part-low-badge {
   background: rgba(200, 50, 50, 0.2);
@@ -945,7 +1912,34 @@ input[type="checkbox"]:checked::before {
   border: 1px solid rgba(40, 160, 80, 0.25);
 }
 
-/* ── Check-In ──────────────────────────────────────────────────────────────── */
+.part-inputs-row {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+.part-micro-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: "Rubik", sans-serif;
+}
+.part-micro-label .pit-input {
+  width: 100%;
+  min-width: 0;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.part-micro-label .pit-input::-webkit-inner-spin-button,
+.part-micro-label .pit-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ─── Check-In ───────────────────────────────────────────────────────────── */
 
 .checkin-progress {
   display: flex;
@@ -971,9 +1965,9 @@ input[type="checkbox"]:checked::before {
   font-size: 0.7rem;
   color: var(--text-muted);
   white-space: nowrap;
+  font-family: "Rubik", sans-serif;
 }
 
-/* ── Check-In rows ─────────────────────────────────────────────────────────── */
 .checkin-row {
   display: flex;
   align-items: center;
@@ -986,10 +1980,6 @@ input[type="checkbox"]:checked::before {
 }
 .checkin-row.flagged {
   border-color: rgba(255, 107, 107, 0.4);
-}
-.checkin-row .pit-del-btn {
-  margin-left: auto;
-  flex-shrink: 0;
 }
 .checkin-done {
   opacity: 0.45;
@@ -1012,10 +2002,8 @@ input[type="checkbox"]:checked::before {
   font-size: 0.85rem;
   color: var(--text-dim);
   flex-shrink: 0;
-  transition:
-    border-color 0.12s,
-    color 0.12s,
-    background 0.12s;
+  transition: all 0.12s;
+  font-family: "Rubik", sans-serif;
 }
 .checkin-check:hover {
   border-color: var(--accent);
@@ -1035,74 +2023,383 @@ input[type="checkbox"]:checked::before {
   gap: 3px;
 }
 
-/* checkin-who is always visible — stacks below task in column layout */
+/* ─── Leaderboard ───────────────────────────────────────────────────────── */
 
-/* ── Pit Notes ─────────────────────────────────────────────────────────────── */
+#card-leaderboard-card {
+  padding: 10px 12px;
+  background-color: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
 
-/* ── Note cards — make del button always on right, not floating in priority col */
-.note-priority-block {
+#card-leaderboard-card .leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+#card-leaderboard-card .leaderboard-table thead th {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  padding: 4px 8px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-surface);
+  font-family: "Rubik", sans-serif;
+}
+#card-leaderboard-card .leaderboard-table tbody td {
+  text-align: center;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: "Rubik", sans-serif;
+}
+#card-leaderboard-card .leaderboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+#card-leaderboard-card .leaderboard-table tbody tr:hover td {
+  background-color: var(--bg-raised);
+}
+#card-leaderboard-card .my-team td {
+  background-color: rgba(47, 48, 112, 0.3) !important;
+  color: var(--text-primary) !important;
+  font-weight: 700;
+}
+/* ─── Webcast ────────────────────────────────────────────────────────────── */
+
+.webcast-card {
+  background-color: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border-accent);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.webcast-card iframe {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+/* ─── Statbotics ────────────────────────────────────────────────────────── */
+
+.statbotics-shell {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  width: 46px;
-} /* Move delete OUT of the priority block — it's awkward there.   Instead put it as a top-right corner button on the card itself. */
-.note-card {
-  position: relative;
+  height: 100%;
+  font-family: "Rubik", sans-serif;
 }
-.note-card .pit-del-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  min-width: 22px;
-  height: 22px;
-  font-size: 0.72rem;
-  padding: 2px 4px;
-} /* Shrink inner layout to not overlap the abs-positioned button */
-.note-card-inner {
-  padding-right: 32px;
+.statbotics-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
 }
-
-.note-pri-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: white;
-  cursor: text;
-  outline: none;
-  overflow: hidden;
-  transition: background-color 0.2s;
+.statbotics-loading {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 20px;
+  font-family: "Rubik", sans-serif;
+}
+.statbotics-error {
+  color: rgb(220, 80, 80);
+  font-size: 0.85rem;
+  padding: 14px;
+  text-align: center;
+  font-family: "Rubik", sans-serif;
+}
+.statbotics-hint {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 4px;
   font-family: "Rubik", sans-serif;
 }
 
-/* In XS, shrink the priority badge inline instead of column */
-.pit-xs .note-card-inner {
-  gap: 5px;
+.sb-header-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
 }
-.pit-xs .note-pri-badge {
-  width: 30px;
-  height: 30px;
-  font-size: 0.8rem;
+.sb-team-num {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+  font-family: "Rubik", sans-serif;
 }
-.pit-xs .note-issue {
-  font-size: 0.78rem;
+.sb-year-badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 2px 7px;
+  font-family: "Rubik", sans-serif;
 }
 
-.note-pri-label {
-  font-size: 0.58rem;
+.sb-section-title {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  font-family: "Rubik", sans-serif;
+}
+.sb-epa-row {
+  margin-bottom: 10px;
+}
+.sb-epa-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sb-epa-val {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -1px;
+  font-family: "Rubik", sans-serif;
+}
+.sb-epa-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: "Rubik", sans-serif;
+}
+.sb-epa-sub {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-family: "Rubik", sans-serif;
+}
+
+.sb-breakdown {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sb-breakdown-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 4px;
+  gap: 3px;
+}
+.sb-breakdown-val {
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: "Rubik", sans-serif;
+}
+.sb-breakdown-val.auto {
+  color: rgb(100, 180, 255);
+}
+.sb-breakdown-val.teleop {
+  color: rgb(130, 220, 140);
+}
+.sb-breakdown-val.endgame {
+  color: rgb(255, 190, 70);
+}
+.sb-breakdown-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--text-dim);
-  white-space: nowrap;
+  font-family: "Rubik", sans-serif;
 }
 
-/* ── Layout Editor ─────────────────────────────────────────────────────────── */
+.sb-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 0;
+}
+.sb-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sb-stat-row:last-of-type {
+  border-bottom: none;
+}
+.sb-label {
+  color: var(--text-muted);
+  font-family: "Rubik", sans-serif;
+}
+.sb-value {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-family: "Rubik", sans-serif;
+}
+.sb-accent {
+  color: var(--accent);
+  filter: brightness(1.4);
+}
+
+.sb-footer {
+  margin-top: 12px;
+  text-align: center;
+}
+.sb-link {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.15s;
+  font-family: "Rubik", sans-serif;
+}
+.sb-link:hover {
+  color: var(--text-primary);
+}
+
+.inactive {
+  text-align: center;
+  color: var(--text-dim);
+  font-style: italic;
+  padding: 20px;
+  font-family: "Rubik", sans-serif;
+}
+
+/* ─── Fallback Card ──────────────────────────────────────────────────────── */
+
+.fallback-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 16px;
+  background: rgba(200, 50, 50, 0.08);
+  border: 2px dashed rgba(200, 50, 50, 0.3);
+  border-radius: 8px;
+  text-align: center;
+  height: 100%;
+  min-height: 80px;
+}
+.fallback-icon {
+  font-size: 2rem;
+  opacity: 0.6;
+}
+/* ─── Icon Buttons ───────────────────────────────────────────────────────── */
+
+.header-btn {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.header-btn:hover {
+  background: var(--accent-hover);
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+}
+
+.mheader-btn svg {
+  width: 50px;
+  height: 50px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.header-btn i {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* Settings icon already exists */
+.settings {
+  width: 1.8rem;
+  height: 1.8rem;
+  margin: 0 10px;
+  opacity: 0.35;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  filter: invert(1);
+}
+.settings:hover {
+  opacity: 0.65;
+}
+.fallback-title {
+  font-weight: 600;
+  color: rgb(220, 80, 80);
+  font-family: "Rubik", sans-serif;
+}
+.fallback-id {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-family: monospace;
+}
+.fallback-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: "Rubik", sans-serif;
+}
+.fallback-remove {
+  background: rgba(200, 50, 50, 0.15);
+  border: 1px solid rgba(200, 50, 50, 0.2);
+  color: rgb(220, 80, 80);
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+  font-family: "Rubik", sans-serif;
+}
+.fallback-remove:hover {
+  background: rgba(200, 50, 50, 0.25);
+}
+
+/* ─── Card Error ─────────────────────────────────────────────────────────── */
+
+.card-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px;
+  background: rgba(200, 50, 50, 0.06);
+  border: 1px solid rgba(200, 50, 50, 0.15);
+  border-radius: 6px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.card-error-icon {
+  font-size: 1.5rem;
+}
+.card-error-msg {
+  font-weight: 500;
+  color: rgb(220, 80, 80);
+  font-family: "Rubik", sans-serif;
+}
+.card-error-detail {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-family: monospace;
+}
+
+/* ─── Layout Editor ──────────────────────────────────────────────────────── */
 
 .layout-editor-modal {
   position: fixed;
@@ -1110,6 +2407,8 @@ input[type="checkbox"]:checked::before {
   background-color: rgba(0, 0, 0, 0.78);
   display: none;
   z-index: 1000;
+  align-items: center;
+  justify-content: center;
 }
 .layout-editor-modal.active {
   display: flex;
@@ -1119,14 +2418,15 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   height: calc(100% - 40px);
-  margin: 20px;
+  max-height: 90vh;
+  width: calc(100% - 40px);
+  max-width: 1200px;
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
 }
 
-/* ── Layout editor title font ──────────────────────────────────────────────── */
 .le-title {
   font-family: "Rubik", sans-serif;
   font-size: 1rem;
@@ -1135,23 +2435,49 @@ input[type="checkbox"]:checked::before {
   margin: 0;
   white-space: nowrap;
   letter-spacing: -0.01em;
-} /* Keep header from wrapping into a mess on mid-size screens */
+}
+
 .le-header {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto;
+  display: flex;
   align-items: center;
-  gap: 8px 16px;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 16px;
   background-color: var(--bg-raised);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-} /* On narrow screens collapse to stacked rows */
-@media (max-width: 760px) {
-  .le-header {
-    grid-template-columns: 1fr;
-  }
+  flex-wrap: wrap;
 }
+
+.le-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.le-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.le-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  font-family: "Rubik", sans-serif;
+  line-height: 1;
+}
+.le-close-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+
 .le-controls {
   display: flex;
   flex-wrap: wrap;
@@ -1160,12 +2486,27 @@ input[type="checkbox"]:checked::before {
   min-width: 0;
   font-family: "Rubik", sans-serif;
   color: var(--text-muted);
+  font-size: 0.8rem;
 }
+
+.le-controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.le-controls input[type="number"] {
+  width: 48px;
+  padding: 3px 5px;
+  font-size: 0.8rem;
+}
+
 .le-btns {
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
-  justify-content: flex-end;
 }
 .le-btns button {
   padding: 5px 11px;
@@ -1199,13 +2540,6 @@ input[type="checkbox"]:checked::before {
 .btn-reset:hover {
   background: rgb(122, 70, 70);
 }
-.btn-close {
-  background: var(--accent);
-  color: #fff;
-}
-.btn-close:hover {
-  background: var(--accent-hover);
-}
 
 .le-body {
   display: flex;
@@ -1216,7 +2550,7 @@ input[type="checkbox"]:checked::before {
 
 /* Palette */
 .le-palette {
-  width: 155px;
+  width: 180px;
   flex-shrink: 0;
   background-color: var(--bg-base);
   border-right: 1px solid var(--border);
@@ -1256,9 +2590,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.78rem;
   cursor: grab;
   user-select: none;
-  transition:
-    border-color 0.12s,
-    color 0.12s;
+  transition: all 0.12s;
 }
 .le-palette-item:hover {
   border-color: var(--border-accent);
@@ -1267,18 +2599,6 @@ input[type="checkbox"]:checked::before {
 .le-palette-item:active {
   cursor: grabbing;
 }
-.le-palette-item i {
-  font-size: 0.88rem;
-  opacity: 0.6;
-}
-/* ── Palette items — add a subtle drag affordance ──────────────────────────── */
-.le-palette-item::before {
-  content: "⠿";
-  opacity: 0.3;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-  letter-spacing: 0;
-}
 .le-palette-empty {
   color: var(--text-dim);
   font-size: 0.73rem;
@@ -1286,9 +2606,10 @@ input[type="checkbox"]:checked::before {
   padding: 8px 2px;
   margin: 0;
   font-style: italic;
+  text-align: center;
 }
 
-/* Canvas & grid */
+/* Canvas */
 .le-canvas {
   flex: 1;
   overflow: auto;
@@ -1305,11 +2626,12 @@ input[type="checkbox"]:checked::before {
   background-image:
     linear-gradient(to right, rgba(47, 48, 112, 0.14) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(47, 48, 112, 0.14) 1px, transparent 1px);
+  background-size: calc((100% + 8px) / var(--grid-cols, 3))
+    calc((100% + 8px) / var(--grid-rows, 3));
   border: 1px solid rgba(47, 48, 112, 0.2);
   border-radius: 6px;
 }
 
-/* Grid items */
 .layout-item {
   background-color: var(--bg-surface);
   border: 2px solid var(--border-accent);
@@ -1321,16 +2643,13 @@ input[type="checkbox"]:checked::before {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  transition:
-    border-color 0.12s,
-    box-shadow 0.12s;
+  gap: 4px;
+  transition: border-color 0.12s;
   min-height: 0;
   overflow: hidden;
 }
 .layout-item:hover {
   border-color: rgba(90, 92, 210, 0.75);
-  box-shadow: 0 0 0 3px rgba(47, 48, 112, 0.1);
 }
 .layout-item.dragging {
   cursor: grabbing;
@@ -1339,10 +2658,6 @@ input[type="checkbox"]:checked::before {
   box-shadow: 0 4px 18px rgba(47, 48, 112, 0.38);
   z-index: 50;
 }
-.layout-item.resizing {
-  opacity: 0.82;
-  border-color: rgb(90, 92, 200);
-}
 
 .layout-item-header {
   display: flex;
@@ -1350,68 +2665,45 @@ input[type="checkbox"]:checked::before {
   align-items: center;
   font-family: "Rubik", sans-serif;
   font-weight: 500;
-  font-size: 0.83rem;
+  font-size: 0.8rem;
   color: var(--text-primary);
   flex-shrink: 0;
   gap: 5px;
 }
-.layout-item-header i {
-  margin-right: 4px;
-  opacity: 0.65;
+.layout-item-header span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.layout-item-size {
-  font-size: 0.67rem;
-  color: var(--text-dim);
-  background: var(--bg-raised);
-  padding: 2px 5px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
 .layout-item-hint {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--text-dim);
   font-family: "Rubik", sans-serif;
   flex: 1;
   display: flex;
   align-items: flex-end;
 }
+/* ─── Resize Handle ──────────────────────────────────────────────────────── */
 
-.le-remove-btn {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  font-size: 1.05rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 1px 3px;
-  border-radius: 4px;
-  transition:
-    color 0.12s,
-    background 0.12s;
-  flex-shrink: 0;
-}
-.le-remove-btn:hover {
-  color: rgb(215, 75, 75);
-  background: rgba(200, 60, 60, 0.1);
-}
-
-/* Resize handles */
 .resize-handle {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 19px;
-  height: 19px;
+  width: 16px;
+  height: 16px;
   cursor: nwse-resize;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  padding: 3px;
-  opacity: 0.28;
-  transition: opacity 0.12s;
+  padding: 2px;
+  opacity: 0.25;
+  transition: opacity 0.15s;
 }
-.resize-handle::before {
+.resize-handle::after {
   content: "";
   display: block;
   width: 10px;
@@ -1421,559 +2713,489 @@ input[type="checkbox"]:checked::before {
   border-radius: 0 0 3px 0;
 }
 .layout-item:hover .resize-handle {
-  opacity: 0.72;
+  opacity: 0.7;
 }
 .layout-item.resizing .resize-handle {
   opacity: 1;
 }
 
-.resize-handle-width {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 9px;
-  cursor: ew-resize;
+.layout-item.dragging {
+  cursor: grabbing;
+  opacity: 0.85;
+  border-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+.layout-item.resizing {
+  opacity: 0.85;
+  border-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+/* ─── Layout Editor Color Controls ──────────────────────────────────────── */
+
+.le-color-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  opacity: 0.22;
-  transition: opacity 0.12s;
-  border-radius: 0 7px 7px 0;
-}
-.resize-handle-width::before {
-  content: "";
-  display: block;
-  width: 3px;
-  height: 22px;
-  background: var(--text-muted);
-  border-radius: 2px;
-}
-.layout-item:hover .resize-handle-width {
-  opacity: 0.68;
-}
-.layout-item.resizing .resize-handle-width {
-  opacity: 1;
+  gap: 8px;
+  padding: 4px 0;
+  flex-wrap: wrap;
 }
 
-/* Locked-aspect (webcast) */
-.layout-item--locked-aspect {
-  border-color: rgba(55, 95, 175, 0.48);
-}
-.layout-item--locked-aspect:hover {
-  border-color: rgba(80, 130, 220, 0.82);
-  box-shadow: 0 0 0 3px rgba(60, 100, 180, 0.1);
-}
-.layout-item--locked-aspect.dragging {
-  border-color: rgb(80, 130, 220);
-}
-
-.layout-item-aspect-badge {
-  font-size: 0.62rem;
+.le-color-controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
   font-family: "Rubik", sans-serif;
-  font-weight: 500;
+}
+
+.le-color-controls select {
+  padding: 3px 6px;
+  font-size: 0.7rem;
+  min-width: 80px;
+  height: 26px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.le-color-controls input[type="color"] {
+  width: 30px;
+  height: 26px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  cursor: pointer;
+}
+
+.le-color-controls input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.le-color-controls input[type="color"]::-webkit-color-swatch {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+.le-color-hex {
+  font-size: 0.7rem;
+  font-family: "Courier New", monospace;
+  color: var(--text-muted);
+  min-width: 50px;
+}
+
+.le-color-reset {
+  background: rgba(200, 50, 50, 0.15);
+  border: 1px solid rgba(200, 50, 50, 0.2);
+  color: rgb(200, 80, 80);
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-family: "Rubik", sans-serif;
+  transition: all 0.15s;
+}
+.le-color-reset:hover {
+  background: rgba(200, 50, 50, 0.25);
+}
+.le-remove-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
   padding: 2px 5px;
   border-radius: 4px;
-  background: rgba(60, 100, 180, 0.16);
-  color: rgb(115, 155, 225);
-  border: 1px solid rgba(60, 100, 180, 0.28);
-}
-/* ── Robot health delete — already in .pit-card-row, just ensure visibility ── */ /* (covered by the global .pit-del-btn override above) */
-/* ── General number inputs — remove spinners globally inside pit sections ──── */
-#notes-section input[type="number"],
-[id^="notes-"] input[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-#notes-section input[type="number"]::-webkit-inner-spin-button,
-#notes-section input[type="number"]::-webkit-outer-spin-button,
-[id^="notes-"] input[type="number"]::-webkit-inner-spin-button,
-[id^="notes-"] input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-/* =============================================================================
-   MISSING STYLES PATCH
-   Append this entire block to the bottom of your style.css.
-   These are the leaderboard, match cards, and inactive message styles
-   that were present in the original CSS but got dropped.
-   ============================================================================= */
-
-/* ── Leaderboard ── */
-
-#leaderboard-section {
-  height: 100%;
-  min-height: 0;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
+  transition: all 0.12s;
+  flex-shrink: 0;
   font-family: "Rubik", sans-serif;
-  color: var(--text-primary);
-  overflow-y: auto;
-  align-self: stretch;
-  box-sizing: border-box;
+}
+.le-remove-btn:hover {
+  color: rgb(215, 75, 75);
+  background: rgba(200, 60, 60, 0.1);
 }
 
-.leaderboard-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
+/* ─── Card Manager Modal ────────────────────────────────────────────────── */
+
+.card-manager-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: none;
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+.card-manager-modal.active {
+  display: flex;
 }
 
-.leaderboard-table thead th {
-  text-align: center;
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  padding: 4px 8px 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  background-color: var(--bg-surface);
-}
-
-.leaderboard-table tbody td {
-  text-align: center;
-  padding: 7px 8px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-muted);
-}
-
-.leaderboard-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.leaderboard-table tbody tr:hover td {
-  background-color: var(--bg-raised);
-}
-
-.my-team td {
-  background-color: rgba(47, 48, 112, 0.3) !important;
-  color: var(--text-primary) !important;
-  font-weight: 700;
-}
-
-.my-team td:first-child {
-  border-radius: 6px 0 0 6px;
-}
-.my-team td:last-child {
-  border-radius: 0 6px 6px 0;
-}
-
-/* ── Match section shell ── */
-
-#match-section {
-  height: 100%;
-  min-height: 0;
+.card-manager-shell {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 2px 2px 12px 2px;
-  overflow-y: auto;
-  align-self: stretch;
-  box-sizing: border-box;
 }
-
-/* ── Match cards ── */
-
-.match-card,
-.upcomingmatch-card {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  padding: 14px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  font-family: "Rubik", sans-serif;
+.card-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-
-.match-card {
-  border-color: var(--border-accent);
-  background-color: rgba(47, 48, 112, 0.12);
-}
-
-.match-card p,
-.upcomingmatch-card p {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-}
-
-.match-title {
-  font-size: 1rem;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  color: var(--text-primary);
-  letter-spacing: -0.2px;
-}
-
-.countdown-warning {
-  color: rgb(255, 200, 0);
+.card-manager-title {
+  font-family: "Rubik", sans-serif;
+  font-size: 1.1rem;
   font-weight: 600;
-  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin: 0;
+}
+.card-manager-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
+}
+.card-manager-close:hover {
+  color: var(--text-primary);
 }
 
-.countdown-urgent {
-  color: rgb(255, 80, 80);
-  font-weight: 700;
-  font-size: 1rem;
-  animation: pulse 0.6s ease-in-out infinite;
+.card-manager-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
 }
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-/* ── Upcoming match layout ── */
-
-.upcoming-basicinfo {
+.card-manager-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
-
-.upcoming-teams {
+.card-manager-item {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-raised);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 6px;
 }
-
-.alliance-row {
+.card-manager-item-info {
   display: flex;
-  flex-direction: row;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
 }
-
-.user-team {
-  justify-content: center;
-  padding: 8px 0;
-  border-bottom: 2px solid var(--border);
+.card-manager-item-icon {
+  font-size: 1.1rem;
 }
-
-.red {
-  color: rgb(200, 80, 80) !important;
-  border: 1px solid rgba(200, 80, 80, 0.25);
-  padding: 4px 8px;
-  border-radius: 5px;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-}
-
-.blue {
-  color: rgb(80, 80, 200) !important;
-  border: 1px solid rgba(80, 80, 200, 0.25);
-  padding: 4px 8px;
-  border-radius: 5px;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-}
-
-.red.highlight {
-  background-color: rgba(200, 80, 80, 0.3) !important;
-}
-.blue.highlight {
-  background-color: rgba(80, 80, 200, 0.3) !important;
-}
-
-/* ── Inactive / no event message ── */
-
-.inactive {
-  text-align: center;
+.card-manager-item-id {
+  font-family: monospace;
+  font-size: 0.8rem;
   color: var(--text-dim);
-  font-style: italic;
-  width: 100vw;
-  font-family: "Rubik", sans-serif;
-  padding: 20px;
 }
-
-/* ── Webcast iframe (ensure it stays styled) ── */
-
-.webcast-card {
-  background-color: var(--bg-surface);
-  border-radius: 8px;
-  border: 1px solid var(--border-accent);
-  overflow: hidden;
+.card-manager-item-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+}
+.card-manager-item-badge {
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(47, 48, 112, 0.3);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-family: "Rubik", sans-serif;
+}
+.card-manager-item-badge.builtin {
+  background: rgba(60, 180, 100, 0.2);
+  color: rgb(80, 200, 120);
+}
+.card-manager-item-actions {
+  display: flex;
+  gap: 4px;
+}
+.card-manager-item-actions button {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: all 0.12s;
+  font-family: "Rubik", sans-serif;
+}
+.card-manager-item-actions button:hover {
+  background: var(--accent-hover);
+  color: var(--text-primary);
+}
+.card-manager-item-delete:hover {
+  background: rgba(200, 50, 50, 0.2) !important;
+  color: rgb(220, 80, 80) !important;
+}
+.card-manager-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
-
-.webcast-card iframe {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-}
-
-/* ── le-controls label inputs need font for the hex span ── */
-
-#leHex {
-  font-family: "Rubik", sans-serif;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  min-width: 58px;
-}
-/* ── Profile Switcher (header) ── */
-
-.profile-switcher {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin: 0 auto 0 1rem;
-}
-
-.profile-btn {
-  font-family: "Rubik", sans-serif;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
+.card-manager-actions button {
+  flex: 1;
+  padding: 6px 12px;
   border-radius: 6px;
-  padding: 4px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-muted);
   cursor: pointer;
-  transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-  white-space: nowrap;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.8rem;
+  transition: all 0.15s;
 }
-
-.profile-btn:hover {
+.card-manager-actions button:hover {
   background: var(--accent-hover);
   color: var(--text-primary);
   border-color: var(--border-accent);
 }
 
-.profile-btn-active {
-  background: var(--accent) !important;
-  color: #fff !important;
-  border-color: transparent !important;
+/* ─── Developer Card Modal ──────────────────────────────────────────────── */
+
+.dev-card-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.78);
+  display: none;
+  z-index: 1001;
+  align-items: center;
+  justify-content: center;
+}
+.dev-card-modal.active {
+  display: flex;
 }
 
-/* ── Statbotics Section ── */
-
-#statbotics-section {
-  height: 100%;
-  min-height: 0;
+.dev-card-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 40px);
+  max-height: 90vh;
+  width: calc(100% - 40px);
+  max-width: 1200px;
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow-y: auto;
-  box-sizing: border-box;
+  border-radius: 12px;
+  overflow: hidden;
 }
-
-.statbotics-shell {
-  padding: 2px 2px 12px 2px;
-  margin: 6px;
-  overflow-y: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  font-family: "Rubik", sans-serif;
-}
-
-.statbotics-body {
-  flex: 1;
-  padding: 8px 12px 14px;
-  overflow-y: auto;
-  font-family: "Rubik", sans-serif;
-}
-
-.statbotics-loading {
-  color: var(--text-dim);
-  font-size: 0.85rem;
-  text-align: center;
-  padding: 20px;
-}
-
-.statbotics-error {
-  color: rgb(220, 80, 80);
-  font-size: 0.85rem;
-  padding: 14px;
-  text-align: center;
-}
-
-.statbotics-hint {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  margin-top: 4px;
-}
-
-.sb-header-team {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0 0 12px 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.sb-team-num {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.3px;
-  font-family: "Rubik", sans-serif;
-}
-
-.sb-year-badge {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 99px;
-  padding: 2px 7px;
-  font-family: "Rubik", sans-serif;
-}
-
-.sb-section-title {
-  font-size: 0.68rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  margin-bottom: 8px;
-}
-
-.sb-epa-row {
-  margin-bottom: 10px;
-}
-
-.sb-epa-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sb-epa-val {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-  letter-spacing: -1px;
-}
-
-.sb-epa-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.sb-epa-sub {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-}
-
-.sb-breakdown {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.sb-breakdown-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 7px 4px;
-  gap: 3px;
-}
-
-.sb-breakdown-val {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.sb-breakdown-val.auto {
-  color: rgb(100, 180, 255);
-}
-.sb-breakdown-val.teleop {
-  color: rgb(130, 220, 140);
-}
-.sb-breakdown-val.endgame {
-  color: rgb(255, 190, 70);
-}
-
-.sb-breakdown-label {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.sb-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 10px 0 10px;
-}
-
-.sb-stat-row {
+.dev-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.82rem;
-  padding: 5px 0;
+  padding: 12px 20px;
+  background-color: var(--bg-raised);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
-
-.sb-stat-row:last-of-type {
-  border-bottom: none;
-}
-
-.sb-label {
-  color: var(--text-muted);
-}
-.sb-value {
-  color: var(--text-primary);
+.dev-card-title {
+  font-family: "Rubik", sans-serif;
+  font-size: 1rem;
   font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
 }
-.sb-accent {
-  color: var(--accent);
-  filter: brightness(1.4);
-}
-
-.sb-footer {
-  margin-top: 12px;
-  text-align: center;
-}
-
-.sb-link {
-  font-size: 0.72rem;
+.dev-card-close {
+  background: none;
+  border: none;
   color: var(--text-dim);
-  text-decoration: none;
-  transition: color 0.15s;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px;
 }
-
-.sb-link:hover {
+.dev-card-close:hover {
   color: var(--text-primary);
 }
 
-/* ── Settings: profile button row ── */
-.settings-field > .savebutton {
+.dev-card-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+.dev-card-left {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   min-width: 0;
+}
+.dev-card-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  border-left: 1px solid var(--border);
+  min-width: 0;
+}
+.dev-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dev-card-field label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: "Rubik", sans-serif;
+}
+.dev-card-field input,
+.dev-card-field textarea {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+.dev-card-field textarea {
+  font-family: "Courier New", monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  tab-size: 2;
+}
+.dev-card-field input:focus,
+.dev-card-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.dev-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+}
+.dev-card-actions button {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: none;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.dev-card-save {
+  background: var(--accent);
+  color: white;
+}
+.dev-card-save:hover {
+  background: var(--accent-hover);
+}
+.dev-card-test {
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.dev-card-test:hover {
+  background: var(--accent-hover);
+  border-color: var(--border-accent);
+}
+
+.dev-card-preview-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  font-family: "Rubik", sans-serif;
+}
+.dev-card-sandbox {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-base);
+  width: 100%;
+  min-height: 200px;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .dev-card-body {
+    flex-direction: column;
+  }
+  .dev-card-right {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    min-height: 300px;
+  }
+  .dev-card-sandbox {
+    min-height: 250px;
+  }
+  .le-palette {
+    width: 140px;
+  }
+  .le-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .le-header-left,
+  .le-header-right {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  .time-display {
+    font-size: 0.85rem;
+  }
+  .profile-switcher {
+    margin: 0;
+  }
+  .title {
+    font-size: 1.3rem;
+  }
+  .settingscontainer {
+    width: 95%;
+  }
+  .le-palette {
+    width: 120px;
+  }
+  .le-palette-item {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+  }
+  .le-canvas {
+    padding: 8px;
+  }
+  .layout-grid {
+    min-height: 200px;
+  }
 }
