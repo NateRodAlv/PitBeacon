@@ -10,6 +10,9 @@ import { FallbackCard } from "./src/cards/fallbackCard.js";
 import { DeveloperCardRuntime } from "./src/cards/developerCardRuntime.js";
 import { DataSourceManager } from "./src/data/sources.js";
 import { LayoutRenderer } from "./src/ui/layoutRenderer.js";
+import { DocsModal } from "./src/ui/docsModal.js"
+
+const docsModal = new DocsModal();
 
 // Audio files
 const audioFiles = {
@@ -506,23 +509,12 @@ function setupListeners() {
     testDateInput.style.display = testModeCheckbox.checked ? "block" : "none";
   });
 
-  // Visual Card Builder
-  document.getElementById("visualBuilderBtn")?.addEventListener("click", () => {
-    // Import and open the visual builder
-    import("./src/ui/visualCardBuilder.js")
-      .then((module) => {
-        const builder = new module.VisualCardBuilder(
-          registry,
-          sdk,
-          devCardRuntime,
-        );
-        builder.openBuilder();
-      })
-      .catch((err) => {
-        console.error("Failed to load Visual Card Builder:", err);
-        displayMessage("Failed to load Visual Card Builder", "error");
-      });
+
+
+  document.getElementById("devEditorGuideBtn").addEventListener("click", () => {
+    docsModal.open();
   });
+
   savebutton.addEventListener("click", () => {
     config.teamNumber = document.getElementById("teamNumber").value;
     config.tbaapikey = document.getElementById("tbaapikey").value;
@@ -961,7 +953,7 @@ function renderLayoutEditor(modal) {
   // ─── Export ────────────────────────────────────────────────────────────
   shell.querySelector("#leExport").addEventListener("click", () => {
     const exportData = {
-      version: "26.6.7",
+      version: "26.7.15",
       gridCols: config.gridCols,
       gridRows: config.gridRows,
       layout: config.layout,
@@ -1337,7 +1329,7 @@ renderLayout();
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionTag = document.getElementById("version");
-  if (versionTag) versionTag.textContent = "Version 26.6.7";
+  if (versionTag) versionTag.textContent = "Version 26.7.15";
 });
 
 // ─── Modal Closes ─────────────────────────────────────────────────────────
