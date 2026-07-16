@@ -18,10 +18,8 @@ export class DeveloperCardRuntime {
 .dev-card-content p { color: var(--text-muted); }
 #fetchBtn { background: var(--accent); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
 #fetchBtn:hover { background: var(--accent-hover); }`,
-      js: `// Access SDK via window.__pitbeaconSDK
-const sdk = window.__pitbeaconSDK;
+      js: `const sdk = window.__pitbeaconSDK;
 
-// Subscribe to state changes
 sdk.onStateChange((state) => {
     const el = document.getElementById('stateDisplay');
     if (el) el.textContent = state.currentMatch ? 
@@ -29,7 +27,6 @@ sdk.onStateChange((state) => {
         'No active match';
 });
 
-// Fetch data on button click
 document.getElementById('fetchBtn')?.addEventListener('click', async function() {
     try {
         const data = await sdk.fetchDataSource('currentMatches');
@@ -66,8 +63,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
 
     if (existing && existing.defSignature === defSignature) {
       if (existing.element === element && document.contains(existing.iframe)) {
-        // Same container, same code, still mounted — just push the new state
-        // into the live sandbox. This is the common case (state-only refresh).
+        // Same container, same code, still mounted; push the new state into the live sandbox.
         try {
           existing.iframe.contentWindow.postMessage(
             { type: "stateUpdate", state },
@@ -80,10 +76,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       }
 
       if (document.contains(existing.iframe)) {
-        // Same card, same code, but the caller handed us a *different*
-        // container this time (e.g. the layout was rebuilt). Re-parent the
-        // already-running iframe instead of creating a second one — this is
-        // what keeps loop counters / variables alive across a full re-render.
+        // Same card, same code, but the caller handed us a different container; reuse the iframe to preserve state.
         element.innerHTML = "";
         element.appendChild(existing.iframe);
         existing.element = element;
@@ -97,13 +90,10 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
         }
         return;
       }
-      // Otherwise the old iframe is gone from the DOM already — fall through
-      // to a full rebuild below.
+      // Otherwise the old iframe is gone from the DOM; fall through to a full rebuild below.
     }
 
-    // Different code, or no live sandbox for this id — tear down whatever
-    // previously existed for this id (wherever it currently lives) before
-    // creating a fresh one, so we never end up with two running at once.
+    // Different code, or no live sandbox for this id; tear down the previous instance before creating a fresh one.
     if (existing && existing.cleanup) {
       existing.cleanup();
     }
@@ -117,7 +107,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
     iframe.sandbox = "allow-scripts allow-same-origin";
     element.appendChild(iframe);
 
-    // Get theme colors from parent
+    // Get theme colors from the parent page
     const computedStyle = getComputedStyle(document.documentElement);
     const themeColors = {
       "--bg-surface":
@@ -147,7 +137,6 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
     };
 
     // Build the sandbox document with theme colors injected
-    // Use a single SDK variable and pass it to user code
     const doc = /*html*/ `
 <!DOCTYPE html>
 <html>

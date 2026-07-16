@@ -1,4 +1,3 @@
-// src/data/sources.js
 export class DataSourceManager {
     constructor(config, stateManager) {
         this._config = config;

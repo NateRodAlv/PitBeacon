@@ -1,4 +1,3 @@
-// src/core/state.js
 export class StateManager {
     constructor(initialState = {}) {
         this._state = { ...initialState };

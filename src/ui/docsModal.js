@@ -1,4 +1,3 @@
-// Somewhere reusable, e.g. src/ui/docsModal.js
 export class DocsModal {
   constructor() {
     this._mdLibPromise = null;

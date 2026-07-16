@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Rubik:wght@400;500;600;700&display=swap");
 
-/* ─── Themes ────────────────────────────────────────────────────────────── */
+/* Themes */
 
 :root,
 [data-theme="dark"] {
@@ -59,7 +59,7 @@
   font-family: "Rubik", sans-serif;
 }
 
-/* ─── Scrollbars ── */
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -89,7 +89,7 @@ html {
   overflow: auto;
 }
 
-/* ─── Header ────────────────────────────────────────────────────────────── */
+/* Header */
 
 .header {
   width: 100%;
@@ -137,7 +137,7 @@ html {
   letter-spacing: 0.06em;
 }
 
-/* ─── Header Buttons ────────────────────────────────────────────────────── */
+/* Header buttons */
 
 .buttons {
   display: flex;
@@ -232,7 +232,7 @@ html {
   opacity: 0.65;
 }
 
-/* ─── Profile Switcher ──────────────────────────────────────────────────── */
+/* Profile switcher */
 
 .profile-switcher {
   display: flex;
@@ -266,7 +266,7 @@ html {
   border-color: transparent !important;
 }
 
-/* ─── Settings ───────────────────────────────────────────────────────────── */
+/* Settings */
 
 .settingscontainer {
   position: fixed;
@@ -421,7 +421,7 @@ input[type="checkbox"]:checked::before {
   background-color: var(--accent-hover);
 }
 
-/* ─── Toasts ─────────────────────────────────────────────────────────────── */
+/* Toasts */
 
 .errorcontainer {
   position: fixed;
@@ -470,7 +470,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-primary);
 }
 
-/* ─── Visual Card Builder ───────────────────────────────────────────────── */
+/* Visual card builder */
 
 .visual-builder-modal {
   position: fixed;
@@ -525,7 +525,7 @@ input[type="checkbox"]:checked::before {
   overflow: hidden;
   min-height: 0;
 }
-/* ─── Visual Builder Tabs ───────────────────────────────────────────────── */
+/* Visual builder tabs */
 
 .vb-tabs {
   display: flex;
@@ -573,7 +573,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
 }
 
-/* ─── Visual Elements in Canvas ──────────────────────────────────────────── */
+/* Visual elements in canvas */
 
 .vb-element {
   background: var(--bg-raised);
@@ -666,7 +666,7 @@ input[type="checkbox"]:checked::before {
   padding: 4px 0;
 }
 
-/* ─── Logic Blocks ───────────────────────────────────────────────────────── */
+/* Logic blocks */
 
 .vb-logic-workspace {
   min-height: 200px;
@@ -791,7 +791,7 @@ input[type="checkbox"]:checked::before {
   font-family: "Rubik", sans-serif;
 }
 
-/* ─── Preview Tab ────────────────────────────────────────────────────────── */
+/* Preview tab */
 
 .vb-preview-full {
   display: flex;
@@ -827,7 +827,7 @@ input[type="checkbox"]:checked::before {
   min-height: 300px;
 }
 
-/* ─── Small Button ───────────────────────────────────────────────────────── */
+/* Small button */
 
 .vb-btn-sm {
   padding: 4px 12px;
@@ -839,7 +839,7 @@ input[type="checkbox"]:checked::before {
   gap: 4px;
 }
 
-/* ─── Responsive Adjustments ────────────────────────────────────────────── */
+/* Responsive adjustments */
 
 @media (max-width: 768px) {
   .vb-body {
@@ -867,7 +867,7 @@ input[type="checkbox"]:checked::before {
     white-space: nowrap;
   }
 }
-/* ─── Sidebar ────────────────────────────────────────────────────────────── */
+/* Sidebar */
 
 .vb-sidebar {
   width: 280px;
@@ -1110,7 +1110,7 @@ input[type="checkbox"]:checked::before {
 .vb-logic-block.drop-after {
   box-shadow: 0 3px 0 0 var(--accent);
 }
-/* ─── Block Palette ──────────────────────────────────────────────────────── */
+/* Block palette */
 
 .vb-block-palette {
   flex: 1;
@@ -1169,7 +1169,7 @@ input[type="checkbox"]:checked::before {
   text-overflow: ellipsis;
 }
 
-/* ─── Canvas ─────────────────────────────────────────────────────────────── */
+/* Canvas */
 
 .vb-canvas {
   flex: 1;
@@ -1198,7 +1198,7 @@ input[type="checkbox"]:checked::before {
   padding: 16px;
 }
 
-/* ─── Drop Zone ──────────────────────────────────────────────────────────── */
+/* Drop zone */
 
 .vb-drop-zone {
   min-height: 200px;
@@ -1230,7 +1230,7 @@ input[type="checkbox"]:checked::before {
   font-family: "Rubik", sans-serif;
 }
 
-/* ─── Block in Canvas ────────────────────────────────────────────────────── */
+/* Block in canvas */
 
 .vb-block {
   background: var(--bg-raised);
@@ -1291,7 +1291,7 @@ input[type="checkbox"]:checked::before {
   padding: 4px 0 2px 0;
 }
 
-/* ─── Block Settings ────────────────────────────────────────────────────── */
+/* Block settings */
 
 .vb-block-settings {
   flex: 1;
@@ -1304,7 +1304,7 @@ input[type="checkbox"]:checked::before {
   gap: 6px;
 }
 
-/* ─── Buttons ────────────────────────────────────────────────────────────── */
+/* Buttons */
 
 .vb-btn {
   padding: 6px 14px;
@@ -1345,7 +1345,7 @@ input[type="checkbox"]:checked::before {
   border-color: var(--border-accent);
 }
 
-/* ─── Docs Modal ───────────────────────────────────────────────────────── */
+/* Docs modal */
 
 .docs-modal {
   position: fixed;
@@ -1400,7 +1400,7 @@ input[type="checkbox"]:checked::before {
   margin: 0;
 }
 
-/* ─── Preview Modal ──────────────────────────────────────────────────────── */
+/* Preview modal */
 
 .vb-preview-modal {
   position: fixed;
@@ -1448,7 +1448,7 @@ input[type="checkbox"]:checked::before {
   padding: 16px;
 }
 
-/* ─── Responsive ─────────────────────────────────────────────────────────── */
+/* Responsive */
 
 @media (max-width: 768px) {
   .vb-body {
@@ -1472,7 +1472,7 @@ input[type="checkbox"]:checked::before {
     width: calc(100% - 40px);
   }
 }
-/* ─── Match Cards ───────────────────────────────────────────────────────── */
+/* Match cards */
 
 .match-card,
 .upcomingmatch-card {
@@ -1590,7 +1590,7 @@ input[type="checkbox"]:checked::before {
   font-weight: 700;
 }
 
-/* ─── Pit Sections (shared) ────────────────────────────────────────────── */
+/* Pit sections */
 
 .pit-header {
   display: flex;
@@ -1660,7 +1660,7 @@ input[type="checkbox"]:checked::before {
   font-family: "Rubik", sans-serif;
 }
 
-/* ─── Pit Cards ──────────────────────────────────────────────────────────── */
+/* Pit cards */
 
 .pit-card {
   background-color: var(--bg-raised);
@@ -1742,7 +1742,7 @@ input[type="checkbox"]:checked::before {
   color: rgb(240, 100, 100);
 }
 
-/* ─── Status Chips ───────────────────────────────────────────────────────── */
+/* Status chips */
 
 .pit-status-row {
   display: flex;
@@ -1787,7 +1787,7 @@ input[type="checkbox"]:checked::before {
   border-color: rgba(200, 50, 50, 0.3);
 }
 
-/* ─── Flag Toggles ───────────────────────────────────────────────────────── */
+/* Flag toggles */
 
 .flag-toggle {
   appearance: none;
@@ -1819,7 +1819,7 @@ input[type="checkbox"]:checked::before {
   font-weight: bold;
 }
 
-/* ─── Battery ────────────────────────────────────────────────────────────── */
+/* Battery */
 
 .batt-top-row {
   display: flex;
@@ -1879,7 +1879,7 @@ input[type="checkbox"]:checked::before {
   margin: 0;
 }
 
-/* ─── Parts ──────────────────────────────────────────────────────────────── */
+/* Parts */
 
 .parts-grid {
   display: grid;

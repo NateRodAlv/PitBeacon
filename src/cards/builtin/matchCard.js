@@ -17,10 +17,8 @@ export function createMatchCard() {
                 return;
             }
 
-            // Sort matches by predicted_time
             const sorted = [...matches].sort((a, b) => a.predicted_time - b.predicted_time);
             
-            // Find matches that include the user's team
             const teamMatches = sorted.filter(match => 
                 match.alliances.red.team_keys.includes(`frc${teamNumber}`) ||
                 match.alliances.blue.team_keys.includes(`frc${teamNumber}`)
@@ -34,7 +32,6 @@ export function createMatchCard() {
             const container = document.createElement('div');
             container.style.cssText = 'display:flex;flex-direction:column;gap:8px;padding:4px 0;';
 
-            // Check if team is currently in a match (within 5 min before or during)
             let foundActive = false;
             const bufferBefore = 300; // 5 minutes before
             const matchDuration = 150; // 2:30 match duration
@@ -44,7 +41,6 @@ export function createMatchCard() {
                 const matchStartTime = match.predicted_time;
                 const timeUntil = matchStartTime - currentTime;
                 
-                // Check if match is active (within buffer before or during)
                 const isActive = currentTime >= matchStartTime - bufferBefore && 
                                  currentTime <= matchStartTime + matchDuration;
 
@@ -70,7 +66,6 @@ export function createMatchCard() {
                     `;
                     container.appendChild(card);
                     
-                    // Add upcoming matches after this one
                     for (let j = i + 1; j < teamMatches.length; j++) {
                         const upcoming = teamMatches[j];
                         container.appendChild(createUpcomingCard(upcoming, currentTime, teamNumber));
@@ -79,9 +74,7 @@ export function createMatchCard() {
                 }
             }
 
-            // If no active match, show all upcoming matches
             if (!foundActive) {
-                // Only show matches that are in the future
                 const futureMatches = teamMatches.filter(m => m.predicted_time > currentTime);
                 if (futureMatches.length === 0) {
                     container.innerHTML = `<p class="inactive">No upcoming matches for team ${teamNumber}.</p>`;

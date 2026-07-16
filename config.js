@@ -1,4 +1,3 @@
-// config.js - Extended with card and profile schemas
 export const config = {
     teamNumber: 7250,
     tbaapikey: 'YOUR_AUTH_KEY',
@@ -24,7 +23,6 @@ export const config = {
     autoSwapEnabled: false,
     autoSwapInterval: 30,
     
-    // Card registry defaults - built-in cards
     defaultCards: [
         { id: 'webcast-card', label: 'Webcasts', icon: 'device-tv', lockedAspect: 16/11, builtin: true },
         { id: 'pit-notes-card', label: 'Pit Notes', icon: 'notes', builtin: true },
@@ -37,11 +35,9 @@ export const config = {
         { id: 'statbotics-card', label: 'Statbotics', icon: 'chart-bar', builtin: true },
     ],
     
-    // User-registered developer cards (persisted)
     developerCards: {},
 };
 
-// Schema for card definitions
 export const CardSchema = {
     id: 'string',
     label: 'string',
@@ -55,7 +51,6 @@ export const CardSchema = {
     render: 'function?'     // for built-in cards
 };
 
-// Schema for profile definitions
 export const ProfileSchema = {
     name: 'string',
     gridCols: 'number',
@@ -64,7 +59,6 @@ export const ProfileSchema = {
     hiddenCards: 'array',   // cardIds to hide
 };
 
-// Schema for runtime state
 export const StateSchema = {
     currentMatches: 'array|null',
     currentEventData: 'object|null',

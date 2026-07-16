@@ -1,7 +1,4 @@
-// app.js - Main orchestration module
 import { config } from "./config.js";
-
-// Import new architecture modules
 import { StateManager } from "./src/core/state.js";
 import { SDK } from "./src/core/sdk.js";
 import { CardRegistry } from "./src/cards/registry.js";
@@ -10,11 +7,10 @@ import { FallbackCard } from "./src/cards/fallbackCard.js";
 import { DeveloperCardRuntime } from "./src/cards/developerCardRuntime.js";
 import { DataSourceManager } from "./src/data/sources.js";
 import { LayoutRenderer } from "./src/ui/layoutRenderer.js";
-import { DocsModal } from "./src/ui/docsModal.js"
+import { DocsModal } from "./src/ui/docsModal.js";
 
 const docsModal = new DocsModal();
 
-// Audio files
 const audioFiles = {
   alarm1: new Audio("alarm1.mp3"),
   alarm2: new Audio("alarm2.mp3"),
@@ -26,16 +22,14 @@ Object.values(audioFiles).forEach((audio) => {
   audio.onerror = () => console.warn("Audio file failed to load");
 });
 
-// ─── Global State ──────────────────────────────────────────────────────────
-
+// Global state
 const year = new Date().getFullYear();
 let fullDate = new Date();
 let pollingInterval = null;
 let timeUpdateInterval = null;
 
-// ─── Initialize Core Systems ──────────────────────────────────────────────
+// Core setup
 
-// 1. State Manager
 const stateManager = new StateManager({
   currentMatches: null,
   currentEventData: null,
@@ -71,9 +65,6 @@ const renderer = new LayoutRenderer(
   sdk,
 );
 
-// ─── Built-in Cards ────────────────────────────────────────────────────────
-
-// Register built-in cards
 import { createMatchCard } from "./src/cards/builtin/matchCard.js";
 import { createLeaderboardCard } from "./src/cards/builtin/leaderboardCard.js";
 import { createWebcastCard } from "./src/cards/builtin/webcastCard.js";
@@ -92,10 +83,9 @@ registry.register("parts-card", createPartsCard());
 registry.register("checkin-card", createCheckinCard());
 registry.register("statbotics-card", createStatboticsCard());
 
-// Register fallback card
 registry.register("__fallback__", FallbackCard);
 
-// ─── Load Saved State ─────────────────────────────────────────────────────
+// Load saved state
 
 function loadSettings() {
   const savedTeamNumber = localStorage.getItem("teamNumber");
@@ -260,7 +250,7 @@ function loadCustomColors() {
   } catch {}
 }
 
-// ─── Profile Management ────────────────────────────────────────────────────
+// Profile management
 
 function captureCurrentLayoutSnapshot() {
   return {
@@ -354,7 +344,7 @@ function refreshProfileUI() {
   });
 }
 
-// ─── Auto-Swap ─────────────────────────────────────────────────────────────
+// Auto-swap
 
 let _autoSwapTimer = null;
 
@@ -373,13 +363,13 @@ function restartAutoSwap() {
   }, config.autoSwapInterval * 1000);
 }
 
-// ─── Render Layout ────────────────────────────────────────────────────────
+// Render layout
 
 function renderLayout() {
   renderer.render(config, document.getElementById("container"));
 }
 
-// ─── Data Fetching ─────────────────────────────────────────────────────────
+// Data fetching
 
 async function getData() {
   try {
@@ -397,7 +387,7 @@ async function getData() {
   }
 }
 
-// ─── UI Helpers ────────────────────────────────────────────────────────────
+// UI helpers
 
 let popupCounter = 0;
 const popups = {};
@@ -495,7 +485,7 @@ function checkMatchAlert(state) {
   }
 }
 
-// ─── Setup Listeners ──────────────────────────────────────────────────────
+// Setup listeners
 
 function setupListeners() {
   const errorContainer = document.getElementById("errorcontainer");
@@ -637,7 +627,7 @@ function setupListeners() {
   });
 }
 
-// ─── Layout Editor ────────────────────────────────────────────────────────
+// Layout editor
 
 // Layout editor state
 let layoutEditorState = {
@@ -649,7 +639,7 @@ let layoutEditorState = {
 
 function openLayoutEditor() {
   const modal = document.getElementById("layoutEditorModal");
-  // Clear any existing content
+  // Clear existing content
   modal.innerHTML = "";
   modal.classList.add("active");
   layoutEditorState.modal = modal;
@@ -752,7 +742,7 @@ function renderLayoutEditor(modal) {
   modal.appendChild(shell);
   layoutEditorState.shell = shell;
 
-  // ─── Grid controls ──────────────────────────────────────────────────────
+  // Grid controls
   const colsInput = shell.querySelector("#leGridCols");
   const rowsInput = shell.querySelector("#leGridRows");
   const grid = shell.querySelector("#leGrid");
@@ -773,13 +763,13 @@ function renderLayoutEditor(modal) {
   colsInput.addEventListener("change", updateGrid);
   rowsInput.addEventListener("change", updateGrid);
 
-  // ─── Color Controls ──────────────────────────────────────────────────
+  // Color controls
   const colorEl = shell.querySelector("#leColorEl");
   const colorPick = shell.querySelector("#leColorPick");
   const colorHex = shell.querySelector("#leColorHex");
   const colorReset = shell.querySelector("#leColorReset");
 
-  // Helper to convert rgb to hex
+  // Convert rgb to hex
   function rgbToHex(rgb) {
     const match = rgb.match(/\d+/g);
     if (!match) return rgb;
@@ -815,7 +805,7 @@ function renderLayoutEditor(modal) {
   });
 
   colorReset.addEventListener("click", () => {
-    // Reset the selected color to its default based on theme
+    // Reset the selected color to the theme default
     const theme = config.theme || "dark";
     const defaultColors = {
       dark: {
@@ -873,7 +863,7 @@ function renderLayoutEditor(modal) {
     }
   });
 
-  // ─── Close ─────────────────────────────────────────────────────────────
+  // Close
   shell.querySelector("#leClose").addEventListener("click", () => {
     closeLayoutEditor();
   });
@@ -884,7 +874,7 @@ function renderLayoutEditor(modal) {
     }
   });
 
-  // ─── Remove card ──────────────────────────────────────────────────────
+  // Remove card
   shell.querySelectorAll(".le-remove-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -896,7 +886,7 @@ function renderLayoutEditor(modal) {
     });
   });
 
-  // ─── Drag and drop from palette ──────────────────────────────────────
+  // Drag and drop from the palette
   const paletteItems = shell.querySelectorAll(
     ".le-palette-item:not(.in-layout)",
   );
@@ -944,7 +934,7 @@ function renderLayoutEditor(modal) {
     renderLayoutEditor(modal);
   });
 
-  // ─── Drag to reposition cards ────────────────────────────────────────
+  // Drag to reposition cards
   setupCardDrag(grid);
 
   // ─── Resize cards ─────────────────────────────────────────────────────

@@ -1,4 +1,3 @@
-// src/cards/registry.js
 export class CardRegistry {
     constructor() {
         this._cards = new Map();

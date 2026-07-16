@@ -8,7 +8,6 @@ export class LayoutRenderer {
         this._sdk = sdk;
         this._renderedCards = new Map();
         
-        // Hook up global render trigger
         window._pitbeaconRender = () => this.render(
             window._pitbeaconConfig || {},
             document.getElementById('container')
@@ -25,8 +24,6 @@ render(config, container) {
     const gridRows = config.gridRows || config.gridSize || 3;
     const layout = config.layout || {};
     const hiddenCards = config.hiddenSections || [];
-
-    // Validate layout
     const validation = this._validator.validate(layout, gridCols, gridRows);
     if (validation.errors.length > 0) {
         console.warn('Layout validation errors:', validation.errors);
@@ -35,10 +32,8 @@ render(config, container) {
         console.warn('Layout warnings:', validation.warnings);
     }
 
-    // Use validated layout
     const validatedLayout = validation.layout;
 
-    // Build grid
     container.style.display = 'grid';
     container.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
     container.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
@@ -48,13 +43,10 @@ render(config, container) {
     container.style.overflow = 'auto';
     container.style.background = 'transparent';
 
-    // Track which cards are currently rendered
     const renderedIds = new Set();
     const state = this._state.getState();
 
-    // Render each card in the layout
     for (const [cardId, pos] of Object.entries(validatedLayout)) {
-        // Skip hidden cards
         if (hiddenCards.includes(cardId)) continue;
 
         const def = this._registry.get(cardId);
@@ -65,7 +57,6 @@ render(config, container) {
 
         renderedIds.add(cardId);
 
-        // Get or create card element
         let element = this._renderedCards.get(cardId);
         if (!element) {
             element = document.createElement('div');
@@ -78,12 +69,10 @@ render(config, container) {
             this._renderedCards.set(cardId, element);
         }
 
-        // Position the card
         element.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
         element.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
         element.style.display = '';
 
-        // Render card content
         if (def.render) {
             try {
                 def.render(element, state, this._sdk, cardId);

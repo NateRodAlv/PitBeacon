@@ -1,4 +1,3 @@
-// src/cards/validator.js
 export class LayoutValidator {
     constructor(registry) {
         this._registry = registry;
@@ -19,7 +18,6 @@ export class LayoutValidator {
             // Check if card exists in registry
             if (!this._registry.has(cardId)) {
                 warnings.push(`Card "${cardId}" not found in registry`);
-                // Inject fallback
                 const replacementId = `__fallback_${cardId}`;
                 layout[replacementId] = { ...pos };
                 delete layout[cardId];
