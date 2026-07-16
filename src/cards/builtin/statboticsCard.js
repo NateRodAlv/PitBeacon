@@ -6,7 +6,7 @@ export function createStatboticsCard() {
     icon: "chart-bar",
     builtin: true,
     render: async (element, state, sdk) => {
-      const teamNumber = sdk.getTeamNumber();
+      const teamNumber = sdk.getConfig('teamNumber');
       const year = new Date().getFullYear();
       const eventKey = state.currentEventData?.key;
       const wrapper = element.querySelector(".statbotics-shell");

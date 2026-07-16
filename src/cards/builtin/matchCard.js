@@ -7,15 +7,38 @@ export function createMatchCard() {
         builtin: true,
         render: (element, state, sdk) => {
             const matches = state.currentMatches || [];
-            const teamNumber = sdk.getTeamNumber();
+            const teamNumber = sdk.getConfig('teamNumber');
             const currentTime = Math.floor(state.fullDate?.getTime() / 1000 || Date.now() / 1000);
 
-            element.innerHTML = '';
-            
-            if (!matches.length) {
-                element.innerHTML = `<p class="inactive">No matches found.</p>`;
-                return;
+            if (!element._matchCardTimer) {
+                element._matchCardTimer = setInterval(() => {
+                    if (element.isConnected) {
+                        const latestState = sdk.getState();
+                        if (latestState?.fullDate) {
+                            const currentElement = element;
+                            currentElement.innerHTML = '';
+                            renderMatchCardContent(currentElement, latestState, sdk);
+                        }
+                    }
+                }, 1000);
             }
+
+            renderMatchCardContent(element, state, sdk);
+        }
+    };
+}
+
+function renderMatchCardContent(element, state, sdk) {
+    const matches = state.currentMatches || [];
+    const teamNumber = sdk.getConfig('teamNumber');
+    const currentTime = Math.floor(state.fullDate?.getTime() / 1000 || Date.now() / 1000);
+
+    element.innerHTML = '';
+    
+    if (!matches.length) {
+        element.innerHTML = `<p class="inactive">No matches found.</p>`;
+        return;
+    }
 
             const sorted = [...matches].sort((a, b) => a.predicted_time - b.predicted_time);
             
@@ -86,8 +109,6 @@ export function createMatchCard() {
             }
 
             element.appendChild(container);
-        }
-    };
 }
 
 // Helper: Render team alliances with user team highlighted

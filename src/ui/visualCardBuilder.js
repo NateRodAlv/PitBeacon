@@ -581,7 +581,7 @@ export class VisualCardBuilder {
         ],
         generateJS: (block) => {
           const tgt = escapeJsString(block.fields?.targetVar || "teamNum");
-          return `vars['${tgt}'] = sdk.getTeamNumber();`;
+          return `vars['${tgt}'] = sdk.getConfig('teamNumber');`;
         },
       },
 

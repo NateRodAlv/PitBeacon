@@ -7,7 +7,7 @@ export function createLeaderboardCard() {
         builtin: true,
         render: (element, state, sdk) => {
             const rankings = state.currentRankings || [];
-            const teamNumber = sdk.getTeamNumber();
+            const teamNumber = sdk.getConfig('teamNumber');
 
             // Clear element and add a wrapper with background
             element.innerHTML = '';

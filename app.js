@@ -432,13 +432,15 @@ function updateTimeDisplay() {
         now.getMinutes(),
         now.getSeconds(),
       );
-      stateManager.update({ fullDate });
     }
   }
+
   const displayDate = isTestMode ? fullDate : new Date();
   timeDisplay.textContent = displayDate.toLocaleTimeString("en-US", {
     hour12: true,
   });
+
+  stateManager.update({ fullDate: displayDate });
 
   const state = stateManager.getState();
   if (state.currentMatches && config.matchAlarmToggle) {
