@@ -3,7 +3,7 @@ name: Deploy Branch Preview
 on:
   push:
     branches:
-      - test        # Triggers instantly when you push to the test branch
+      - test
 
 permissions:
   contents: write
@@ -15,9 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Creates a file to disable Jekyll so your subfolder loads correctly
+      - name: Disable Jekyll
+        run: touch .nojekyll
+
       - name: Deploy Preview to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: '.'         # Deploys your root files
-          destination_dir: test    # Puts the preview at: username.github.io/repo/test/
+          publish_dir: '.' 
+          destination_dir: test    # Keeps it at /test
+          keep_files: true         # Prevents overwriting your main site
