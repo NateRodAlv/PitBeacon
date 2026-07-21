@@ -1,0 +1,19 @@
+name: Deploy Branch Preview
+
+on:
+  push:
+    branches:
+      - test       
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Preview to GitHub Pages
+        uses: rossjrw/preview-pages-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          source-dir: '.'  
