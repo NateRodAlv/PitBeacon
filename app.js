@@ -321,7 +321,7 @@ function refreshProfileUI() {
   if (sel) {
     const current = sel.value || config.activeProfileName;
     sel.innerHTML = `<option value="Default">Default</option>`;
-    Object.keys(config.layoutProfiles).forEach((name) => {
+    Object.keys(config.layoutProfiles).filter(name => name !== "Default").forEach((name) => {
       const opt = document.createElement("option");
       opt.value = name;
       opt.textContent = name;
@@ -592,8 +592,8 @@ function setupListeners() {
   document.getElementById("deleteProfileBtn")?.addEventListener("click", () => {
     const sel = document.getElementById("profileSelect");
     const name = sel.value;
-    if (!name || name === "Default") {
-      displayMessage("Cannot delete the Default profile.", "error");
+    if (Object.keys(config.layoutProfiles).length === 0) {
+      displayMessage("Cannot delete the last profile.", "error");
       return;
     }
     if (!confirm(`Delete profile "${name}"?`)) return;
