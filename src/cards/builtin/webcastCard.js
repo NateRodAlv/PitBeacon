@@ -12,6 +12,8 @@ export function createWebcastCard() {
             sdk.updateCard(element, 10000, (elem, latestState, sdk) => {
                 createWebcastCard();
             })
+
+            const iframeCache = element._webcastIframeCache || (element._webcastIframeCache = new Map());
             
             // Clear element and add wrapper with background
             element.innerHTML = '';
@@ -48,13 +50,19 @@ export function createWebcastCard() {
                     const card = document.createElement('div');
                     card.className = 'webcast-card';
                     card.style.cssText = 'border-radius:8px;border:1px solid var(--border-accent);overflow:hidden;';
-                    const iframe = document.createElement('iframe');
-                    iframe.src = webcastUrl;
-                    iframe.width = '100%';
-                    iframe.height = '225';
-                    iframe.frameborder = '0';
-                    iframe.allowfullscreen = true;
-                    iframe.style.cssText = 'display:block;width:100%;aspect-ratio:16/9;';
+
+                    let iframe = iframeCache.get(webcastUrl);
+                    if (!iframe) {
+                        iframe = document.createElement('iframe');
+                        iframe.src = webcastUrl;
+                        iframe.width = '100%';
+                        iframe.height = '225';
+                        iframe.frameborder = '0';
+                        iframe.allowfullscreen = true;
+                        iframe.style.cssText = 'display:block;width:100%;aspect-ratio:16/9;';
+                        iframeCache.set(webcastUrl, iframe);
+                    }
+
                     card.appendChild(iframe);
                     container.appendChild(card);
                 }
