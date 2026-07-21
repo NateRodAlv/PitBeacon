@@ -1,12 +1,12 @@
 name: Deploy Branch Preview
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize] # Runs when you open/update a PR from test to main
+  push:
+    branches:
+      - test        # Triggers instantly when you push to the test branch
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   deploy-preview:
@@ -15,9 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Deploys your preview to a subfolder like: your-username.github.io/your-repo/pr-preview/pr-1/
-      - name: Deploy PR Preview to GitHub Pages
-        uses: rossjrw/pr-preview-action@v1
+      - name: Deploy Preview to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          source-dir: '.' 
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: '.'         # Deploys your root files
+          destination_dir: test    # Puts the preview at: username.github.io/repo/test/
