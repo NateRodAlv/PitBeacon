@@ -262,6 +262,10 @@ function captureCurrentLayoutSnapshot() {
 }
 
 function saveCurrentAsProfile(name) {
+  if (name === "Default") {
+    delete config.layoutProfiles["Default"];
+    localStorage.setItem("layoutProfiles", JSON.stringify(config.layoutProfiles));
+  }
   const snapshot = captureCurrentLayoutSnapshot();
   config.layoutProfiles[name] = snapshot;
   config.activeProfileName = name;
@@ -328,7 +332,7 @@ function refreshProfileUI() {
 
   const switcher = document.getElementById("profileSwitcher");
   if (!switcher) return;
-  const names = ["Default", ...Object.keys(config.layoutProfiles)];
+  const names = [...Object.keys(config.layoutProfiles)];
   if (names.length <= 1) {
     switcher.innerHTML = "";
     return;
