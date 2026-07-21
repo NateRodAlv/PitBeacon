@@ -1,9 +1,12 @@
 name: Deploy Branch Preview
 
 on:
-  push:
-    branches:
-      - test       
+  pull_request:
+    types: [opened, reopened, synchronize] # Runs when you open/update a PR from test to main
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   deploy-preview:
@@ -12,8 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy Preview to GitHub Pages
-        uses: rossjrw/preview-pages-action@v1
+      # Deploys your preview to a subfolder like: your-username.github.io/your-repo/pr-preview/pr-1/
+      - name: Deploy PR Preview to GitHub Pages
+        uses: rossjrw/pr-preview-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          source-dir: '.'  
+          source-dir: '.' 
