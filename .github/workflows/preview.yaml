@@ -6,7 +6,13 @@ on:
       - test
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   deploy-preview:
@@ -15,14 +21,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Creates a file to disable Jekyll so your subfolder loads correctly
-      - name: Disable Jekyll
-        run: touch .nojekyll
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
-      - name: Deploy Preview to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: '.' 
-          destination_dir: test    # Keeps it at /test
-          keep_files: true         # Prevents overwriting your main site
+      # Creates the subfolder structure right inside the runner before uploading
+      - name: Structure Preview Folder
+        run: |
+          mkdir -p _site/test
+          cp -r * _site/test/ || true
+          rm -rf _site/test/_site  # Prevent infinite nesting
+          touch _site/.nojekyll
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
