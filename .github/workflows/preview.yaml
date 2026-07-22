@@ -1,19 +1,37 @@
-name: Deploy Branch Preview
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - test       
+    branches: ["main"] # Triggers on pushes to the main branch
+  workflow_dispatch:   # Allows manual execution from the Actions tab
+
+permissions:
+  contents: read       # Required to clone the repository
+  pages: write        # Required to deploy to GitHub Pages
+  id-token: write      # Required to verify the deployment source
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
-  deploy-preview:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Deploy Preview to GitHub Pages
-        uses: rossjrw/preview-pages-action@v1
+      # (Optional) If you have a framework, add your compilation/build steps here
+      # Example: npm ci && npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          source-dir: '.'  
+          path: '.' # Change to your build output folder (e.g., 'dist' or 'build') if applicable
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
