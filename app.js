@@ -381,6 +381,13 @@ function renderLayout() {
   renderer.render(config, document.getElementById("container"));
 }
 
+function hasRealTbaKey() {
+  const key = (config.tbaapikey || "").toString().trim();
+  if (!key) return false;
+  const normalized = key.toLowerCase();
+  return !["your_auth_key", "your auth key", "tba key", "your-api-key", "your api key"].includes(normalized);
+}
+
 async function fetchWithRetry(url, options = {}, retries = 2) {
   let lastError = null;
 
@@ -415,8 +422,16 @@ const TEAM_SUMMARY_COOLDOWN_MS = 60 * 1000;
 async function fetchTeamSummaryData(teamNumber, eventKey) {
   const year = new Date().getFullYear();
 
-  if (!teamNumber) {
-    return null;
+  if (!teamNumber || !hasRealTbaKey()) {
+    return {
+      teamSummary: {
+        eventRank: "–",
+        eventRecord: { wins: 0, losses: 0, ties: 0 },
+        winRate: "–",
+        seasonEventCount: 0,
+        eventName: stateManager.getState().currentEventData?.name || null,
+      },
+    };
   }
 
   const currentState = stateManager.getState();

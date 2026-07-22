@@ -38,10 +38,21 @@ export class SDK {
     element.selfRefresh = true;
     if (!element || typeof interval !== "number" || interval <= 0) return;
 
+    const sameConfig =
+      element._cardTimer &&
+      element._cardTimerInterval === interval &&
+      element._cardRefreshCallback === refreshCallback &&
+      element._cardCompareFn === compareFn;
+
+    if (sameConfig) return;
+
     if (element._cardTimer) {
       clearInterval(element._cardTimer);
     }
 
+    element._cardTimerInterval = interval;
+    element._cardRefreshCallback = refreshCallback;
+    element._cardCompareFn = compareFn;
     element._cardTimer = setInterval(() => {
       if (!element.isConnected) return;
 

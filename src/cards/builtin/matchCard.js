@@ -10,9 +10,12 @@ export function createMatchCard() {
             const teamNumber = sdk.getConfig('teamNumber');
             const currentTime = Math.floor(state.fullDate?.getTime() / 1000 || Date.now() / 1000);
 
-            sdk.updateCard(element, 1000, (el, latestState, sdkInstance) => {
-                renderMatchCardContent(el, latestState, sdkInstance);
-            });
+            if (!element._matchCardInitialized) {
+                sdk.updateCard(element, 1000, (el, latestState, sdkInstance) => {
+                    renderMatchCardContent(el, latestState, sdkInstance);
+                });
+                element._matchCardInitialized = true;
+            }
 
             renderMatchCardContent(element, state, sdk);
         }
