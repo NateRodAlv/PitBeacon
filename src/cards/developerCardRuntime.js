@@ -49,6 +49,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       html: def.html,
       css: def.css,
       js: def.js,
+      visualData: def.visualData,
       render: (element, state, sdk) => {
         this._renderDevCard(element, id, def, state, sdk);
       },
@@ -388,10 +389,6 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
               );
             });
           break;
-          case "updateCard": {
-            sdk.updateCard(e.data.element, e.data.interval, e.data.refreshCallback);
-            break;
-          }
         case "triggerAlarm":
           sdk.triggerAlarm(e.data.nameOrPreset);
           break;

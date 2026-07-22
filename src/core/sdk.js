@@ -27,62 +27,6 @@ export class SDK {
     return this._dataSources.getSourceNames();
   }
 
-  async refreshTeamData() {
-    if (typeof window.pitbeaconRefreshTeamData === "function") {
-      return window.pitbeaconRefreshTeamData();
-    }
-    return null;
-  }
-
-  updateCard(element, interval, refreshCallback = null, compareFn = null) {
-    element.selfRefresh = true;
-    if (!element || typeof interval !== "number" || interval <= 0) return;
-
-    const sameConfig =
-      element._cardTimer &&
-      element._cardTimerInterval === interval &&
-      element._cardRefreshCallback === refreshCallback &&
-      element._cardCompareFn === compareFn;
-
-    if (sameConfig) return;
-
-    if (element._cardTimer) {
-      clearInterval(element._cardTimer);
-    }
-
-    element._cardTimerInterval = interval;
-    element._cardRefreshCallback = refreshCallback;
-    element._cardCompareFn = compareFn;
-    element._cardTimer = setInterval(() => {
-      if (!element.isConnected) return;
-
-      const latestState = this.getState();
-      if (!latestState) return;
-
-      try {
-        const snapshot = compareFn ? compareFn(latestState, this) : latestState;
-        const serialized = JSON.stringify(snapshot);
-        const previousSerialized = element._lastCardSnapshot;
-
-        if (previousSerialized === serialized) {
-          return;
-        }
-
-        element._lastCardSnapshot = serialized;
-
-        if (typeof refreshCallback === "function") {
-          refreshCallback(element, latestState, this);
-        } else if (window._pitbeaconRender) {
-          window._pitbeaconRender();
-        } else {
-          element.innerHTML = "";
-        }
-      } catch (err) {
-        console.error("Card refresh failed:", err);
-      }
-    }, interval);
-  }
-
   async fetchCustom(url, options = {}) {
     const {
       method = "GET",

@@ -2,13 +2,13 @@
 export function createStatboticsCard() {
   return {
     id: "statbotics-card",
-    label: "Team Overview",
+    label: "Statbotics",
     icon: "chart-bar",
     builtin: true,
     render: async (element, state, sdk) => {
       const teamNumber = sdk.getConfig('teamNumber');
       const year = new Date().getFullYear();
-      const eventName = state.currentEventData?.name || "Current Event";
+      const eventKey = state.currentEventData?.key;
       const wrapper = element.querySelector(".statbotics-shell");
       if (!wrapper) {
         const wrapper = document.createElement("div");
@@ -25,7 +25,7 @@ export function createStatboticsCard() {
         wrapper.innerHTML = `
                 <div class="statbotics-shell">
                     <div class="pit-header">
-                        <span class="pit-title"><i class="ti ti-chart-bar"></i> Team Overview</span>
+                        <span class="pit-title"><i class="ti ti-chart-bar"></i> Statbotics</span>
                         <button class="pit-add-btn" id="statboticsRefresh">↻ Refresh</button>
                     </div>
                     <div class="statbotics-body" id="statboticsBody">
@@ -41,67 +41,106 @@ export function createStatboticsCard() {
       const loadData = async () => {
         body.innerHTML = `<div class="statbotics-loading">Loading…</div>`;
         try {
-          const teamSummaryData = await sdk.refreshTeamData();
-          const summary = teamSummaryData?.teamSummary || null;
+          const teamRes = await fetch(
+            `https://api.statbotics.io/v3/team_year/${teamNumber}/${year}`,
+          );
+          if (!teamRes.ok) throw new Error(`HTTP ${teamRes.status}`);
+          const teamData = await teamRes.json();
 
-          if (!summary) {
-            throw new Error("No The Blue Alliance data returned.");
+          let eventData = null;
+          if (eventKey) {
+            try {
+              const evRes = await fetch(
+                `https://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`,
+              );
+              if (evRes.ok) eventData = await evRes.json();
+            } catch (_) {}
           }
 
-          body.innerHTML = renderTeamSummaryHTML(summary, teamNumber, year, eventName);
+          body.innerHTML = renderStatboticsHTML(
+            teamData,
+            eventData,
+            teamNumber,
+            year,
+          );
         } catch (err) {
           body.innerHTML = `<div class="statbotics-error">
-                        <p>⚠ Could not load Team Overview data.</p>
+                        <p>⚠ Could not load Statbotics data.</p>
                         <p class="statbotics-hint">${err.message}</p>
                     </div>`;
         }
       };
 
-      // render() gets re-invoked on every full-grid re-render, not just once.
-      // Previously this added a new click listener each time without ever
-      // removing the old one, so every re-render stacked another listener on
-      // the same button -- each stale one still firing (and fetching) on
-      // click long after it should have been replaced.
-      if (element._statboticsClickHandler) {
-        refreshBtn.removeEventListener("click", element._statboticsClickHandler);
-      }
-      element._statboticsClickHandler = () => loadData();
-      refreshBtn.addEventListener("click", element._statboticsClickHandler);
+      refreshBtn.addEventListener("click", loadData);
+      await loadData();
 
-      // Likewise, only auto-fetch on first mount / when the identifying
-      // config actually changes -- not on every re-render this card happens
-      // to get swept up in.
-      const loadKey = `${teamNumber}:${eventName}`;
-      if (element._statboticsLoadKey !== loadKey) {
-        element._statboticsLoadKey = loadKey;
-        await loadData();
-      }
+      function renderStatboticsHTML(team, event, teamNum, yr) {
+        const epa = team?.epa?.total_points;
+        const epaRank = team?.epa?.ranks?.total?.rank;
+        const epaPercentile = team?.epa?.ranks?.total?.percentile;
+        const wins = team?.record?.wins ?? "–";
+        const losses = team?.record?.losses ?? "–";
+        const ties = team?.record?.ties ?? "–";
+        const winrate =
+          team?.record?.count > 0
+            ? ((team.record.wins / team.record.count) * 100).toFixed(1) + "%"
+            : "–";
 
-      function renderTeamSummaryHTML(summary, teamNum, yr, eventDisplayName) {
-        const eventRank = summary?.eventRank ?? "–";
-        const wins = summary?.eventRecord?.wins ?? "–";
-        const losses = summary?.eventRecord?.losses ?? "–";
-        const ties = summary?.eventRecord?.ties ?? "–";
-        const winrate = summary?.winRate ?? "–";
-        const seasonEvents = summary?.seasonEventCount ?? "–";
-        const currentEventName = eventDisplayName || summary?.eventName || "Current Event";
+        const autoEpa = team?.epa?.breakdown?.auto_points;
+        const teleopEpa = team?.epa?.breakdown?.teleop_points;
+        const endgameEpa = team?.epa?.breakdown?.endgame_points;
+
+        const fmtEpa = (v) => (v != null ? Number(v).toFixed(1) : "–");
+        const fmtPct = (p) =>
+          p != null ? (p * 100).toFixed(0) + "th %ile" : "";
+
+        let eventBlock = "";
+        if (event) {
+          const eRank = event?.epa?.ranks?.total?.rank ?? "–";
+          const eTotal = event?.epa?.total_points;
+          eventBlock = `
+                        <div class="sb-divider"></div>
+                        <div class="sb-section-title">This Event</div>
+                        <div class="sb-stat-row">
+                            <span class="sb-label">EPA</span>
+                            <span class="sb-value sb-accent">${fmtEpa(eTotal)}</span>
+                        </div>
+                        <div class="sb-stat-row">
+                            <span class="sb-label">Event Rank</span>
+                            <span class="sb-value">${eRank}</span>
+                        </div>
+                    `;
+        }
 
         return `
                     <div class="sb-header-team">
                         <span class="sb-team-num">${teamNum}</span>
                         <span class="sb-year-badge">${yr}</span>
                     </div>
-                    <div class="sb-section-title">Current Event</div>
-                    <div class="sb-stat-row">
-                        <span class="sb-label">Event</span>
-                        <span class="sb-value">${currentEventName}</span>
+                    <div class="sb-section-title">Season EPA</div>
+                    <div class="sb-epa-row">
+                        <div class="sb-epa-block">
+                            <div class="sb-epa-val">${fmtEpa(epa?.mean ?? epa)}</div>
+                            <div class="sb-epa-label">Total EPA</div>
+                            ${epaRank != null ? `<div class="sb-epa-sub">Rank #${epaRank} ${fmtPct(epaPercentile)}</div>` : ""}
+                        </div>
                     </div>
-                    <div class="sb-stat-row">
-                        <span class="sb-label">Event Rank</span>
-                        <span class="sb-value sb-accent">${eventRank}</span>
+                    <div class="sb-breakdown">
+                        <div class="sb-breakdown-item">
+                            <span class="sb-breakdown-val auto">${fmtEpa(autoEpa?.mean ?? autoEpa)}</span>
+                            <span class="sb-breakdown-label">Auto</span>
+                        </div>
+                        <div class="sb-breakdown-item">
+                            <span class="sb-breakdown-val teleop">${fmtEpa(teleopEpa?.mean ?? teleopEpa)}</span>
+                            <span class="sb-breakdown-label">Teleop</span>
+                        </div>
+                        <div class="sb-breakdown-item">
+                            <span class="sb-breakdown-val endgame">${fmtEpa(endgameEpa?.mean ?? endgameEpa)}</span>
+                            <span class="sb-breakdown-label">Endgame</span>
+                        </div>
                     </div>
                     <div class="sb-divider"></div>
-                    <div class="sb-section-title">Event Record</div>
+                    <div class="sb-section-title">Season Record</div>
                     <div class="sb-stat-row">
                         <span class="sb-label">W / L / T</span>
                         <span class="sb-value">${wins} – ${losses} – ${ties}</span>
@@ -110,14 +149,9 @@ export function createStatboticsCard() {
                         <span class="sb-label">Win Rate</span>
                         <span class="sb-value sb-accent">${winrate}</span>
                     </div>
-                    <div class="sb-divider"></div>
-                    <div class="sb-section-title">Season Snapshot</div>
-                    <div class="sb-stat-row">
-                        <span class="sb-label">Events This Year</span>
-                        <span class="sb-value">${seasonEvents}</span>
-                    </div>
+                    ${eventBlock}
                     <div class="sb-footer">
-                        <a href="https://www.thebluealliance.com/team/${teamNum}" target="_blank" class="sb-link">View on The Blue Alliance ↗</a>
+                        <a href="https://statbotics.io/team/${teamNum}" target="_blank" class="sb-link">View on Statbotics ↗</a>
                     </div>
                 `;
       }
