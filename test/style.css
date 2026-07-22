@@ -81,7 +81,6 @@ html {
   overflow: hidden;
   color: var(--text-primary);
 }
-
 #container {
   overflow: hidden;
 }
@@ -176,6 +175,20 @@ html {
   height: 1.8rem;
   opacity: 0.35;
   border-radius: 4px;
+}
+#hideTopBtn {
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  z-index: 9999;
+}
+.hidden {
+  display: none !important;
+}
+.spacer {
+  padding: 4px;
+  width: 1.8rem;
+  height: 1.8rem;
 }
 .mheader-btn:hover {
   opacity: 0.65;

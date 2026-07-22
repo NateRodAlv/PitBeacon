@@ -650,12 +650,16 @@ function setupListeners() {
   const savebutton = document.getElementById("savebutton");
   const testModeCheckbox = document.getElementById("testMode");
   const testDateInput = document.getElementById("testDate");
+  const hideButton = document.getElementById("hideTopBtn");
 
   testModeCheckbox.addEventListener("change", () => {
     testDateInput.style.display = testModeCheckbox.checked ? "block" : "none";
   });
 
-
+  hideButton.addEventListener("click", () => {
+    const header = document.getElementById("header");
+    header.classList.toggle("hidden");
+  });
 
   document.getElementById("devEditorGuideBtn").addEventListener("click", () => {
     docsModal.open();
