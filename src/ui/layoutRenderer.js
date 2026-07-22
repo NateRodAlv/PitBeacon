@@ -38,7 +38,7 @@ render(config, container) {
     container.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
     container.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
     container.style.gap = '12px';
-    container.style.height = 'calc(100vh - 4.5rem)';
+    container.style.height = 'calc(100vh - var(--header-height, 4.5rem))';
     container.style.padding = '12px';
     container.style.overflow = 'auto';
     container.style.background = 'transparent';
@@ -105,7 +105,7 @@ render(config, container) {
         // Update all rendered cards with new state
         for (const [cardId, element] of this._renderedCards) {
             const def = this._registry.get(cardId);
-            if (def && def.render && element.isConnected) {
+            if (def && def.render && element.isConnected && !element.selfRefresh) {
                 try {
                     def.render(element, state, this._sdk, cardId);
                 } catch (err) {

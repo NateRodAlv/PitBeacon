@@ -49,7 +49,6 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       html: def.html,
       css: def.css,
       js: def.js,
-      visualData: def.visualData,
       render: (element, state, sdk) => {
         this._renderDevCard(element, id, def, state, sdk);
       },
@@ -100,6 +99,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
     this._sandboxes.delete(id);
 
     element.innerHTML = "";
+    element.selfRefresh = false;
 
     const iframe = document.createElement("iframe");
     iframe.style.cssText =
@@ -178,6 +178,8 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             var sdk = {
                 _callbacks: [],
                 _state: null,
+                _cardTimer: null,
+                _lastCardSnapshot: null,
                 
                 getState: function() {
                     return this._state;
@@ -333,6 +335,35 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
                         window.addEventListener('message', handler);
                         window.parent.postMessage({ type: 'getConfig', id: id }, '*');
                     });
+                },
+
+                // Opts this card out of the default per-tick render (which just
+                // pushes a fresh stateUpdate into this iframe every tick) in favor
+                // of a self-managed interval with its own change-detection. Runs
+                // entirely inside this iframe since neither a DOM element nor a
+                // function can cross the postMessage boundary to the parent page —
+                // only a one-time signal to stop the default push is sent out.
+                updateCard: function(interval, refreshCallback, compareFn) {
+                    if (typeof interval !== 'number' || interval <= 0) return;
+                    if (this._cardTimer) clearInterval(this._cardTimer);
+
+                    window.parent.postMessage({ type: 'markSelfRefresh' }, '*');
+
+                    this._cardTimer = setInterval(function() {
+                        if (!sdk._state) return;
+                        try {
+                            var snapshot = compareFn ? compareFn(sdk._state, sdk) : sdk._state;
+                            var serialized = JSON.stringify(snapshot);
+                            if (sdk._lastCardSnapshot === serialized) return;
+                            sdk._lastCardSnapshot = serialized;
+
+                            if (typeof refreshCallback === 'function') {
+                                refreshCallback(sdk._state, sdk);
+                            }
+                        } catch (err) {
+                            console.error('Card refresh failed:', err);
+                        }
+                    }, interval);
                 }
             };
             
@@ -389,6 +420,10 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
               );
             });
           break;
+          case "markSelfRefresh": {
+            element.selfRefresh = true;
+            break;
+          }
         case "triggerAlarm":
           sdk.triggerAlarm(e.data.nameOrPreset);
           break;

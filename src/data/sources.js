@@ -19,7 +19,7 @@ export class DataSourceManager {
     }
 
     getSourceNames() {
-        return ['currentMatches', 'currentEventData', 'currentRankings', 'teamInfo'];
+        return ['currentMatches', 'currentEventData', 'currentRankings', 'teamInfo', 'teamSummaryData'];
     }
 
     async fetch(sourceName) {
@@ -32,12 +32,25 @@ export class DataSourceManager {
                 return this._fetchRankings();
             case 'teamInfo':
                 return this._fetchTeamInfo();
+            case 'teamSummaryData':
+                return this._fetchTeamSummaryData();
             default:
                 return null;
         }
     }
 
+    _hasRealApiKey() {
+        const key = (this._config.tbaapikey || "").toString().trim();
+        if (!key) return false;
+        const normalized = key.toLowerCase();
+        return !["your_auth_key", "your auth key", "tba key", "your-api-key", "your api key"].includes(normalized);
+    }
+
     async fetchAll() {
+        if (!this._hasRealApiKey()) {
+            return null;
+        }
+
         const teamInfo = await this._fetchTeamInfo();
         if (!teamInfo || !teamInfo.events) {
             return null;
@@ -80,6 +93,10 @@ export class DataSourceManager {
     }
 
     async _fetchTeamInfo() {
+        if (!this._hasRealApiKey()) {
+            return { events: [] };
+        }
+
         const cacheKey = 'teamInfo';
         if (this._cache.has(cacheKey)) {
             return this._cache.get(cacheKey);
@@ -113,6 +130,10 @@ export class DataSourceManager {
     }
 
     async _fetchMatchesForEvent(eventKey) {
+        if (!this._hasRealApiKey()) {
+            return null;
+        }
+
         const cacheKey = `matches_${eventKey}`;
         if (this._cache.has(cacheKey)) {
             return this._cache.get(cacheKey);
@@ -149,6 +170,10 @@ export class DataSourceManager {
     }
 
     async _fetchRankingsForEvent(eventKey) {
+        if (!this._hasRealApiKey()) {
+            return null;
+        }
+
         const cacheKey = `rankings_${eventKey}`;
         if (this._cache.has(cacheKey)) {
             return this._cache.get(cacheKey);
@@ -191,6 +216,11 @@ export class DataSourceManager {
     async _fetchRankings() {
         const state = this._state.getState();
         return state.currentRankings || null;
+    }
+
+    async _fetchTeamSummaryData() {
+        const state = this._state.getState();
+        return state.currentTeamSummaryData || null;
     }
 
     clearCache() {
