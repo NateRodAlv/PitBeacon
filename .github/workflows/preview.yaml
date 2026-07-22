@@ -27,7 +27,7 @@ jobs:
           branch: gh-pages
 
       - name: Deploy Second Branch to Subfolder
-        if: github.ref == 'refs/heads/branch_two' # Change to your second branch name
+        if: github.ref == 'refs/heads/test' # Change to your second branch name
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: . # Change to 'dist' or 'build' if using a framework
