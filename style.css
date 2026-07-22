@@ -83,6 +83,7 @@ html {
 }
 #container {
   overflow: hidden;
+  transition: height 0.25s ease;
 }
 #container[style*="display: grid"] {
   overflow: auto;
