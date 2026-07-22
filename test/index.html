@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="PitBeacon - FRC team pits tool. Real-time match alerts, team rankings, and event data for FIRST Robotics Competition teams."
+    />
+    <meta
+      name="keywords"
+      content="FRC, FIRST Robotics, pit display, team 7250, event management, match alerts, robotics competition, pitradar, pitbeacon"
+    />
+    <meta name="author" content="FRC Team 7250" />
+    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="English" />
+    <title>PitBeacon</title>
+
+    <!-- Open Graph Tags for Social Media -->
+    <meta
+      property="og:title"
+      content="PitBeacon"
+    />
+    <meta
+      property="og:description"
+      content="PitBeacon - FRC team pits tool. Real-time match alerts, team rankings, and event data for FIRST Robotics Competition teams."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://www.naterodalv.github.io/PitBeacon"
+    />
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="PitBeacon"
+    />
+    <meta
+      name="twitter:description"
+      content="Real-time match alerts, team rankings, and comprehensive event data for FIRST Robotics teams."
+    />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.naterodalv.github.io/PitBeacon" />
+
+    <!-- Stylesheets and Resources -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="icon" href="favicon.png" type="image/x-icon" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+      rel="stylesheet"
+    />
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo">
+        <h1 class="title">Pit<span class="beacon">Beacon</span></h1>
+        <p class="frc7250">By FRC 7250</p>
+        <p class="version" id="version">Version 26.7.21</p>
+      </div>
+      <div class="time-display" id="time-display">--:--:--</div>
+      <div class="profile-switcher" id="profileSwitcher"></div>
+      <div class="buttons">
+        <!-- Layout Editor Button -->
+        <button
+          class="mheader-btn"
+          id="layoutEditorBtn"
+          title="Layout Editor"
+          aria-label="Layout Editor"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          </svg>
+        </button>
+
+        <!-- Card Manager Button -->
+        <button
+          class="mheader-btn"
+          id="cardsBtn"
+          title="Card Manager"
+          aria-label="Card Manager"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="4" y="4" width="16" height="4" rx="1"></rect>
+            <rect x="4" y="10" width="16" height="4" rx="1"></rect>
+            <rect x="4" y="16" width="16" height="4" rx="1"></rect>
+          </svg>
+        </button>
+        <button
+          class="mheader-btn"
+          id="devEditorGuideBtn"
+          title="Dev Editor Guide"
+          aria-label="Dev Editor Guide"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5"></path>
+            <path d="M7 4v16"></path>
+            <path d="M9 7h6"></path>
+            <path d="M9 11h6"></path>
+            <path d="M9 15h4"></path>
+            <path d="M17 4h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-1"></path>
+          </svg>
+        </button>
+        <!-- Developer Editor Button -->
+        <button
+          class="mheader-btn"
+          id="developerBtn"
+          title="Developer Card Editor"
+          aria-label="Developer Card Editor"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+        </button>
+        
+        <button
+          class="mheader-btn"
+          id="settingsBtn"
+          title="Settings"
+          aria-label="Settings"
+        >
+          <svg
+            id="settings"
+            xmlns="http://w3.org"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="settings-icon"
+          >
+            <path
+              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="settingscontainer" id="settingscontainer">
+      <h2 class="settings-title">Settings</h2>
+      <div class="settingsdiv">
+        <div class="settings-section-title">General</div>
+        <div class="settings-field">
+          <label for="teamNumber">Team Number</label>
+          <input
+            class="teaminput"
+            type="text"
+            id="teamNumber"
+            name="teamNumber"
+            value="7250"
+          />
+        </div>
+        <div class="settings-field">
+          <label for="tbaapikey">TBA API Key</label>
+          <input type="text" id="tbaapikey" name="tbaapikey" value="TBA Key" />
+        </div>
+      </div>
+      <div class="settingsdiv">
+        <div class="settings-section-title">Alerts</div>
+        <div class="settings-field">
+          <label for="noteAlarmToggle">Flagged Items Alarm</label>
+          <input
+            type="checkbox"
+            id="noteAlarmToggle"
+            title="Toggle flagged items alarm"
+          />
+        </div>
+        <div class="settings-field">
+          <label for="noteAlarmSound">Note Sound</label>
+          <select id="noteAlarmSound" name="noteAlarmSound">
+            <option value="alarm1">Alarm 1</option>
+            <option value="alarm2">Alarm 2</option>
+            <option value="alarm3">Alarm 3</option>
+            <option value="beep">Beep</option>
+          </select>
+        </div>
+        <div class="settings-field">
+          <label for="matchAlarmToggle">Match Alert</label>
+          <input
+            type="checkbox"
+            id="matchAlarmToggle"
+            name="matchAlarmToggle"
+            checked
+          />
+        </div>
+        <div class="settings-field">
+          <label for="matchAlertThreshold">Match Alert (seconds before)</label>
+          <input
+            type="number"
+            id="matchAlertThreshold"
+            name="matchAlertThreshold"
+            min="30"
+            max="600"
+            value="300"
+          />
+        </div>
+        <div class="settings-field">
+          <label for="matchAlarmSound">Match Sound</label>
+          <select id="matchAlarmSound" name="matchAlarmSound">
+            <option value="alarm1">Alarm 1</option>
+            <option value="alarm2">Alarm 2</option>
+            <option value="alarm3">Alarm 3</option>
+            <option value="beep">Beep</option>
+          </select>
+        </div>
+      </div>
+      <div class="settingsdiv">
+        <div class="settings-section-title">Layout Profiles</div>
+        <div class="settings-field">
+          <label for="profileSelect">Active Profile</label>
+          <select id="profileSelect" name="profileSelect"></select>
+        </div>
+        <div class="settings-field">
+          <label for="newProfileName">New Profile Name</label>
+          <input
+            type="text"
+            id="newProfileName"
+            name="newProfileName"
+            placeholder="e.g. Quals View"
+          />
+        </div>
+        <div class="settings-field" style="gap: 6px">
+          <button
+            class="savebutton"
+            id="saveProfileBtn"
+            style="flex: 1; margin: 0; padding: 6px 8px; font-size: 0.8rem"
+          >
+            Save as Profile
+          </button>
+          <button
+            class="savebutton"
+            id="deleteProfileBtn"
+            style="
+              flex: 1;
+              margin: 0;
+              padding: 6px 8px;
+              font-size: 0.8rem;
+              background: rgb(120, 40, 40);
+            "
+          >
+            Delete Profile
+          </button>
+        </div>
+        <div class="settings-section-title" style="margin-top: 12px">
+          Auto-Swap
+        </div>
+        <div class="settings-field">
+          <label for="autoSwapEnabled">Enable Auto-Swap</label>
+          <input type="checkbox" id="autoSwapEnabled" name="autoSwapEnabled" />
+        </div>
+        <div class="settings-field">
+          <label for="autoSwapInterval">Swap Interval (seconds)</label>
+          <input
+            type="number"
+            id="autoSwapInterval"
+            name="autoSwapInterval"
+            min="5"
+            max="3600"
+            value="30"
+          />
+        </div>
+      </div>
+      <div class="settingsdiv">
+        <div class="settings-section-title">Testing</div>
+        <div class="settings-field">
+          <label for="testMode">Test Mode</label>
+          <input type="checkbox" id="testMode" name="testMode" />
+        </div>
+        <div class="settings-field">
+          <label for="testDate">Test Date (YYYY-MM-DD)</label>
+          <input
+            type="text"
+            id="testDate"
+            name="testDate"
+            placeholder="2026-04-26"
+            style="display: none"
+          />
+        </div>
+      </div>
+      <button class="savebutton" id="savebutton">Save</button>
+    </div>
+    <div class="layout-editor-modal" id="layoutEditorModal"></div>
+
+    <!-- Developer Card Editor Modal -->
+    <div class="dev-card-modal" id="devCardModal">
+      <div class="dev-card-shell">
+        <div class="dev-card-header">
+          <h2 class="dev-card-title">⚡ Developer Card Editor</h2>
+          <button class="dev-card-close" id="devCardClose">✕</button>
+        </div>
+        <div class="dev-card-body">
+          <div class="dev-card-left">
+            <div class="dev-card-field">
+              <label>Card ID</label>
+              <input
+                type="text"
+                id="devCardId"
+                value="dev-card-1"
+                placeholder="dev-card-1"
+              />
+            </div>
+            <div class="dev-card-field">
+              <label>Card Label</label>
+              <input type="text" id="devCardLabel" value="My Custom Card" />
+            </div>
+            <div class="dev-card-field">
+              <label>HTML</label>
+              <textarea id="devCardHTML" rows="6" spellcheck="false">
+<div class="dev-card-content">
+    <h3>My Custom Card</h3>
+    <p>State: <span id="stateDisplay">Loading...</span></p>
+    <button id="fetchBtn">Fetch Data</button>
+    <div id="result"></div>
+</div></textarea
+              >
+            </div>
+            <div class="dev-card-field">
+              <label>CSS</label>
+              <textarea id="devCardCSS" rows="4" spellcheck="false">
+.dev-card-content { padding: 8px; }
+.dev-card-content h3 { margin: 0 0 6px 0; color: var(--text-primary); }
+.dev-card-content p { color: var(--text-muted); }
+#fetchBtn { background: var(--accent); color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; }</textarea
+              >
+            </div>
+            <div class="dev-card-field">
+              <label>JavaScript (sandboxed)</label>
+              <textarea id="devCardJS" rows="8" spellcheck="false">
+// Access SDK via window.__pitbeaconSDK
+const sdk = window.__pitbeaconSDK;
+
+// Subscribe to state changes
+sdk.onStateChange((state) => {
+    const el = document.getElementById('stateDisplay');
+    if (el) el.textContent = state.currentMatch ? 
+        'Match ' + state.currentMatch.comp_level + ' ' + state.currentMatch.match_number : 
+        'No active match';
+});
+
+// Fetch data on button click
+document.getElementById('fetchBtn')?.addEventListener('click', async function() {
+    try {
+        const data = await sdk.fetchDataSource('currentMatches');
+        document.getElementById('result').textContent = 
+            data ? 'Found ' + data.length + ' matches' : 'No data';
+    } catch(e) {
+        document.getElementById('result').textContent = 'Error: ' + e.message;
+    }
+});</textarea
+              >
+            </div>
+            <div class="dev-card-actions">
+              <button class="dev-card-save" id="devCardSave">
+                Save &amp; Register Card
+              </button>
+              <button class="dev-card-test" id="devCardTest">
+                Test in Sandbox
+              </button>
+            </div>
+          </div>
+          <div class="dev-card-right">
+            <div class="dev-card-preview-label">Live Preview (sandboxed)</div>
+            <iframe
+              id="devCardSandbox"
+              class="dev-card-sandbox"
+              sandbox="allow-scripts"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card Manager Modal -->
+    <div class="card-manager-modal" id="cardManagerModal">
+      <div class="card-manager-shell">
+        <div class="card-manager-header">
+          <h2 class="card-manager-title">📦 Card Registry</h2>
+          <button class="card-manager-close" id="cardManagerClose">✕</button>
+        </div>
+        <div class="card-manager-body">
+          <div class="card-manager-list" id="cardManagerList"></div>
+          <div class="card-manager-actions">
+            <button class="card-manager-export" id="cardManagerExport">
+              Export Cards
+            </button>
+            <button class="card-manager-import" id="cardManagerImport">
+              Import Cards
+            </button>
+            <input
+              type="file"
+              id="cardManagerFileInput"
+              accept=".json"
+              style="display: none"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="errorcontainer" id="errorcontainer"></div>
+    <div class="container" id="container"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
