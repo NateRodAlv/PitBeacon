@@ -1,37 +1,35 @@
-name: Deploy to GitHub Pages
+name: Deploy to Subfolders
 
 on:
   push:
-    branches: ["main"] # Triggers on pushes to the main branch
-  workflow_dispatch:   # Allows manual execution from the Actions tab
+    branches:
+      - main
+      - test # Change to your second branch name
 
 permissions:
-  contents: read       # Required to clone the repository
-  pages: write        # Required to deploy to GitHub Pages
-  id-token: write      # Required to verify the deployment source
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  contents: write # Required to commit build files to the gh-pages branch
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      # (Optional) If you have a framework, add your compilation/build steps here
+      # (Optional) Add compilation/build steps here if your framework requires them.
       # Example: npm ci && npm run build
 
-      - name: Upload Build Artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy Main Branch to Root
+        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: '.' # Change to your build output folder (e.g., 'dist' or 'build') if applicable
+          folder: . # Change to 'dist' or 'build' if using a framework
+          branch: gh-pages
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy Second Branch to Subfolder
+        if: github.ref == 'refs/heads/branch_two' # Change to your second branch name
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # Change to 'dist' or 'build' if using a framework
+          branch: gh-pages
+          target-folder: test # The URL will be username.github.io/repo/subfolder_name
