@@ -33,3 +33,4 @@ jobs:
           folder: . # Change to 'dist' or 'build' if using a framework
           branch: gh-pages
           target-folder: test # The URL will be username.github.io/repo/subfolder_name
+          clean: false
