@@ -408,6 +408,10 @@ async function fetchWithRetry(url, options = {}, retries = 2) {
   throw lastError || new Error("Unknown Statbotics fetch error");
 }
 
+let _statboticsFetchInFlight = null;
+let _statboticsLastFetchAt = 0;
+const STATBOTICS_COOLDOWN_MS = 60 * 1000;
+
 async function fetchStatboticsData(teamNumber, eventKey) {
   const year = new Date().getFullYear();
 
@@ -417,20 +421,36 @@ async function fetchStatboticsData(teamNumber, eventKey) {
 
   const currentState = stateManager.getState();
   const previousData = currentState.currentStatboticsData;
+  const now = Date.now();
 
-  try {
-    const [teamData, eventData] = await Promise.all([
-      fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_year/${teamNumber}/${year}`),
-      eventKey
-        ? fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`)
-        : Promise.resolve(null),
-    ]);
-
-    return { teamData, eventData };
-  } catch (error) {
-    console.warn("Statbotics fetch failed:", error);
-    return previousData || null;
+  if (_statboticsFetchInFlight) {
+    return _statboticsFetchInFlight;
   }
+
+  if (now - _statboticsLastFetchAt < STATBOTICS_COOLDOWN_MS && previousData) {
+    return previousData;
+  }
+
+  _statboticsFetchInFlight = (async () => {
+    try {
+      const [teamData, eventData] = await Promise.all([
+        fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_year/${teamNumber}/${year}`),
+        eventKey
+          ? fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`)
+          : Promise.resolve(null),
+      ]);
+
+      return { teamData, eventData };
+    } catch (error) {
+      console.warn("Statbotics fetch failed:", error);
+      return previousData || null;
+    } finally {
+      _statboticsLastFetchAt = Date.now();
+      _statboticsFetchInFlight = null;
+    }
+  })();
+
+  return _statboticsFetchInFlight;
 }
 
 window.pitbeaconRefreshStatbotics = async () => {
