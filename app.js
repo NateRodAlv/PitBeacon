@@ -34,6 +34,7 @@ const stateManager = new StateManager({
   currentMatches: null,
   currentEventData: null,
   currentRankings: null,
+  currentStatboticsData: null,
   lastMatchAlertId: null,
   fullDate: fullDate,
   teamNumber: config.teamNumber,
@@ -282,10 +283,10 @@ function switchToProfile(name) {
       gridCols: 3,
       gridRows: 3,
       layout: {
-        "webcast-card": { x: 0, y: 0, width: 1, height: 2 },
-        "battery-card": { x: 0, y: 2, width: 1, height: 1 },
-        "match-card": { x: 1, y: 0, width: 2, height: 2 },
-        "leaderboard-card": { x: 1, y: 2, width: 2, height: 1 },
+        "webcast-card": {x: 0, y: 0, width: 1, height: 1},
+        "match-card": {x: 2, y: 0, width: 1, height: 3},
+        "leaderboard-card": {x: 1, y: 0, width: 1, height: 3},
+        "statbotics-card": {x: 0, y: 1, width: 1, height: 2},
       },
       hiddenCards: [],
     };
@@ -380,16 +381,66 @@ function renderLayout() {
   renderer.render(config, document.getElementById("container"));
 }
 
+async function fetchStatboticsData(teamNumber, eventKey) {
+  const year = new Date().getFullYear();
+
+  if (!teamNumber) {
+    return null;
+  }
+
+  try {
+    const [teamRes, eventRes] = await Promise.all([
+      fetch(`https://r.jina.ai/http://api.statbotics.io/v3/team_year/${teamNumber}/${year}`),
+      eventKey
+        ? fetch(`https://r.jina.ai/http://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`)
+        : Promise.resolve(null),
+    ]);
+
+    if (!teamRes.ok) {
+      throw new Error(`Team stats request failed: ${teamRes.status}`);
+    }
+
+    const teamData = await teamRes.json();
+    let eventData = null;
+
+    if (eventRes?.ok) {
+      eventData = await eventRes.json();
+    }
+
+    return { teamData, eventData };
+  } catch (error) {
+    console.warn("Statbotics fetch failed:", error);
+    return null;
+  }
+}
+
+window.pitbeaconRefreshStatbotics = async () => {
+  const currentState = stateManager.getState();
+  const statboticsData = await fetchStatboticsData(
+    config.teamNumber,
+    currentState.currentEventData?.key,
+  );
+  stateManager.update({ currentStatboticsData: statboticsData });
+  renderer.updateCards(stateManager.getState());
+  return statboticsData;
+};
+
 // Data fetching
 
 async function getData() {
   try {
     const result = await dataSources.fetchAll();
     if (result) {
+      const statboticsData = await fetchStatboticsData(
+        config.teamNumber,
+        result.eventData?.key,
+      );
+
       stateManager.update({
         currentMatches: result.matches,
         currentEventData: result.eventData,
         currentRankings: result.rankings,
+        currentStatboticsData: statboticsData,
       });
       renderer.updateCards(stateManager.getState());
     }

@@ -27,6 +27,13 @@ export class SDK {
     return this._dataSources.getSourceNames();
   }
 
+  async refreshStatboticsData() {
+    if (typeof window.pitbeaconRefreshStatbotics === "function") {
+      return window.pitbeaconRefreshStatbotics();
+    }
+    return null;
+  }
+
   updateCard(element, interval, refreshCallback = null, compareFn = null) {
     element.selfRefresh = true;
     if (!element || typeof interval !== "number" || interval <= 0) return;

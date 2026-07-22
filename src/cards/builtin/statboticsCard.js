@@ -41,20 +41,12 @@ export function createStatboticsCard() {
       const loadData = async () => {
         body.innerHTML = `<div class="statbotics-loading">Loading…</div>`;
         try {
-          const teamRes = await fetch(
-            `https://api.statbotics.io/v3/team_year/${teamNumber}/${year}`,
-          );
-          if (!teamRes.ok) throw new Error(`HTTP ${teamRes.status}`);
-          const teamData = await teamRes.json();
+          const statboticsData = await sdk.refreshStatboticsData();
+          const teamData = statboticsData?.teamData || null;
+          const eventData = statboticsData?.eventData || null;
 
-          let eventData = null;
-          if (eventKey) {
-            try {
-              const evRes = await fetch(
-                `https://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`,
-              );
-              if (evRes.ok) eventData = await evRes.json();
-            } catch (_) {}
+          if (!teamData && !eventData) {
+            throw new Error("No Statbotics data returned.");
           }
 
           body.innerHTML = renderStatboticsHTML(
@@ -71,7 +63,9 @@ export function createStatboticsCard() {
         }
       };
 
-      refreshBtn.addEventListener("click", loadData);
+      refreshBtn.addEventListener("click", () => {
+        loadData();
+      });
       await loadData();
 
       function renderStatboticsHTML(team, event, teamNum, yr) {
