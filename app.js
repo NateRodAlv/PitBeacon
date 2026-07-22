@@ -381,6 +381,33 @@ function renderLayout() {
   renderer.render(config, document.getElementById("container"));
 }
 
+async function fetchWithRetry(url, options = {}, retries = 2) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetch(url, options);
+      const text = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${text.slice(0, 120)}`);
+      }
+
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        throw new Error(`Invalid JSON: ${text.slice(0, 120)}`);
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt === retries) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+
+  throw lastError || new Error("Unknown Statbotics fetch error");
+}
+
 async function fetchStatboticsData(teamNumber, eventKey) {
   const year = new Date().getFullYear();
 
@@ -388,29 +415,21 @@ async function fetchStatboticsData(teamNumber, eventKey) {
     return null;
   }
 
+  const currentState = stateManager.getState();
+  const previousData = currentState.currentStatboticsData;
+
   try {
-    const [teamRes, eventRes] = await Promise.all([
-      fetch(`https://r.jina.ai/http://api.statbotics.io/v3/team_year/${teamNumber}/${year}`),
+    const [teamData, eventData] = await Promise.all([
+      fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_year/${teamNumber}/${year}`),
       eventKey
-        ? fetch(`https://r.jina.ai/http://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`)
+        ? fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`)
         : Promise.resolve(null),
     ]);
-
-    if (!teamRes.ok) {
-      throw new Error(`Team stats request failed: ${teamRes.status}`);
-    }
-
-    const teamData = await teamRes.json();
-    let eventData = null;
-
-    if (eventRes?.ok) {
-      eventData = await eventRes.json();
-    }
 
     return { teamData, eventData };
   } catch (error) {
     console.warn("Statbotics fetch failed:", error);
-    return null;
+    return previousData || null;
   }
 }
 
