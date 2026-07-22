@@ -658,7 +658,11 @@ function setupListeners() {
 
   hideButton.addEventListener("click", () => {
     const header = document.getElementById("header");
-    header.classList.toggle("hidden");
+    const isNowHidden = header.classList.toggle("hidden");
+    document.documentElement.style.setProperty(
+      "--header-height",
+      isNowHidden ? "0px" : "4.5rem",
+    );
   });
 
   document.getElementById("devEditorGuideBtn").addEventListener("click", () => {

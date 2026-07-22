@@ -38,7 +38,7 @@ render(config, container) {
     container.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
     container.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
     container.style.gap = '12px';
-    container.style.height = 'calc(100vh - 4.5rem)';
+    container.style.height = 'calc(100vh - var(--header-height, 4.5rem))';
     container.style.padding = '12px';
     container.style.overflow = 'auto';
     container.style.background = 'transparent';
