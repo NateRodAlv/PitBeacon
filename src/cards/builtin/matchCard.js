@@ -11,9 +11,26 @@ export function createMatchCard() {
             const currentTime = Math.floor(state.fullDate?.getTime() / 1000 || Date.now() / 1000);
 
             if (!element._matchCardInitialized) {
-                sdk.updateCard(element, 1000, (el, latestState, sdkInstance) => {
-                    renderMatchCardContent(el, latestState, sdkInstance);
-                });
+                sdk.updateCard(
+                    element,
+                    1000,
+                    (el, latestState, sdkInstance) => {
+                        renderMatchCardContent(el, latestState, sdkInstance);
+                    },
+                    // Scope the diff to just what this card actually cares about.
+                    // Without this, updateCard() defaults to diffing the ENTIRE
+                    // app state (event data, rankings, other cards' data, etc.),
+                    // which also always looks "changed" anyway because fullDate
+                    // ticks every second. This keeps the per-second check cheap
+                    // and only reruns render for reasons that matter to this card.
+                    (latestState, sdkInstance) => ({
+                        matches: latestState.currentMatches,
+                        teamNumber: sdkInstance.getConfig('teamNumber'),
+                        // Rounding to the second (already the tick rate) keeps the
+                        // countdown live without pulling in the rest of the state.
+                        t: Math.floor((latestState.fullDate?.getTime() ?? Date.now()) / 1000),
+                    })
+                );
                 element._matchCardInitialized = true;
             }
 

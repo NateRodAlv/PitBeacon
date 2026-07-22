@@ -57,10 +57,25 @@ export function createStatboticsCard() {
         }
       };
 
-      refreshBtn.addEventListener("click", () => {
-        loadData();
-      });
-      await loadData();
+      // render() gets re-invoked on every full-grid re-render, not just once.
+      // Previously this added a new click listener each time without ever
+      // removing the old one, so every re-render stacked another listener on
+      // the same button -- each stale one still firing (and fetching) on
+      // click long after it should have been replaced.
+      if (element._statboticsClickHandler) {
+        refreshBtn.removeEventListener("click", element._statboticsClickHandler);
+      }
+      element._statboticsClickHandler = () => loadData();
+      refreshBtn.addEventListener("click", element._statboticsClickHandler);
+
+      // Likewise, only auto-fetch on first mount / when the identifying
+      // config actually changes -- not on every re-render this card happens
+      // to get swept up in.
+      const loadKey = `${teamNumber}:${eventName}`;
+      if (element._statboticsLoadKey !== loadKey) {
+        element._statboticsLoadKey = loadKey;
+        await loadData();
+      }
 
       function renderTeamSummaryHTML(summary, teamNum, yr, eventDisplayName) {
         const eventRank = summary?.eventRank ?? "–";

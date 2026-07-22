@@ -10,9 +10,19 @@ export function createWebcastCard() {
             const eventData = state.currentEventData;
 
             if (!element._webcastCardInitialized) {
-                sdk.updateCard(element, 10000, () => {
-                    // Keep the current player alive unless the webcast source actually changes.
-                });
+                sdk.updateCard(
+                    element,
+                    10000,
+                    () => {
+                        // Keep the current player alive unless the webcast source actually changes.
+                    },
+                    // Only diff the piece of state this card cares about. Without
+                    // this it defaults to diffing the whole app state, which is
+                    // guaranteed to look "changed" every tick just from fullDate
+                    // ticking, and means stringifying event data / matches / etc.
+                    // for a card that only needs to know about webcasts.
+                    (latestState) => latestState.currentEventData?.webcasts ?? null
+                );
                 element._webcastCardInitialized = true;
             }
 
