@@ -214,6 +214,76 @@ Returns a small set of app-level settings your card can read, e.g.
 `{ teamNumber, matchAlarmSound, noteAlarmSound }`. Use this instead of a
 dedicated "get team number" call — e.g. `(await sdk.getConfig()).teamNumber`.
 
+### Custom refresh — `updateCard`
+
+**The default behavior:** PitBeacon polls for fresh match/event data on a
+rolling 30–60 second cadence (a random delay in that range, so cards
+across different displays don't all hit the network at once). Every time
+that poll completes, your card gets a fresh `stateUpdate` — which is what
+fires your `onStateChange` callbacks.
+
+That default is fine for most cards. Reach for `updateCard` when you want
+something different — a faster local countdown, a slower check to avoid
+re-rendering something expensive, or a check that should only react to one
+specific slice of state instead of *any* state change:
+
+```js
+sdk.updateCard(interval, refreshCallback, compareFn)
+```
+
+| Param | Required | Meaning |
+|---|---|---|
+| `interval` | Yes | Milliseconds between checks. Silently does nothing if this isn't a positive number. |
+| `refreshCallback` | No | `function(state, sdk)`, called only when `compareFn`'s output has actually changed since the last check. |
+| `compareFn` | No | `function(state, sdk)`, returns whatever snapshot of state you actually care about. Defaults to the entire state object if you leave it out. |
+
+**Calling this opts your card out of the default refresh entirely.**
+From that point on, nothing re-checks your card until your own `interval`
+timer fires — the regular 30–60 second poll cycle skips it completely.
+If you never call `updateCard`, your card just keeps getting the default
+treatment described above; you don't need to do anything to get that.
+
+A couple of things that are specific to the Developer Editor (as opposed
+to PitBeacon's built-in cards):
+
+- **The callback only gets `(state, sdk)`**, not an element reference.
+  Built-in cards get passed the outer container element because their
+  code lives outside it; your card's HTML *is* the entire iframe body, so
+  you just query it directly (`document.getElementById(...)`, etc.) — no
+  element to pass in.
+- **It's safe to call once, directly in your top-level script.** Your
+  card's JS runs fresh exactly once per load (unlike a `render()` function
+  that re-runs on every tick), so there's no need to guard it with an
+  "only set this up once" flag — just call `sdk.updateCard(...)` near the
+  top of your script and let it run.
+
+**Why bother with `compareFn`:** without one, `updateCard` diffs the
+*entire* state object on every check — which includes things like the
+live clock, so it looks "changed" on basically every tick regardless of
+whether anything your card actually displays moved. A `compareFn` scopes
+the diff down to just the fields you care about, so `refreshCallback`
+only fires when something relevant actually changed:
+
+```js
+sdk.updateCard(
+  1000,
+  (state, sdk) => {
+    // Your custom render/update logic goes here.
+    renderMyCard(state, sdk);
+  },
+  (state) => ({
+    // Only this field is compared — anything else changing elsewhere in
+    // app state (e.g. the live clock) won't cause a false "changed" match.
+    matches: state.currentMatches,
+  }),
+);
+```
+
+(`compareFn` only receives `state` — anything else your card needs, like
+config values, should be read inside `refreshCallback` via `sdk`, or
+captured from an earlier `await sdk.getConfig()` call, since `getConfig`
+itself is async and can't be called synchronously inside `compareFn`.)
+
 ---
 
 ## 3. Configuring a Card for Your Own System
