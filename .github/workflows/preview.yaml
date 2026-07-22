@@ -1,40 +1,35 @@
-name: Deploy Branch Preview
+name: Deploy to Subfolders
 
 on:
   push:
     branches:
-      - test
+      - main
+      - test # Change to your second branch name
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  contents: write # Required to commit build files to the gh-pages branch
 
 jobs:
-  deploy-preview:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      # (Optional) Add compilation/build steps here if your framework requires them.
+      # Example: npm ci && npm run build
 
-      # Creates the subfolder structure right inside the runner before uploading
-      - name: Structure Preview Folder
-        run: |
-          mkdir -p _site/test
-          cp -r * _site/test/ || true
-          rm -rf _site/test/_site  # Prevent infinite nesting
-          touch _site/.nojekyll
+      - name: Deploy Main Branch to Root
+        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # Change to 'dist' or 'build' if using a framework
+          branch: gh-pages
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Deploy Second Branch to Subfolder
+        if: github.ref == 'refs/heads/branch_two' # Change to your second branch name
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: . # Change to 'dist' or 'build' if using a framework
+          branch: gh-pages
+          target-folder: test # The URL will be username.github.io/repo/subfolder_name
