@@ -19,7 +19,7 @@ export class DataSourceManager {
     }
 
     getSourceNames() {
-        return ['currentMatches', 'currentEventData', 'currentRankings', 'teamInfo', 'statboticsData'];
+        return ['currentMatches', 'currentEventData', 'currentRankings', 'teamInfo', 'teamSummaryData'];
     }
 
     async fetch(sourceName) {
@@ -32,8 +32,8 @@ export class DataSourceManager {
                 return this._fetchRankings();
             case 'teamInfo':
                 return this._fetchTeamInfo();
-            case 'statboticsData':
-                return this._fetchStatboticsData();
+            case 'teamSummaryData':
+                return this._fetchTeamSummaryData();
             default:
                 return null;
         }
@@ -195,9 +195,9 @@ export class DataSourceManager {
         return state.currentRankings || null;
     }
 
-    async _fetchStatboticsData() {
+    async _fetchTeamSummaryData() {
         const state = this._state.getState();
-        return state.currentStatboticsData || null;
+        return state.currentTeamSummaryData || null;
     }
 
     clearCache() {

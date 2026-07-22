@@ -34,7 +34,7 @@ const stateManager = new StateManager({
   currentMatches: null,
   currentEventData: null,
   currentRankings: null,
-  currentStatboticsData: null,
+  currentTeamSummaryData: null,
   lastMatchAlertId: null,
   fullDate: fullDate,
   teamNumber: config.teamNumber,
@@ -405,14 +405,14 @@ async function fetchWithRetry(url, options = {}, retries = 2) {
     }
   }
 
-  throw lastError || new Error("Unknown Statbotics fetch error");
+  throw lastError || new Error("Unknown TBA fetch error");
 }
 
-let _statboticsFetchInFlight = null;
-let _statboticsLastFetchAt = 0;
-const STATBOTICS_COOLDOWN_MS = 60 * 1000;
+let _teamSummaryFetchInFlight = null;
+let _teamSummaryLastFetchAt = 0;
+const TEAM_SUMMARY_COOLDOWN_MS = 60 * 1000;
 
-async function fetchStatboticsData(teamNumber, eventKey) {
+async function fetchTeamSummaryData(teamNumber, eventKey) {
   const year = new Date().getFullYear();
 
   if (!teamNumber) {
@@ -420,48 +420,86 @@ async function fetchStatboticsData(teamNumber, eventKey) {
   }
 
   const currentState = stateManager.getState();
-  const previousData = currentState.currentStatboticsData;
+  const previousData = currentState.currentTeamSummaryData;
   const now = Date.now();
 
-  if (_statboticsFetchInFlight) {
-    return _statboticsFetchInFlight;
+  if (_teamSummaryFetchInFlight) {
+    return _teamSummaryFetchInFlight;
   }
 
-  if (now - _statboticsLastFetchAt < STATBOTICS_COOLDOWN_MS && previousData) {
+  if (now - _teamSummaryLastFetchAt < TEAM_SUMMARY_COOLDOWN_MS && previousData) {
     return previousData;
   }
 
-  _statboticsFetchInFlight = (async () => {
+  _teamSummaryFetchInFlight = (async () => {
     try {
-      const [teamData, eventData] = await Promise.all([
-        fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_year/${teamNumber}/${year}`),
+      const headers = {
+        "X-TBA-Auth-Key": config.tbaapikey || "",
+      };
+
+      const [teamEvents, eventStatus, rankings] = await Promise.all([
+        fetchWithRetry(
+          `https://www.thebluealliance.com/api/v3/team/frc${teamNumber}/events/${year}`,
+          { headers },
+        ),
         eventKey
-          ? fetchWithRetry(`https://r.jina.ai/http://api.statbotics.io/v3/team_event/${teamNumber}/${eventKey}`)
+          ? fetchWithRetry(
+              `https://www.thebluealliance.com/api/v3/team/frc${teamNumber}/event/${eventKey}/status`,
+              { headers },
+            )
+          : Promise.resolve(null),
+        eventKey
+          ? fetchWithRetry(`https://www.thebluealliance.com/api/v3/event/${eventKey}/rankings`, { headers })
           : Promise.resolve(null),
       ]);
 
-      return { teamData, eventData };
+      const rankingEntry = Array.isArray(rankings?.rankings)
+        ? rankings.rankings.find((entry) => entry.team_key === `frc${teamNumber}`)
+        : null;
+
+      const record = rankingEntry?.record || eventStatus?.qual?.record || null;
+      const eventRank = rankingEntry?.rank ?? eventStatus?.qual?.rank ?? null;
+      const winTotal = record?.wins ?? 0;
+      const lossTotal = record?.losses ?? 0;
+      const tieTotal = record?.ties ?? 0;
+      const totalGames = winTotal + lossTotal + tieTotal;
+      const winRate =
+        totalGames > 0 ? `${((winTotal / totalGames) * 100).toFixed(1)}%` : "–";
+
+      return {
+        teamSummary: {
+          eventRank,
+          eventRecord: {
+            wins: winTotal,
+            losses: lossTotal,
+            ties: tieTotal,
+          },
+          winRate,
+          seasonEventCount: Array.isArray(teamEvents) ? teamEvents.length : 0,
+          eventName: currentState.currentEventData?.name || null,
+        },
+      };
     } catch (error) {
-      console.warn("Statbotics fetch failed:", error);
+      console.warn("Team summary fetch failed:", error);
       return previousData || null;
     } finally {
-      _statboticsLastFetchAt = Date.now();
-      _statboticsFetchInFlight = null;
+      _teamSummaryLastFetchAt = Date.now();
+      _teamSummaryFetchInFlight = null;
     }
   })();
 
-  return _statboticsFetchInFlight;
+  return _teamSummaryFetchInFlight;
 }
 
-window.pitbeaconRefreshStatbotics = async () => {
+window.pitbeaconRefreshTeamData = async () => {
   const currentState = stateManager.getState();
-  const statboticsData = await fetchStatboticsData(
+  const teamSummaryData = await fetchTeamSummaryData(
     config.teamNumber,
     currentState.currentEventData?.key,
   );
-  stateManager.update({ currentStatboticsData: statboticsData });
+  stateManager.update({ currentTeamSummaryData: teamSummaryData });
   renderer.updateCards(stateManager.getState());
-  return statboticsData;
+  return teamSummaryData;
 };
 
 // Data fetching
@@ -470,7 +508,7 @@ async function getData() {
   try {
     const result = await dataSources.fetchAll();
     if (result) {
-      const statboticsData = await fetchStatboticsData(
+      const teamSummaryData = await fetchTeamSummaryData(
         config.teamNumber,
         result.eventData?.key,
       );
@@ -479,7 +517,7 @@ async function getData() {
         currentMatches: result.matches,
         currentEventData: result.eventData,
         currentRankings: result.rankings,
-        currentStatboticsData: statboticsData,
+        currentTeamSummaryData: teamSummaryData,
       });
       renderer.updateCards(stateManager.getState());
     }

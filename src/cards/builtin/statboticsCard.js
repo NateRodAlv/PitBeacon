@@ -2,13 +2,13 @@
 export function createStatboticsCard() {
   return {
     id: "statbotics-card",
-    label: "Statbotics",
+    label: "Team Overview",
     icon: "chart-bar",
     builtin: true,
     render: async (element, state, sdk) => {
       const teamNumber = sdk.getConfig('teamNumber');
       const year = new Date().getFullYear();
-      const eventKey = state.currentEventData?.key;
+      const eventName = state.currentEventData?.name || "Current Event";
       const wrapper = element.querySelector(".statbotics-shell");
       if (!wrapper) {
         const wrapper = document.createElement("div");
@@ -25,7 +25,7 @@ export function createStatboticsCard() {
         wrapper.innerHTML = `
                 <div class="statbotics-shell">
                     <div class="pit-header">
-                        <span class="pit-title"><i class="ti ti-chart-bar"></i> Statbotics</span>
+                        <span class="pit-title"><i class="ti ti-chart-bar"></i> Team Overview</span>
                         <button class="pit-add-btn" id="statboticsRefresh">↻ Refresh</button>
                     </div>
                     <div class="statbotics-body" id="statboticsBody">
@@ -41,23 +41,17 @@ export function createStatboticsCard() {
       const loadData = async () => {
         body.innerHTML = `<div class="statbotics-loading">Loading…</div>`;
         try {
-          const statboticsData = await sdk.refreshStatboticsData();
-          const teamData = statboticsData?.teamData || null;
-          const eventData = statboticsData?.eventData || null;
+          const teamSummaryData = await sdk.refreshTeamData();
+          const summary = teamSummaryData?.teamSummary || null;
 
-          if (!teamData && !eventData) {
-            throw new Error("No Statbotics data returned.");
+          if (!summary) {
+            throw new Error("No The Blue Alliance data returned.");
           }
 
-          body.innerHTML = renderStatboticsHTML(
-            teamData,
-            eventData,
-            teamNumber,
-            year,
-          );
+          body.innerHTML = renderTeamSummaryHTML(summary, teamNumber, year, eventName);
         } catch (err) {
           body.innerHTML = `<div class="statbotics-error">
-                        <p>⚠ Could not load Statbotics data.</p>
+                        <p>⚠ Could not load Team Overview data.</p>
                         <p class="statbotics-hint">${err.message}</p>
                     </div>`;
         }
@@ -68,73 +62,31 @@ export function createStatboticsCard() {
       });
       await loadData();
 
-      function renderStatboticsHTML(team, event, teamNum, yr) {
-        const epa = team?.epa?.total_points;
-        const epaRank = team?.epa?.ranks?.total?.rank;
-        const epaPercentile = team?.epa?.ranks?.total?.percentile;
-        const wins = team?.record?.wins ?? "–";
-        const losses = team?.record?.losses ?? "–";
-        const ties = team?.record?.ties ?? "–";
-        const winrate =
-          team?.record?.count > 0
-            ? ((team.record.wins / team.record.count) * 100).toFixed(1) + "%"
-            : "–";
-
-        const autoEpa = team?.epa?.breakdown?.auto_points;
-        const teleopEpa = team?.epa?.breakdown?.teleop_points;
-        const endgameEpa = team?.epa?.breakdown?.endgame_points;
-
-        const fmtEpa = (v) => (v != null ? Number(v).toFixed(1) : "–");
-        const fmtPct = (p) =>
-          p != null ? (p * 100).toFixed(0) + "th %ile" : "";
-
-        let eventBlock = "";
-        if (event) {
-          const eRank = event?.epa?.ranks?.total?.rank ?? "–";
-          const eTotal = event?.epa?.total_points;
-          eventBlock = `
-                        <div class="sb-divider"></div>
-                        <div class="sb-section-title">This Event</div>
-                        <div class="sb-stat-row">
-                            <span class="sb-label">EPA</span>
-                            <span class="sb-value sb-accent">${fmtEpa(eTotal)}</span>
-                        </div>
-                        <div class="sb-stat-row">
-                            <span class="sb-label">Event Rank</span>
-                            <span class="sb-value">${eRank}</span>
-                        </div>
-                    `;
-        }
+      function renderTeamSummaryHTML(summary, teamNum, yr, eventDisplayName) {
+        const eventRank = summary?.eventRank ?? "–";
+        const wins = summary?.eventRecord?.wins ?? "–";
+        const losses = summary?.eventRecord?.losses ?? "–";
+        const ties = summary?.eventRecord?.ties ?? "–";
+        const winrate = summary?.winRate ?? "–";
+        const seasonEvents = summary?.seasonEventCount ?? "–";
+        const currentEventName = eventDisplayName || summary?.eventName || "Current Event";
 
         return `
                     <div class="sb-header-team">
                         <span class="sb-team-num">${teamNum}</span>
                         <span class="sb-year-badge">${yr}</span>
                     </div>
-                    <div class="sb-section-title">Season EPA</div>
-                    <div class="sb-epa-row">
-                        <div class="sb-epa-block">
-                            <div class="sb-epa-val">${fmtEpa(epa?.mean ?? epa)}</div>
-                            <div class="sb-epa-label">Total EPA</div>
-                            ${epaRank != null ? `<div class="sb-epa-sub">Rank #${epaRank} ${fmtPct(epaPercentile)}</div>` : ""}
-                        </div>
+                    <div class="sb-section-title">Current Event</div>
+                    <div class="sb-stat-row">
+                        <span class="sb-label">Event</span>
+                        <span class="sb-value">${currentEventName}</span>
                     </div>
-                    <div class="sb-breakdown">
-                        <div class="sb-breakdown-item">
-                            <span class="sb-breakdown-val auto">${fmtEpa(autoEpa?.mean ?? autoEpa)}</span>
-                            <span class="sb-breakdown-label">Auto</span>
-                        </div>
-                        <div class="sb-breakdown-item">
-                            <span class="sb-breakdown-val teleop">${fmtEpa(teleopEpa?.mean ?? teleopEpa)}</span>
-                            <span class="sb-breakdown-label">Teleop</span>
-                        </div>
-                        <div class="sb-breakdown-item">
-                            <span class="sb-breakdown-val endgame">${fmtEpa(endgameEpa?.mean ?? endgameEpa)}</span>
-                            <span class="sb-breakdown-label">Endgame</span>
-                        </div>
+                    <div class="sb-stat-row">
+                        <span class="sb-label">Event Rank</span>
+                        <span class="sb-value sb-accent">${eventRank}</span>
                     </div>
                     <div class="sb-divider"></div>
-                    <div class="sb-section-title">Season Record</div>
+                    <div class="sb-section-title">Event Record</div>
                     <div class="sb-stat-row">
                         <span class="sb-label">W / L / T</span>
                         <span class="sb-value">${wins} – ${losses} – ${ties}</span>
@@ -143,9 +95,14 @@ export function createStatboticsCard() {
                         <span class="sb-label">Win Rate</span>
                         <span class="sb-value sb-accent">${winrate}</span>
                     </div>
-                    ${eventBlock}
+                    <div class="sb-divider"></div>
+                    <div class="sb-section-title">Season Snapshot</div>
+                    <div class="sb-stat-row">
+                        <span class="sb-label">Events This Year</span>
+                        <span class="sb-value">${seasonEvents}</span>
+                    </div>
                     <div class="sb-footer">
-                        <a href="https://statbotics.io/team/${teamNum}" target="_blank" class="sb-link">View on Statbotics ↗</a>
+                        <a href="https://www.thebluealliance.com/team/${teamNum}" target="_blank" class="sb-link">View on The Blue Alliance ↗</a>
                     </div>
                 `;
       }

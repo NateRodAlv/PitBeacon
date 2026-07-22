@@ -27,9 +27,9 @@ export class SDK {
     return this._dataSources.getSourceNames();
   }
 
-  async refreshStatboticsData() {
-    if (typeof window.pitbeaconRefreshStatbotics === "function") {
-      return window.pitbeaconRefreshStatbotics();
+  async refreshTeamData() {
+    if (typeof window.pitbeaconRefreshTeamData === "function") {
+      return window.pitbeaconRefreshTeamData();
     }
     return null;
   }
