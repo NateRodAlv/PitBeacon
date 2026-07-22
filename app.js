@@ -277,7 +277,7 @@ function saveCurrentAsProfile(name) {
 
 function switchToProfile(name) {
   let profile = null;
-  if (name === "Default" && !config.layoutProfiles["Default"]) {
+  if (name === "Default") {
     profile = {
       gridCols: 3,
       gridRows: 3,
@@ -352,13 +352,20 @@ function refreshProfileUI() {
 
 let _autoSwapTimer = null;
 
+function getAutoSwapProfileNames() {
+  return [
+    "Default",
+    ...Object.keys(config.layoutProfiles || {}).filter((name) => name !== "Default"),
+  ];
+}
+
 function restartAutoSwap() {
   if (_autoSwapTimer) {
     clearInterval(_autoSwapTimer);
     _autoSwapTimer = null;
   }
   if (!config.autoSwapEnabled) return;
-  const names = ["Default", ...Object.keys(config.layoutProfiles)];
+  const names = getAutoSwapProfileNames();
   if (names.length < 2) return;
   _autoSwapTimer = setInterval(() => {
     const idx = names.indexOf(config.activeProfileName);
