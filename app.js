@@ -34,6 +34,7 @@ const stateManager = new StateManager({
   currentMatches: null,
   currentEventData: null,
   currentRankings: null,
+  currentTeamSummaryData: null,
   lastMatchAlertId: null,
   fullDate: fullDate,
   teamNumber: config.teamNumber,
@@ -262,6 +263,10 @@ function captureCurrentLayoutSnapshot() {
 }
 
 function saveCurrentAsProfile(name) {
+  if (name === "Default") {
+    delete config.layoutProfiles["Default"];
+    localStorage.setItem("layoutProfiles", JSON.stringify(config.layoutProfiles));
+  }
   const snapshot = captureCurrentLayoutSnapshot();
   config.layoutProfiles[name] = snapshot;
   config.activeProfileName = name;
@@ -273,15 +278,15 @@ function saveCurrentAsProfile(name) {
 
 function switchToProfile(name) {
   let profile = null;
-  if (name === "Default" && !config.layoutProfiles["Default"]) {
+  if (name === "Default") {
     profile = {
       gridCols: 3,
       gridRows: 3,
       layout: {
-        "webcast-card": { x: 0, y: 0, width: 1, height: 2 },
-        "pit-notes-card": { x: 0, y: 2, width: 1, height: 1 },
-        "match-card": { x: 1, y: 0, width: 2, height: 2 },
-        "leaderboard-card": { x: 1, y: 2, width: 2, height: 1 },
+        "webcast-card": {x: 0, y: 0, width: 1, height: 1},
+        "match-card": {x: 2, y: 0, width: 1, height: 3},
+        "leaderboard-card": {x: 1, y: 0, width: 1, height: 3},
+        "statbotics-card": {x: 0, y: 1, width: 1, height: 2},
       },
       hiddenCards: [],
     };
@@ -317,7 +322,7 @@ function refreshProfileUI() {
   if (sel) {
     const current = sel.value || config.activeProfileName;
     sel.innerHTML = `<option value="Default">Default</option>`;
-    Object.keys(config.layoutProfiles).forEach((name) => {
+    Object.keys(config.layoutProfiles).filter(name => name !== "Default").forEach((name) => {
       const opt = document.createElement("option");
       opt.value = name;
       opt.textContent = name;
@@ -328,7 +333,7 @@ function refreshProfileUI() {
 
   const switcher = document.getElementById("profileSwitcher");
   if (!switcher) return;
-  const names = ["Default", ...Object.keys(config.layoutProfiles)];
+  const names = [...Object.keys(config.layoutProfiles)];
   if (names.length <= 1) {
     switcher.innerHTML = "";
     return;
@@ -348,13 +353,20 @@ function refreshProfileUI() {
 
 let _autoSwapTimer = null;
 
+function getAutoSwapProfileNames() {
+  return [
+    "Default",
+    ...Object.keys(config.layoutProfiles || {}).filter((name) => name !== "Default"),
+  ];
+}
+
 function restartAutoSwap() {
   if (_autoSwapTimer) {
     clearInterval(_autoSwapTimer);
     _autoSwapTimer = null;
   }
   if (!config.autoSwapEnabled) return;
-  const names = ["Default", ...Object.keys(config.layoutProfiles)];
+  const names = getAutoSwapProfileNames();
   if (names.length < 2) return;
   _autoSwapTimer = setInterval(() => {
     const idx = names.indexOf(config.activeProfileName);
@@ -369,16 +381,158 @@ function renderLayout() {
   renderer.render(config, document.getElementById("container"));
 }
 
+function hasRealTbaKey() {
+  const key = (config.tbaapikey || "").toString().trim();
+  if (!key) return false;
+  const normalized = key.toLowerCase();
+  return !["your_auth_key", "your auth key", "tba key", "your-api-key", "your api key"].includes(normalized);
+}
+
+async function fetchWithRetry(url, options = {}, retries = 2) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetch(url, options);
+      const text = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${text.slice(0, 120)}`);
+      }
+
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        throw new Error(`Invalid JSON: ${text.slice(0, 120)}`);
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt === retries) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+
+  throw lastError || new Error("Unknown TBA fetch error");
+}
+
+let _teamSummaryFetchInFlight = null;
+let _teamSummaryLastFetchAt = 0;
+const TEAM_SUMMARY_COOLDOWN_MS = 60 * 1000;
+
+async function fetchTeamSummaryData(teamNumber, eventKey) {
+  const year = new Date().getFullYear();
+
+  if (!teamNumber || !hasRealTbaKey()) {
+    return {
+      teamSummary: {
+        eventRank: "–",
+        eventRecord: { wins: 0, losses: 0, ties: 0 },
+        winRate: "–",
+        seasonEventCount: 0,
+        eventName: stateManager.getState().currentEventData?.name || null,
+      },
+    };
+  }
+
+  const currentState = stateManager.getState();
+  const previousData = currentState.currentTeamSummaryData;
+  const now = Date.now();
+
+  if (_teamSummaryFetchInFlight) {
+    return _teamSummaryFetchInFlight;
+  }
+
+  if (now - _teamSummaryLastFetchAt < TEAM_SUMMARY_COOLDOWN_MS && previousData) {
+    return previousData;
+  }
+
+  _teamSummaryFetchInFlight = (async () => {
+    try {
+      const headers = {
+        "X-TBA-Auth-Key": config.tbaapikey || "",
+      };
+
+      const [teamEvents, eventStatus, rankings] = await Promise.all([
+        fetchWithRetry(
+          `https://www.thebluealliance.com/api/v3/team/frc${teamNumber}/events/${year}`,
+          { headers },
+        ),
+        eventKey
+          ? fetchWithRetry(
+              `https://www.thebluealliance.com/api/v3/team/frc${teamNumber}/event/${eventKey}/status`,
+              { headers },
+            )
+          : Promise.resolve(null),
+        eventKey
+          ? fetchWithRetry(`https://www.thebluealliance.com/api/v3/event/${eventKey}/rankings`, { headers })
+          : Promise.resolve(null),
+      ]);
+
+      const rankingEntry = Array.isArray(rankings?.rankings)
+        ? rankings.rankings.find((entry) => entry.team_key === `frc${teamNumber}`)
+        : null;
+
+      const record = rankingEntry?.record || eventStatus?.qual?.record || null;
+      const eventRank = rankingEntry?.rank ?? eventStatus?.qual?.rank ?? null;
+      const winTotal = record?.wins ?? 0;
+      const lossTotal = record?.losses ?? 0;
+      const tieTotal = record?.ties ?? 0;
+      const totalGames = winTotal + lossTotal + tieTotal;
+      const winRate =
+        totalGames > 0 ? `${((winTotal / totalGames) * 100).toFixed(1)}%` : "–";
+
+      return {
+        teamSummary: {
+          eventRank,
+          eventRecord: {
+            wins: winTotal,
+            losses: lossTotal,
+            ties: tieTotal,
+          },
+          winRate,
+          seasonEventCount: Array.isArray(teamEvents) ? teamEvents.length : 0,
+          eventName: currentState.currentEventData?.name || null,
+        },
+      };
+    } catch (error) {
+      console.warn("Team summary fetch failed:", error);
+      return previousData || null;
+    } finally {
+      _teamSummaryLastFetchAt = Date.now();
+      _teamSummaryFetchInFlight = null;
+    }
+  })();
+
+  return _teamSummaryFetchInFlight;
+}
+
+window.pitbeaconRefreshTeamData = async () => {
+  const currentState = stateManager.getState();
+  const teamSummaryData = await fetchTeamSummaryData(
+    config.teamNumber,
+    currentState.currentEventData?.key,
+  );
+  stateManager.update({ currentTeamSummaryData: teamSummaryData });
+  renderer.updateCards(stateManager.getState());
+  return teamSummaryData;
+};
+
 // Data fetching
 
 async function getData() {
   try {
     const result = await dataSources.fetchAll();
     if (result) {
+      const teamSummaryData = await fetchTeamSummaryData(
+        config.teamNumber,
+        result.eventData?.key,
+      );
+
       stateManager.update({
         currentMatches: result.matches,
         currentEventData: result.eventData,
         currentRankings: result.rankings,
+        currentTeamSummaryData: teamSummaryData,
       });
       renderer.updateCards(stateManager.getState());
     }
@@ -588,8 +742,8 @@ function setupListeners() {
   document.getElementById("deleteProfileBtn")?.addEventListener("click", () => {
     const sel = document.getElementById("profileSelect");
     const name = sel.value;
-    if (!name || name === "Default") {
-      displayMessage("Cannot delete the Default profile.", "error");
+    if (Object.keys(config.layoutProfiles).length === 0) {
+      displayMessage("Cannot delete the last profile.", "error");
       return;
     }
     if (!confirm(`Delete profile "${name}"?`)) return;
@@ -648,6 +802,30 @@ function openLayoutEditor() {
   renderLayoutEditor(modal);
 }
 
+function getCardIconMarkup(cardId, cardDef) {
+  const defaultCardDef = Array.isArray(config.defaultCards)
+    ? config.defaultCards.find((entry) => entry.id === cardId)
+    : null;
+  const iconName = cardDef?.icon || defaultCardDef?.icon || "square";
+  const normalized = String(iconName).trim().toLowerCase();
+
+  const svgMap = {
+    "device-tv": `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 18v3"></path></svg>`,
+    "tournament": `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v4"></path><path d="M16 4v4"></path><path d="M4 8h16"></path><path d="M8 8v4"></path><path d="M16 8v4"></path><path d="M8 12h8"></path><path d="M6 12h2"></path><path d="M16 12h2"></path><path d="M4 16h16"></path><path d="M8 16v4"></path><path d="M16 16v4"></path></svg>`,
+    trophy: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10"></path><path d="M8 4v3a4 4 0 0 0 4 4 4 4 0 0 0 4-4V4"></path><path d="M8 12H6a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1"></path><path d="M16 12h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"></path><path d="M12 17v3"></path></svg>`,
+    tool: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4a2 2 0 0 1 2.8 2.8L9.6 12 8 10.4l7.2-7.2Z"></path><path d="m6 12 6 6"></path><path d="m10 16 4 4"></path></svg>`,
+    battery: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="14" height="12" rx="2"></rect><path d="M19 10h1"></path><path d="M17 8v8"></path></svg>`,
+    package: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z"></path><path d="m4 7 8 4 8-4"></path><path d="m12 11 8-4"></path><path d="M12 11v10"></path></svg>`,
+    checklist: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11"></path><path d="M9 12h11"></path><path d="M9 18h11"></path><path d="m4 5 1.5 1.5L8 3"></path><path d="m4 11 1.5 1.5L8 9"></path><path d="m4 17 1.5 1.5L8 15"></path></svg>`,
+    "chart-bar": `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9"></path><path d="M10 19V5"></path><path d="M16 19v-7"></path><path d="M22 19v-3"></path></svg>`,
+    "alert-circle": `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path></svg>`,
+    code: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4"></path><path d="m16 8 4 4-4 4"></path><path d="m13 4-2 16"></path></svg>`,
+  };
+
+  const iconSvg = svgMap[normalized] || svgMap.square || `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>`;
+  return `<span class="le-card-icon" data-icon-name="${iconName}" aria-hidden="true">${iconSvg}</span>`;
+}
+
 function renderLayoutEditor(modal) {
   const cardIds = registry.listCards();
   const cols = config.gridCols || 3;
@@ -695,7 +873,8 @@ function renderLayoutEditor(modal) {
                         const def = registry.get(id);
                         const inLayout = config.layout[id] !== undefined;
                         return `<div class="le-palette-item ${inLayout ? "in-layout" : ""}" draggable="true" data-card-id="${id}" style="${inLayout ? "opacity:0.4;cursor:default;" : ""}">
-                            📄 ${def.label}
+                            ${getCardIconMarkup(id, def)}
+                            <span class="le-card-label">${def.label}</span>
                             ${inLayout ? " ✓" : ""}
                         </div>`;
                       })
@@ -729,7 +908,7 @@ function renderLayoutEditor(modal) {
                         if (!def) return "";
                         return `<div class="layout-item" data-card-id="${id}" style="grid-column:${pos.x + 1}/span ${pos.width};grid-row:${pos.y + 1}/span ${pos.height};">
                             <div class="layout-item-header">
-                                <span>📄 ${def.label}</span>
+                                <span>${getCardIconMarkup(id, def)}<span class="le-card-label">${def.label}</span></span>
                                 <button class="le-remove-btn" data-card-id="${id}">✕</button>
                             </div>
                             <div class="layout-item-hint">${pos.width}×${pos.height}</div>
@@ -945,7 +1124,7 @@ function renderLayoutEditor(modal) {
   // ─── Export ────────────────────────────────────────────────────────────
   shell.querySelector("#leExport").addEventListener("click", () => {
     const exportData = {
-      version: "26.7.15",
+      version: "26.7.21",
       gridCols: config.gridCols,
       gridRows: config.gridRows,
       layout: config.layout,
@@ -1011,7 +1190,7 @@ function renderLayoutEditor(modal) {
     if (!confirm("Reset layout to default?")) return;
     config.layout = {
       "webcast-card": { x: 0, y: 0, width: 1, height: 2 },
-      "pit-notes-card": { x: 0, y: 2, width: 1, height: 1 },
+      "battery-card": { x: 0, y: 2, width: 1, height: 1 },
       "match-card": { x: 1, y: 0, width: 2, height: 2 },
       "leaderboard-card": { x: 1, y: 2, width: 2, height: 1 },
     };
@@ -1321,7 +1500,7 @@ renderLayout();
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionTag = document.getElementById("version");
-  if (versionTag) versionTag.textContent = "Version 26.7.15";
+  if (versionTag) versionTag.textContent = "Version 26.7.21";
 });
 
 // ─── Modal Closes ─────────────────────────────────────────────────────────

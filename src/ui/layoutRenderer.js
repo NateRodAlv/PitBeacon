@@ -105,7 +105,7 @@ render(config, container) {
         // Update all rendered cards with new state
         for (const [cardId, element] of this._renderedCards) {
             const def = this._registry.get(cardId);
-            if (def && def.render && element.isConnected) {
+            if (def && def.render && element.isConnected && !def.selfRefresh) {
                 try {
                     def.render(element, state, this._sdk, cardId);
                 } catch (err) {

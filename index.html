@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="PitBeacon"
+      content="PitBeacon - FRC team pits tool. Real-time match alerts, team rankings, and event data for FIRST Robotics Competition teams."
     />
     <meta
       name="keywords"
-      content="FRC, FIRST Robotics, pit display, event management, match alerts, robotics competition, pitradar, pitbeacon"
+      content="FRC, FIRST Robotics, team 7250, event management, match alerts, robotics competition, pitradar, pitbeacon"
     />
     <meta name="author" content="FRC Team 7250" />
     <meta name="theme-color" content="#1a1a1a" />
@@ -24,7 +24,7 @@
     />
     <meta
       property="og:description"
-      content="Real-time match alerts, team rankings, and comprehensive event data for FIRST Robotics Competition teams."
+      content="PitBeacon - FRC team pits tool. Real-time match alerts, team rankings, and event data for FIRST Robotics Competition teams."
     />
     <meta property="og:type" content="website" />
     <meta
@@ -36,7 +36,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
-      content="PitBeacon - FRC Team Scouting & Event Management"
+      content="PitBeacon"
     />
     <meta
       name="twitter:description"
@@ -55,19 +55,19 @@
       href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
       rel="stylesheet"
     />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body>
     <div class="header">
       <div class="logo">
         <h1 class="title">Pit<span class="beacon">Beacon</span></h1>
         <p class="frc7250">By FRC 7250</p>
-        <p class="version" id="version">Version 26.6.7</p>
+        <p class="version" id="version">Version 26.7.21</p>
       </div>
       <div class="time-display" id="time-display">--:--:--</div>
       <div class="profile-switcher" id="profileSwitcher"></div>
       <div class="buttons">
-        <!-- Layout Editor Button (was Card Manager) -->
+        <!-- Layout Editor Button -->
         <button
           class="mheader-btn"
           id="layoutEditorBtn"
@@ -91,7 +91,7 @@
           </svg>
         </button>
 
-        <!-- Card Manager Button (was Developer Editor) -->
+        <!-- Card Manager Button -->
         <button
           class="mheader-btn"
           id="cardsBtn"
@@ -108,11 +108,9 @@
             stroke-linecap="round"
             stroke-linejoin="round"
           >
-            <path d="M4 4h16v16H4z"></path>
-            <path d="M9 4v16"></path>
-            <path d="M15 4v16"></path>
-            <path d="M4 9h16"></path>
-            <path d="M4 15h16"></path>
+            <rect x="4" y="4" width="16" height="4" rx="1"></rect>
+            <rect x="4" y="10" width="16" height="4" rx="1"></rect>
+            <rect x="4" y="16" width="16" height="4" rx="1"></rect>
           </svg>
         </button>
         <button
