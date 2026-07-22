@@ -20,14 +20,14 @@ jobs:
       # Example: npm ci && npm run build
 
       - name: Deploy Main Branch to Root
-        if: github.ref == 'refs/heads/test'
+        if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: . # Change to 'dist' or 'build' if using a framework
           branch: gh-pages
 
       - name: Deploy Second Branch to Subfolder
-        if: github.ref == 'refs/heads/branch_two' # Change to your second branch name
+        if: github.ref == 'refs/heads/test' # Change to your second branch name
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: . # Change to 'dist' or 'build' if using a framework
