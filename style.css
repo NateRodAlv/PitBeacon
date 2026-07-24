@@ -255,6 +255,10 @@ html {
   flex-wrap: wrap;
   margin: 0 auto 0 1rem;
 }
+.proftoggle {
+    position: relative;
+    z-index: 2000;
+}
 
 .profile-btn {
   font-family: "Rubik", sans-serif;
@@ -484,437 +488,6 @@ input[type="checkbox"]:checked::before {
   color: var(--text-primary);
 }
 
-/* Visual card builder */
-
-.visual-builder-modal {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.78);
-  display: none;
-  z-index: 1002;
-  align-items: center;
-  justify-content: center;
-}
-.visual-builder-modal.active {
-  display: flex;
-}
-
-.vb-shell {
-  display: flex;
-  flex-direction: column;
-  height: calc(100% - 40px);
-  max-height: 90vh;
-  width: calc(100% - 40px);
-  max-width: 1400px;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.vb-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background-color: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.vb-title {
-  font-family: "Rubik", sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-.vb-header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.vb-body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
-}
-/* Visual builder tabs */
-
-.vb-tabs {
-  display: flex;
-  gap: 0;
-  background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  padding: 0 16px;
-}
-
-.vb-tab {
-  padding: 10px 20px;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: var(--text-dim);
-  cursor: pointer;
-  font-family: "Rubik", sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-
-.vb-tab:hover {
-  color: var(--text-primary);
-  background: var(--bg-surface);
-}
-
-.vb-tab.active {
-  color: var(--text-primary);
-  border-bottom-color: var(--accent);
-}
-
-.vb-tab-content {
-  display: none;
-  flex: 1;
-  overflow: auto;
-}
-.vb-logic-block.drop-inside {
-  outline: 2px dashed var(--accent);
-  outline-offset: -4px;
-  background: rgba(47, 48, 112, 0.08);
-}
-.vb-tab-content.active {
-  display: flex;
-}
-
-/* Visual elements in canvas */
-
-.vb-element {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-  margin-bottom: 6px;
-}
-
-.vb-element:hover {
-  border-color: var(--border-accent);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.vb-element.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-.vb-element-properties {
-  overflow-y: auto !important;
-  flex: 1;
-  min-height: 0;
-  padding-right: 4px;
-}
-
-.vb-block-properties {
-  overflow-y: auto !important;
-  flex: 1;
-  min-height: 0;
-  padding-right: 4px;
-}
-
-/* Ensure the sidebar section containing properties can shrink */
-.vb-sidebar-section:last-of-type {
-  flex: 1;
-  overflow: hidden; /* changed from auto to hidden, let inner element scroll */
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.vb-element-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.vb-element-icon {
-  font-size: 0.9rem;
-}
-
-.vb-element-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  flex: 1;
-  font-family: "Rubik", sans-serif;
-}
-
-.vb-element-actions {
-  display: flex;
-  gap: 2px;
-}
-
-.vb-element-btn {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  transition: all 0.15s;
-}
-
-.vb-element-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-input);
-}
-
-.vb-element-btn.vb-element-delete:hover {
-  color: rgb(215, 75, 75);
-  background: rgba(200, 60, 60, 0.1);
-}
-
-.vb-element-preview {
-  padding: 4px 0;
-}
-
-/* Logic blocks */
-
-.vb-logic-workspace {
-  min-height: 200px;
-  border: 2px dashed var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-  background: rgba(0, 0, 0, 0.1);
-}
-
-.vb-logic-workspace.drag-over {
-  border-color: var(--accent);
-  background: rgba(47, 48, 112, 0.1);
-}
-
-.vb-logic-block {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-left: 4px solid #888;
-  border-radius: 6px;
-  padding: 8px 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.vb-logic-block:hover {
-  border-color: var(--border-accent);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.vb-logic-block.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
-.vb-logic-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.vb-logic-icon {
-  font-size: 0.9rem;
-}
-
-.vb-logic-label {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
-}
-
-.vb-logic-fields {
-  flex: 1;
-  display: flex;
-  gap: 6px;
-  padding: 0 8px;
-}
-
-.vb-logic-field {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  background: var(--bg-input);
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-family: "Rubik", sans-serif;
-}
-
-.vb-logic-field-label {
-  color: var(--text-dim);
-}
-
-.vb-logic-field-value {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.vb-logic-actions {
-  display: flex;
-  gap: 2px;
-}
-
-.vb-logic-btn {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  transition: all 0.15s;
-}
-
-.vb-logic-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-input);
-}
-
-.vb-logic-btn.vb-logic-delete:hover {
-  color: rgb(215, 75, 75);
-  background: rgba(200, 60, 60, 0.1);
-}
-
-.vb-logic-children {
-  margin: 8px 0 0 24px;
-  padding: 6px;
-  border-left: 2px solid var(--border);
-  min-height: 30px;
-}
-
-.vb-logic-child-hint {
-  color: var(--text-dim);
-  font-size: 0.7rem;
-  font-style: italic;
-  text-align: center;
-  padding: 4px;
-  font-family: "Rubik", sans-serif;
-}
-
-/* Preview tab */
-
-.vb-preview-full {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-  background: var(--bg-base);
-}
-
-.vb-preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-shrink: 0;
-}
-
-.vb-preview-title {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
-}
-
-.vb-preview-body {
-  flex: 1;
-  overflow: auto;
-  background: var(--bg-surface);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  padding: 16px;
-  min-height: 300px;
-}
-
-/* Small button */
-
-.vb-btn-sm {
-  padding: 4px 12px;
-  font-size: 0.75rem;
-}
-
-.vb-canvas-actions {
-  display: flex;
-  gap: 4px;
-}
-
-/* Responsive adjustments */
-
-@media (max-width: 768px) {
-  .vb-body {
-    flex-direction: column;
-  }
-  .vb-sidebar {
-    width: 100%;
-    max-height: 40%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .vb-palette-grid {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-  .vb-shell {
-    height: calc(100% - 20px);
-    width: calc(100% - 20px);
-  }
-  .vb-tabs {
-    overflow-x: auto;
-  }
-  .vb-tab {
-    padding: 8px 12px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-}
-/* Sidebar */
-
-.vb-sidebar {
-  width: 280px;
-  flex-shrink: 0;
-  background-color: var(--bg-base);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-}
-.vb-sidebar-section {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  height: 50%;
-  flex-shrink: 0;
-  overflow: auto;
-}
-/* For logic block properties */
-.vb-block-properties {
-  overflow-y: auto !important;
-  flex: 1;
-  min-height: 0;
-  padding-right: 4px;
-}
-.vb-sidebar-section:last-of-type {
-  flex: 1;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-}
-/* ─── Visual Builder / Dev Card Picker ──────────────────────────────────── */
-
-.vb-picker,
 .dc-picker {
   flex: 1;
   display: flex;
@@ -924,7 +497,6 @@ input[type="checkbox"]:checked::before {
   padding: 24px;
 }
 
-.vb-picker-inner,
 .dc-picker-inner {
   width: 100%;
   max-width: 480px;
@@ -934,7 +506,6 @@ input[type="checkbox"]:checked::before {
   gap: 14px;
 }
 
-.vb-picker-divider,
 .dc-picker-divider {
   text-align: center;
   font-size: 0.75rem;
@@ -942,8 +513,7 @@ input[type="checkbox"]:checked::before {
   font-family: "Rubik", sans-serif;
   position: relative;
 }
-.vb-picker-divider::before,
-.vb-picker-divider::after,
+
 .dc-picker-divider::before,
 .dc-picker-divider::after {
   content: "";
@@ -953,16 +523,13 @@ input[type="checkbox"]:checked::before {
   height: 1px;
   background: var(--border);
 }
-.vb-picker-divider::before,
 .dc-picker-divider::before {
   left: 0;
 }
-.vb-picker-divider::after,
 .dc-picker-divider::after {
   right: 0;
 }
 
-.vb-picker-list,
 .dc-picker-list {
   display: flex;
   flex-direction: column;
@@ -971,7 +538,6 @@ input[type="checkbox"]:checked::before {
   overflow-y: auto;
 }
 
-.vb-picker-item,
 .dc-picker-item {
   display: flex;
   justify-content: space-between;
@@ -984,22 +550,12 @@ input[type="checkbox"]:checked::before {
   cursor: pointer;
   transition: all 0.15s;
 }
-.vb-picker-item:hover,
 .dc-picker-item:hover {
   border-color: var(--border-accent);
   background: var(--accent-hover);
 }
 
-.vb-picker-item-disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-.vb-picker-item-disabled:hover {
-  border-color: var(--border);
-  background: var(--bg-raised);
-}
 
-.vb-picker-item-label,
 .dc-picker-item-label {
   font-weight: 500;
   color: var(--text-primary);
@@ -1007,26 +563,13 @@ input[type="checkbox"]:checked::before {
   font-size: 0.85rem;
 }
 
-.vb-picker-item-id,
 .dc-picker-item-id {
   font-family: monospace;
   font-size: 0.75rem;
   color: var(--text-dim);
 }
 
-.vb-picker-item-badge {
-  font-size: 0.6rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(200, 140, 40, 0.2);
-  color: rgb(230, 175, 80);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-family: "Rubik", sans-serif;
-  white-space: nowrap;
-}
 
-.vb-picker-item,
 .dc-picker-item {
   flex-wrap: wrap;
 }
@@ -1038,325 +581,6 @@ input[type="checkbox"]:checked::before {
   text-align: center;
   padding: 12px 4px;
   font-family: "Rubik", sans-serif;
-}
-
-/* ─── Header fields (Visual Builder id/label) ───────────────────────────── */
-
-.vb-header-fields {
-  display: flex;
-  gap: 8px;
-  flex: 1;
-  margin: 0 16px;
-}
-
-.vb-header-input {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px 10px;
-  color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
-  font-size: 0.82rem;
-  min-width: 0;
-  flex: 1;
-}
-.vb-header-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-.vb-btn-primary {
-  background: var(--accent);
-  color: white;
-  padding: 10px 16px;
-  font-size: 0.85rem;
-}
-.vb-btn-primary:hover {
-  background: var(--accent-hover);
-}
-.vb-sidebar-title {
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-family: "Rubik", sans-serif;
-}
-
-.vb-field {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-bottom: 8px;
-}
-.vb-field label {
-  font-size: 0.72rem;
-  color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
-}
-.vb-field input,
-.vb-field select {
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  font-family: "Rubik", sans-serif;
-}
-.vb-field input:focus,
-.vb-field select:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.vb-element.dragging,
-.vb-logic-block.dragging {
-  opacity: 0.4;
-}
-
-.vb-element.drop-before,
-.vb-logic-block.drop-before {
-  box-shadow: 0 -3px 0 0 var(--accent);
-}
-
-.vb-element.drop-after,
-.vb-logic-block.drop-after {
-  box-shadow: 0 3px 0 0 var(--accent);
-}
-/* Block palette */
-
-.vb-block-palette {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 0;
-}
-.vb-palette-category {
-  margin-bottom: 8px;
-}
-.vb-palette-category-title {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
-  padding: 4px 8px;
-  font-weight: 500;
-  font-family: "Rubik", sans-serif;
-}
-.vb-palette-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 0 4px;
-}
-.vb-palette-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-left: 3px solid #888;
-  cursor: grab;
-  transition: all 0.15s;
-  font-family: "Rubik", sans-serif;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-.vb-palette-item:hover {
-  border-color: var(--border-accent);
-  color: var(--text-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-.vb-palette-item:active {
-  cursor: grabbing;
-}
-.vb-palette-icon {
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-.vb-palette-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Canvas */
-
-.vb-canvas {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--bg-base);
-}
-.vb-canvas-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.vb-canvas-title {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
-}
-.vb-canvas-area {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-}
-
-/* Drop zone */
-
-.vb-drop-zone {
-  min-height: 200px;
-  border: 2px dashed var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-  background: rgba(0, 0, 0, 0.1);
-}
-.vb-drop-zone-active {
-  border-color: var(--border-accent);
-  background: rgba(47, 48, 112, 0.05);
-}
-.vb-drop-zone.drag-over {
-  border-color: var(--accent);
-  background: rgba(47, 48, 112, 0.1);
-}
-.vb-drop-hint {
-  text-align: center;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  font-style: italic;
-  padding: 20px;
-  font-family: "Rubik", sans-serif;
-}
-
-/* Block in canvas */
-
-.vb-block {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-left: 4px solid #888;
-  border-radius: 6px;
-  padding: 8px 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.vb-block:hover {
-  border-color: var(--border-accent);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-.vb-block.selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-.vb-block-header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-.vb-block-icon {
-  font-size: 0.9rem;
-}
-.vb-block-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  flex: 1;
-  font-family: "Rubik", sans-serif;
-}
-.vb-block-actions {
-  display: flex;
-  gap: 2px;
-}
-.vb-block-btn {
-  background: none;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  transition: all 0.15s;
-}
-.vb-block-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-input);
-}
-.vb-block-btn.vb-block-delete:hover {
-  color: rgb(215, 75, 75);
-  background: rgba(200, 60, 60, 0.1);
-}
-.vb-block-preview {
-  padding: 4px 0 2px 0;
-}
-
-/* Block settings */
-
-.vb-block-settings {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 0;
-}
-.vb-settings-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Buttons */
-
-.vb-btn {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: none;
-  font-family: "Rubik", sans-serif;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.vb-btn-save {
-  background: var(--accent);
-  color: white;
-}
-.vb-btn-save:hover {
-  background: var(--accent-hover);
-}
-.vb-btn-close {
-  background: transparent;
-  color: var(--text-dim);
-  font-size: 1.1rem;
-  padding: 4px 8px;
-}
-.vb-btn-close:hover {
-  color: var(--text-primary);
-  background: var(--bg-input);
-}
-.vb-btn-preview {
-  background: var(--bg-raised);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  font-size: 0.75rem;
-  padding: 4px 12px;
-}
-.vb-btn-preview:hover {
-  background: var(--accent-hover);
-  border-color: var(--border-accent);
 }
 
 /* Docs modal */
@@ -1414,78 +638,6 @@ input[type="checkbox"]:checked::before {
   margin: 0;
 }
 
-/* Preview modal */
-
-.vb-preview-modal {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  display: none;
-  z-index: 1003;
-  align-items: center;
-  justify-content: center;
-}
-.vb-preview-modal.active {
-  display: flex;
-}
-.vb-preview-shell {
-  display: flex;
-  flex-direction: column;
-  height: calc(100% - 80px);
-  max-height: 90vh;
-  width: calc(100% - 80px);
-  max-width: 900px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.vb-preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 16px;
-  background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.vb-preview-title {
-  font-family: "Rubik", sans-serif;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0;
-}
-.vb-preview-body {
-  flex: 1;
-  overflow: auto;
-  padding: 16px;
-}
-
-/* Responsive */
-
-@media (max-width: 768px) {
-  .vb-body {
-    flex-direction: column;
-  }
-  .vb-sidebar {
-    width: 100%;
-    max-height: 40%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .vb-palette-grid {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-  .vb-shell {
-    height: calc(100% - 20px);
-    width: calc(100% - 20px);
-  }
-  .vb-preview-shell {
-    height: calc(100% - 40px);
-    width: calc(100% - 40px);
-  }
-}
 /* Match cards */
 
 .match-card,
