@@ -148,7 +148,7 @@ html {
   position: fixed;
   top: 30px;
   right: 30px;
-  z-index: 9999;
+  z-index: 20;
 }
 .hidden {
   display: none !important;
@@ -254,22 +254,24 @@ html {
 }
 .proftoggle {
   position: relative;
-  z-index: 2000;
-  width: 16px !important;
+  z-index: 20;
+  width: 25px !important;
   height: 14px !important;
+  color: var(--accent) !important;
 }
 .proftoggle:checked {
-  background-color: var(--accent);
-  border-color: var(--accent);
+  background-color: var(--accent) !important;
+  border-color: var(--border) !important;
 }
 .proftoggle::before {
   width: 14px !important;
   height: 14px !important;
   top: -1px !important;
   left: 0px !important;
+  z-index: 5 !important;
 }
 .proftoggle:checked::before {
-  left: 6px !important;
+  left: 9.5px !important;
 }
 
 .profile-btn {

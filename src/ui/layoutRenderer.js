@@ -105,12 +105,24 @@ render(config, container) {
         // Update all rendered cards with new state
         for (const [cardId, element] of this._renderedCards) {
             const def = this._registry.get(cardId);
-            if (def && def.render && element.isConnected && !element.selfRefresh) {
-                try {
-                    def.render(element, state, this._sdk, cardId);
-                } catch (err) {
-                    console.error(`Error updating card "${cardId}":`, err);
-                }
+            if (!def || !def.render || !element.isConnected) continue;
+
+            // Developer Editor cards' render() is just a cheap postMessage
+            // relay of fresh state into the sandboxed iframe (see
+            // developerCardRuntime._renderDevCard's fast path) — unlike
+            // built-in cards, it does none of the expensive DOM rebuilding
+            // selfRefresh exists to let a card skip. A dev card that calls
+            // sdk.updateCard() still needs this relay to keep its own
+            // internal sdk._state cache fresh, since that's the only thing
+            // its custom interval has to diff against — skipping it here
+            // would freeze that card's state forever the moment it opts in
+            // to a custom refresh cadence.
+            if (element.selfRefresh && !def.developer) continue;
+
+            try {
+                def.render(element, state, this._sdk, cardId);
+            } catch (err) {
+                console.error(`Error updating card "${cardId}":`, err);
             }
         }
     }

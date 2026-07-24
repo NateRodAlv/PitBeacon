@@ -607,6 +607,13 @@ function displayMessage(message, type) {
     popups[popupId] = { element: element, timeout: timeout };
   }
 }
+// app.js is loaded as an ES module (<script type="module">), so this
+// top-level function declaration is scoped to the module and does NOT
+// automatically attach to `window` the way it would in a classic script.
+// sdk.notify() (called by every card, built-in or Developer Editor) reads
+// window.displayMessage specifically — without this line that check is
+// always false and notify() silently does nothing.
+window.displayMessage = displayMessage;
 
 function updateTimeDisplay() {
   const timeDisplay = document.getElementById("time-display");
