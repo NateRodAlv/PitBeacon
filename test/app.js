@@ -345,13 +345,16 @@ function refreshProfileUI() {
     return;
   }
   switcher.innerHTML = names
-    .map(
-      (name) =>
-        `  <div class="profile-btn${name === config.activeProfileName ? " profile-btn-active" : ""}" data-profile="${name}">
+    .map((name) => {
+      // Only an explicit `enabled: false` counts as disabled — profiles
+      // saved before this toggle existed have no `enabled` field at all,
+      // and should be treated as on rather than silently dropped.
+      const isEnabled = config.layoutProfiles[name].enabled !== false;
+      return `  <div class="profile-btn${name === config.activeProfileName ? " profile-btn-active" : ""}" data-profile="${name}">
     ${name}
-    <input type="checkbox" class="proftoggle" name="profiletoggle" data-profile="${name}" ${config.layoutProfiles[name].enabled}>
-  </div>`,
-    )
+    <input type="checkbox" class="proftoggle" name="profiletoggle" data-profile="${name}" ${isEnabled ? "checked" : ""}>
+  </div>`;
+    })
     .join("");
   switcher.querySelectorAll(".profile-btn").forEach((btn) => {
     btn.addEventListener("click", () => switchToProfile(btn.dataset.profile));
@@ -363,6 +366,10 @@ function refreshProfileUI() {
       const profile = config.layoutProfiles[name];
       if (profile) {
         profile.enabled = cb.checked;
+        localStorage.setItem(
+          "layoutProfiles",
+          JSON.stringify(config.layoutProfiles),
+        );
         restartAutoSwap();
       }
     });
@@ -378,7 +385,10 @@ function getAutoSwapProfileNames() {
     "Default",
     ...Object.keys(config.layoutProfiles || {})
       .filter((name) => name !== "Default")
-      .filter((name) => config.layoutProfiles[name].enabled),
+      // Only an explicit `enabled: false` opts a profile out — profiles
+      // saved before this toggle existed have no `enabled` field at all
+      // and should stay in rotation rather than silently disappear.
+      .filter((name) => config.layoutProfiles[name].enabled !== false),
   ];
 }
 
