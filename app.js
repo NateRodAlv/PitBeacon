@@ -346,9 +346,6 @@ function refreshProfileUI() {
   }
   switcher.innerHTML = names
     .map((name) => {
-      // Only an explicit `enabled: false` counts as disabled — profiles
-      // saved before this toggle existed have no `enabled` field at all,
-      // and should be treated as on rather than silently dropped.
       const isEnabled = config.layoutProfiles[name].enabled !== false;
       return `  <div class="profile-btn${name === config.activeProfileName ? " profile-btn-active" : ""}" data-profile="${name}">
     ${name}
@@ -381,15 +378,11 @@ function refreshProfileUI() {
 let _autoSwapTimer = null;
 
 function getAutoSwapProfileNames() {
-  return [
+  const allNames = [
     "Default",
-    ...Object.keys(config.layoutProfiles || {})
-      .filter((name) => name !== "Default")
-      // Only an explicit `enabled: false` opts a profile out — profiles
-      // saved before this toggle existed have no `enabled` field at all
-      // and should stay in rotation rather than silently disappear.
-      .filter((name) => config.layoutProfiles[name].enabled !== false),
+    ...Object.keys(config.layoutProfiles || {}).filter((name) => name !== "Default"),
   ];
+  return allNames.filter((name) => config.layoutProfiles[name]?.enabled !== false);
 }
 
 function restartAutoSwap() {
