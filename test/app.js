@@ -255,6 +255,7 @@ function loadCustomColors() {
 
 function captureCurrentLayoutSnapshot() {
   return {
+    enabled: true,
     gridCols: config.gridCols,
     gridRows: config.gridRows,
     layout: JSON.parse(JSON.stringify(config.layout || {})),
@@ -265,7 +266,10 @@ function captureCurrentLayoutSnapshot() {
 function saveCurrentAsProfile(name) {
   if (name === "Default") {
     delete config.layoutProfiles["Default"];
-    localStorage.setItem("layoutProfiles", JSON.stringify(config.layoutProfiles));
+    localStorage.setItem(
+      "layoutProfiles",
+      JSON.stringify(config.layoutProfiles),
+    );
   }
   const snapshot = captureCurrentLayoutSnapshot();
   config.layoutProfiles[name] = snapshot;
@@ -283,10 +287,10 @@ function switchToProfile(name) {
       gridCols: 3,
       gridRows: 3,
       layout: {
-        "webcast-card": {x: 0, y: 0, width: 1, height: 1},
-        "match-card": {x: 2, y: 0, width: 1, height: 3},
-        "leaderboard-card": {x: 1, y: 0, width: 1, height: 3},
-        "statbotics-card": {x: 0, y: 1, width: 1, height: 2},
+        "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
+        "match-card": { x: 2, y: 0, width: 1, height: 3 },
+        "leaderboard-card": { x: 1, y: 0, width: 1, height: 3 },
+        "statbotics-card": { x: 0, y: 1, width: 1, height: 2 },
       },
       hiddenCards: [],
     };
@@ -322,12 +326,14 @@ function refreshProfileUI() {
   if (sel) {
     const current = sel.value || config.activeProfileName;
     sel.innerHTML = `<option value="Default">Default</option>`;
-    Object.keys(config.layoutProfiles).filter(name => name !== "Default").forEach((name) => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
-    });
+    Object.keys(config.layoutProfiles)
+      .filter((name) => name !== "Default")
+      .forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
     sel.value = config.activeProfileName || "Default";
   }
 
@@ -341,11 +347,25 @@ function refreshProfileUI() {
   switcher.innerHTML = names
     .map(
       (name) =>
-        `<button class="profile-btn${name === config.activeProfileName ? " profile-btn-active" : ""}" data-profile="${name}">${name}</button>`,
+        `  <div class="profile-btn${name === config.activeProfileName ? " profile-btn-active" : ""}" data-profile="${name}">
+    ${name}
+    <input type="checkbox" class="proftoggle" name="profiletoggle" data-profile="${name}" ${config.layoutProfiles[name].enabled}>
+  </div>`,
     )
     .join("");
   switcher.querySelectorAll(".profile-btn").forEach((btn) => {
     btn.addEventListener("click", () => switchToProfile(btn.dataset.profile));
+  });
+  switcher.querySelectorAll("input[name='profiletoggle']").forEach((cb) => {
+    cb.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const name = cb.dataset.profile;
+      const profile = config.layoutProfiles[name];
+      if (profile) {
+        profile.enabled = cb.checked;
+        restartAutoSwap();
+      }
+    });
   });
 }
 
@@ -356,7 +376,9 @@ let _autoSwapTimer = null;
 function getAutoSwapProfileNames() {
   return [
     "Default",
-    ...Object.keys(config.layoutProfiles || {}).filter((name) => name !== "Default"),
+    ...Object.keys(config.layoutProfiles || {})
+      .filter((name) => name !== "Default")
+      .filter((name) => config.layoutProfiles[name].enabled),
   ];
 }
 
@@ -385,7 +407,13 @@ function hasRealTbaKey() {
   const key = (config.tbaapikey || "").toString().trim();
   if (!key) return false;
   const normalized = key.toLowerCase();
-  return !["your_auth_key", "your auth key", "tba key", "your-api-key", "your api key"].includes(normalized);
+  return ![
+    "your_auth_key",
+    "your auth key",
+    "tba key",
+    "your-api-key",
+    "your api key",
+  ].includes(normalized);
 }
 
 async function fetchWithRetry(url, options = {}, retries = 2) {
@@ -442,7 +470,10 @@ async function fetchTeamSummaryData(teamNumber, eventKey) {
     return _teamSummaryFetchInFlight;
   }
 
-  if (now - _teamSummaryLastFetchAt < TEAM_SUMMARY_COOLDOWN_MS && previousData) {
+  if (
+    now - _teamSummaryLastFetchAt < TEAM_SUMMARY_COOLDOWN_MS &&
+    previousData
+  ) {
     return previousData;
   }
 
@@ -464,12 +495,17 @@ async function fetchTeamSummaryData(teamNumber, eventKey) {
             )
           : Promise.resolve(null),
         eventKey
-          ? fetchWithRetry(`https://www.thebluealliance.com/api/v3/event/${eventKey}/rankings`, { headers })
+          ? fetchWithRetry(
+              `https://www.thebluealliance.com/api/v3/event/${eventKey}/rankings`,
+              { headers },
+            )
           : Promise.resolve(null),
       ]);
 
       const rankingEntry = Array.isArray(rankings?.rankings)
-        ? rankings.rankings.find((entry) => entry.team_key === `frc${teamNumber}`)
+        ? rankings.rankings.find(
+            (entry) => entry.team_key === `frc${teamNumber}`,
+          )
         : null;
 
       const record = rankingEntry?.record || eventStatus?.qual?.record || null;
@@ -819,7 +855,7 @@ function getCardIconMarkup(cardId, cardDef) {
 
   const svgMap = {
     "device-tv": `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 18v3"></path></svg>`,
-    "tournament": `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v4"></path><path d="M16 4v4"></path><path d="M4 8h16"></path><path d="M8 8v4"></path><path d="M16 8v4"></path><path d="M8 12h8"></path><path d="M6 12h2"></path><path d="M16 12h2"></path><path d="M4 16h16"></path><path d="M8 16v4"></path><path d="M16 16v4"></path></svg>`,
+    tournament: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v4"></path><path d="M16 4v4"></path><path d="M4 8h16"></path><path d="M8 8v4"></path><path d="M16 8v4"></path><path d="M8 12h8"></path><path d="M6 12h2"></path><path d="M16 12h2"></path><path d="M4 16h16"></path><path d="M8 16v4"></path><path d="M16 16v4"></path></svg>`,
     trophy: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10"></path><path d="M8 4v3a4 4 0 0 0 4 4 4 4 0 0 0 4-4V4"></path><path d="M8 12H6a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h1"></path><path d="M16 12h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-1"></path><path d="M12 17v3"></path></svg>`,
     tool: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4a2 2 0 0 1 2.8 2.8L9.6 12 8 10.4l7.2-7.2Z"></path><path d="m6 12 6 6"></path><path d="m10 16 4 4"></path></svg>`,
     battery: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="14" height="12" rx="2"></rect><path d="M19 10h1"></path><path d="M17 8v8"></path></svg>`,
@@ -830,7 +866,10 @@ function getCardIconMarkup(cardId, cardDef) {
     code: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4"></path><path d="m16 8 4 4-4 4"></path><path d="m13 4-2 16"></path></svg>`,
   };
 
-  const iconSvg = svgMap[normalized] || svgMap.square || `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>`;
+  const iconSvg =
+    svgMap[normalized] ||
+    svgMap.square ||
+    `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>`;
   return `<span class="le-card-icon" data-icon-name="${iconName}" aria-hidden="true">${iconSvg}</span>`;
 }
 

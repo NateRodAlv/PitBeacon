@@ -101,6 +101,7 @@ export const CardSchema = {
 
 export const ProfileSchema = {
   name: "string",
+  enabled: "boolean",
   gridCols: "number",
   gridRows: "number",
   layout: "object", // { cardId: { x, y, width, height } }
