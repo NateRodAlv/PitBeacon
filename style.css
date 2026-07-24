@@ -20,39 +20,6 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
 }
 
-[data-theme="light"] {
-  --bg-base: rgb(245, 245, 247);
-  --bg-surface: rgb(235, 235, 238);
-  --bg-raised: rgb(225, 225, 230);
-  --bg-input: rgb(210, 210, 215);
-  --accent: rgb(47, 48, 112);
-  --accent-hover: rgb(70, 72, 160);
-  --border: rgba(0, 0, 0, 0.1);
-  --border-accent: rgba(47, 48, 112, 0.3);
-  --text-primary: rgb(20, 20, 22);
-  --text-muted: rgb(80, 85, 90);
-  --text-dim: rgb(130, 135, 140);
-  --scrollbar-track: rgba(0, 0, 0, 0.05);
-  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
-}
-
-[data-theme="high-contrast"] {
-  --bg-base: rgb(0, 0, 0);
-  --bg-surface: rgb(15, 15, 15);
-  --bg-raised: rgb(30, 30, 30);
-  --bg-input: rgb(50, 50, 50);
-  --accent: rgb(0, 255, 255);
-  --accent-hover: rgb(0, 200, 200);
-  --border: rgba(0, 255, 255, 0.3);
-  --border-accent: rgba(0, 255, 255, 0.6);
-  --text-primary: rgb(255, 255, 255);
-  --text-muted: rgb(200, 200, 200);
-  --text-dim: rgb(150, 150, 150);
-  --scrollbar-track: rgba(0, 255, 255, 0.05);
-  --scrollbar-thumb: rgba(0, 255, 255, 0.2);
-  --scrollbar-thumb-hover: rgba(0, 255, 255, 0.4);
-}
 
 * {
   box-sizing: border-box;
@@ -289,11 +256,15 @@ html {
   position: relative;
   z-index: 2000;
   width: 16px !important;
-  height: 9px !important;
+  height: 14px !important;
+}
+.proftoggle:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
 }
 .proftoggle::before {
-  width: 9px !important;
-  height: 9px !important;
+  width: 14px !important;
+  height: 14px !important;
   top: -1px !important;
   left: 0px !important;
 }
@@ -303,6 +274,8 @@ html {
 
 .profile-btn {
   font-family: "Rubik", sans-serif;
+  display: flex;
+  justify-content: space-between;
   font-size: 0.65rem;
   font-weight: 500;
   color: var(--text-muted);
@@ -320,7 +293,7 @@ html {
   border-color: var(--border-accent);
 }
 .profile-btn-active {
-  background: var(--accent) !important;
+  background: var(--border) !important;
   color: #fff !important;
   border-color: transparent !important;
 }
