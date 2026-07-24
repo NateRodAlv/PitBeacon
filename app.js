@@ -318,7 +318,6 @@ function switchToProfile(name) {
 
   renderLayout();
   refreshProfileUI();
-  displayMessage(`Switched to "${name}"`, "message");
 }
 
 function refreshProfileUI() {
