@@ -283,8 +283,19 @@ html {
   background: var(--bg-input);
 }
 .proftoggle {
-    position: relative;
-    z-index: 2000;
+  position: relative;
+  z-index: 2000;
+  width: 16px !important;
+  height: 9px !important;
+}
+.proftoggle::before {
+  width: 9px !important;
+  height: 9px !important;
+  top: -1px !important;
+  left: 0px !important;
+}
+.proftoggle:checked::before {
+  left: 6px !important;
 }
 
 .profile-btn {
@@ -582,7 +593,6 @@ input[type="checkbox"]:checked::before {
   background: var(--accent-hover);
 }
 
-
 .dc-picker-item-label {
   font-weight: 500;
   color: var(--text-primary);
@@ -595,7 +605,6 @@ input[type="checkbox"]:checked::before {
   font-size: 0.75rem;
   color: var(--text-dim);
 }
-
 
 .dc-picker-item {
   flex-wrap: wrap;

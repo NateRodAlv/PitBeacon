@@ -346,9 +346,6 @@ function refreshProfileUI() {
   }
   switcher.innerHTML = names
     .map((name) => {
-      // Only an explicit `enabled: false` counts as disabled — profiles
-      // saved before this toggle existed have no `enabled` field at all,
-      // and should be treated as on rather than silently dropped.
       const isEnabled = config.layoutProfiles[name].enabled !== false;
       return `  <div class="profile-btn${name === config.activeProfileName ? " profile-btn-active" : ""}" data-profile="${name}">
     ${name}
@@ -381,15 +378,11 @@ function refreshProfileUI() {
 let _autoSwapTimer = null;
 
 function getAutoSwapProfileNames() {
-  return [
+  const allNames = [
     "Default",
-    ...Object.keys(config.layoutProfiles || {})
-      .filter((name) => name !== "Default")
-      // Only an explicit `enabled: false` opts a profile out — profiles
-      // saved before this toggle existed have no `enabled` field at all
-      // and should stay in rotation rather than silently disappear.
-      .filter((name) => config.layoutProfiles[name].enabled !== false),
+    ...Object.keys(config.layoutProfiles || {}).filter((name) => name !== "Default"),
   ];
+  return allNames.filter((name) => config.layoutProfiles[name]?.enabled !== false);
 }
 
 function restartAutoSwap() {
@@ -1181,7 +1174,7 @@ function renderLayoutEditor(modal) {
   // ─── Export ────────────────────────────────────────────────────────────
   shell.querySelector("#leExport").addEventListener("click", () => {
     const exportData = {
-      version: "26.7.22",
+      version: "26.7.24",
       gridCols: config.gridCols,
       gridRows: config.gridRows,
       layout: config.layout,
@@ -1557,7 +1550,7 @@ renderLayout();
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionTag = document.getElementById("version");
-  if (versionTag) versionTag.textContent = "Version 26.7.22";
+  if (versionTag) versionTag.textContent = "Version 26.7.24";
 });
 
 // ─── Modal Closes ─────────────────────────────────────────────────────────
