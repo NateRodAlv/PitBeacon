@@ -255,6 +255,33 @@ html {
   flex-wrap: wrap;
   margin: 0 auto 0 1rem;
 }
+.vb-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.vb-btn-save {
+  background: var(--accent);
+  color: white;
+}
+.vb-btn-save:hover {
+  background: var(--accent-hover);
+}
+.vb-btn-close {
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+}
+.vb-btn-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
 .proftoggle {
     position: relative;
     z-index: 2000;
