@@ -249,8 +249,11 @@ html {
 /* Profile switcher */
 
 .profile-switcher {
-  display: flex;
-  align-items: center;
+  height: 80%;
+  width: 100%;
+  display: grid;
+  grid-template-rows: 2fr 2fr;
+  grid-template-columns: 2fr 2fr;
   gap: 6px;
   flex-wrap: wrap;
   margin: 0 auto 0 1rem;
@@ -300,7 +303,7 @@ html {
 
 .profile-btn {
   font-family: "Rubik", sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 500;
   color: var(--text-muted);
   background: var(--bg-raised);
