@@ -12,6 +12,31 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Compute today's version (YY.M.D, no leading zeros)
+        run: |
+          VERSION="$(date +'%y').$(date +'%-m').$(date +'%-d')"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "Version for this deploy: ${VERSION}"
+
+      - name: Bump version strings
+        run: |
+          sed -i -E "s/Version [0-9]+\.[0-9]+\.[0-9]+/Version ${VERSION}/" index.html
+          sed -i -E "s/version: \"[0-9]+\.[0-9]+\.[0-9]+\"/version: \"${VERSION}\"/" app.js
+          sed -i -E "s/\"Version [0-9]+\.[0-9]+\.[0-9]+\"/\"Version ${VERSION}\"/" app.js
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html app.js
+          if git diff --cached --quiet; then
+            echo "Version already up to date, nothing to commit."
+          else
+            git commit -m "Bump version to ${VERSION} [skip ci]"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
       - name: Deploy Main Branch to Root
         if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
