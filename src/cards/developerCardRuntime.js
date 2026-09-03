@@ -49,6 +49,8 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       html: def.html,
       css: def.css,
       js: def.js,
+      settings: def.settings || {},
+      settingsValues: def.settingsValues || {},
       render: (element, state, sdk) => {
         this._renderDevCard(element, id, def, state, sdk);
       },
@@ -57,7 +59,13 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
 
   _renderDevCard(element, id, def, state, sdk) {
     const defSignature =
-      (def.html || "") + "||" + (def.css || "") + "||" + (def.js || "");
+      (def.html || "") +
+      "||" +
+      (def.css || "") +
+      "||" +
+      (def.js || "") +
+      "||" +
+      JSON.stringify(def.settingsValues || {});
     const existing = this._sandboxes.get(id);
 
     if (existing && existing.defSignature === defSignature) {
@@ -183,6 +191,16 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
                 
                 getState: function() {
                     return this._state;
+                },
+
+                getSetting: function(name, fallback) {
+                  var settings = window.__pitbeaconCardSettings || {};
+                  return Object.prototype.hasOwnProperty.call(settings, name) ? settings[name] : fallback;
+                },
+
+                configurable: function(name, defaultValue, options) {
+                  var settings = window.__pitbeaconCardSettings || {};
+                  return Object.prototype.hasOwnProperty.call(settings, name) ? settings[name] : defaultValue;
                 },
                 
                 onStateChange: function(cb) {
@@ -383,7 +401,8 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             window.__pitbeaconSDK = sdk;
         })();
         
-        // User code - uses window.__pitbeaconSDK
+        // User code - uses window.__pitbeaconSDK and window.__pitbeaconCardSettings
+        window.__pitbeaconCardSettings = ${JSON.stringify(def.settingsValues || {}).replace(/</g, "\\u003c")};
         ${def.js || ""}
     <\/script>
 </body>

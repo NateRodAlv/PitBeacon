@@ -2106,9 +2106,9 @@ input[type="checkbox"]:checked::before {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
+  max-width: 760px;
+  width: min(92vw, 760px);
+  max-height: 86vh;
   display: flex;
   flex-direction: column;
 }
@@ -2149,11 +2149,36 @@ input[type="checkbox"]:checked::before {
   flex-direction: column;
   gap: 6px;
 }
+.card-manager-section + .card-manager-section {
+  margin-top: 20px;
+}
+.card-manager-section-title {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.card-manager-section-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.card-manager-developer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  align-items: start;
+}
+.card-manager-empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
 .card-manager-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: var(--bg-raised);
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -2165,6 +2190,41 @@ input[type="checkbox"]:checked::before {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
+}
+.card-manager-export-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-family: "Rubik", sans-serif;
+}
+.card-manager-export-select input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-input);
+  accent-color: var(--accent);
+}
+.card-manager-export-select input::before {
+  width: 8px;
+  height: 8px;
+  top: 3px;
+  left: 3px;
+  border-radius: 2px;
+  background: transparent;
+}
+.card-manager-export-select input:checked::before {
+  left: 3px;
+  background: var(--text-primary);
 }
 .card-manager-item-icon {
   font-size: 1.1rem;
@@ -2238,6 +2298,350 @@ input[type="checkbox"]:checked::before {
   background: var(--accent-hover);
   color: var(--text-primary);
   border-color: var(--border-accent);
+}
+
+/* ─── Community Card Catalog ───────────────────────────────────────────── */
+
+.card-catalog-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: none;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.card-catalog-modal.active {
+  display: flex;
+}
+.card-catalog-shell {
+  width: min(900px, calc(100% - 32px));
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.card-catalog-shell .card-manager-header,
+.card-upload-shell .card-manager-header {
+  padding: 12px 20px;
+  background-color: var(--bg-raised);
+}
+.card-catalog-shell .card-manager-title,
+.card-upload-shell .card-manager-title {
+  font-size: 1rem;
+}
+.card-catalog-shell .card-manager-close,
+.card-upload-shell .card-manager-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 5px;
+  transition: color 0.15s, background-color 0.15s;
+}
+.card-catalog-shell .card-manager-close:hover,
+.card-upload-shell .card-manager-close:hover {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+.card-catalog-body {
+  overflow-y: hidden;
+  padding: 16px;
+}
+.card-catalog-status {
+  min-height: 1.1em;
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.card-catalog-list {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  padding: -16px 2px 12px;
+}
+.catalog-card-item {
+  min-width: 0;
+  width: 340px;
+  min-width: 340px;
+  max-width: 420px;
+  scroll-snap-align: start;
+  overflow: hidden;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+}
+.catalog-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+}
+.catalog-card-info strong {
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+}
+.catalog-card-info span {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+.catalog-card-settings,
+.card-manager-card-settings {
+  padding: 8px 10px 0;
+}
+.card-settings-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+.card-settings-controls strong {
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.75rem;
+}
+.card-setting-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-setting-field input,
+.card-setting-field select {
+  width: 56%;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.72rem;
+}
+.card-setting-field input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  padding: 0;
+  border-radius: 3px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  margin-right: auto;
+}
+.card-setting-field input[type="checkbox"]::before {
+  width: 8px;
+  height: 8px;
+  top: 4px;
+  left: 4px;
+  border-radius: 2px;
+  background: transparent;
+}
+.card-setting-field input[type="checkbox"]:checked::before {
+  left: 4px;
+  background: var(--text-primary);
+}
+.catalog-card-preview {
+  width: 100%;
+  height: 220px;
+  max-height: 220px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+.catalog-card-preview iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.catalog-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  min-height: 42px;
+}
+.catalog-card-save {
+  padding: 6px 9px;
+  border: 1px solid var(--border-accent);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.72rem;
+}
+.catalog-card-save:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.catalog-card-save:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.catalog-card-save-status {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+.card-upload-details {
+  display: none;
+}
+.card-manager-card-preview {
+  flex-basis: 100%;
+  width: 100%;
+  height: 220px;
+  max-height: 220px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+.card-manager-card-preview iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.card-manager-card-settings {
+  flex-basis: 100%;
+  padding: 8px 10px 0;
+}
+.card-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px 20px;
+}
+.card-upload-label {
+  color: var(--text-muted);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.card-upload-form input,
+.card-upload-form textarea,
+.card-upload-form select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+}
+.card-upload-form select {
+  min-width: 0;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.card-upload-form button {
+  align-self: flex-start;
+  padding: 7px 12px;
+  border: 1px solid var(--border-accent);
+  border-radius: 5px;
+  background: var(--accent);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+}
+.card-upload-form button:hover {
+  background: var(--accent-hover);
+}
+.card-catalog-submit-button,
+.card-upload-submit-button {
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.card-catalog-submit-button {
+  display: block;
+  margin: 14px auto 0;
+  padding: 9px 16px;
+}
+.card-upload-submit-button {
+  align-self: stretch !important;
+  padding: 9px 12px !important;
+}
+.card-catalog-submit-button:hover,
+.card-upload-submit-button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+.card-upload-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1002;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+}
+.card-upload-modal.active {
+  display: flex;
+}
+.card-upload-shell {
+  width: min(460px, calc(100% - 28px));
+  max-height: 86vh;
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.4);
+}
+.card-upload-shell .card-upload-form {
+  margin: 0;
+}
+
+@media (max-width: 620px) {
+  .card-manager-shell,
+  .card-catalog-shell {
+    width: calc(100% - 20px);
+    max-height: 92vh;
+  }
+  .card-manager-shell {
+    padding: 16px;
+  }
+  .card-catalog-body {
+    padding: 12px;
+  }
+  .card-catalog-list {
+    padding-bottom: 10px;
+  }
+  .catalog-card-item {
+    width: min(82vw, 340px);
+    min-width: min(82vw, 340px);
+  }
+  .card-manager-actions {
+    flex-direction: column;
+  }
+  .card-manager-item-actions {
+    width: 100%;
+  }
+  .card-manager-item-actions button {
+    flex: 1;
+    min-height: 30px;
+  }
 }
 
 /* ─── Developer Card Modal ──────────────────────────────────────────────── */
@@ -2327,10 +2731,89 @@ input[type="checkbox"]:checked::before {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-family: "Rubik", sans-serif;
+.card-upload-settings-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-raised);
 }
+.card-upload-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.card-upload-settings-header button,
+.card-upload-setting-remove {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.7rem;
+}
+.card-upload-settings-header button:hover,
+.card-upload-setting-remove:hover {
+  background: var(--accent-hover);
+  color: var(--text-primary);
+}
+.card-upload-setting-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr 0.8fr 1fr auto;
+  gap: 5px;
+  align-items: center;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-surface);
+}
+.card-upload-setting-row input,
+.card-upload-setting-row select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 0.7rem;
+}
+.card-upload-setting-extra {
+  display: contents;
+}
+.card-upload-setting-extra[hidden] {
+  display: none;
+}
+.card-upload-help {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+.card-upload-help code {
+  color: var(--text-primary);
+}
+  text-transform: uppercase;
+  .card-upload-setting-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .card-upload-setting-row select,
+  .card-upload-setting-row [data-setting-field="default"],
+  .card-upload-setting-row .card-upload-setting-extra,
+  .card-upload-setting-row .card-upload-setting-remove {
+    grid-column: span 2;
+  }
+}
+
 .dev-card-field input,
 .dev-card-field textarea {
   background: var(--bg-input);
