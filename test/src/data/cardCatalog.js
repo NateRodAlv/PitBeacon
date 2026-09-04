@@ -19,6 +19,15 @@ function normalizeCard(card) {
   };
 }
 
+export function cardFingerprint(card) {
+  return JSON.stringify({
+    html: String(card.html || ""),
+    css: String(card.css || ""),
+    js: String(card.js || card.javascript || ""),
+    settings: card.settings || {},
+  });
+}
+
 function validateCard(card) {
   const normalized = normalizeCard(card);
   const errors = [];
@@ -152,14 +161,18 @@ export class CardCatalog {
         apikey: this._config.supabaseAnonKey,
         Authorization: `Bearer ${this._config.supabaseAnonKey}`,
       },
-      body: JSON.stringify({ card: normalized, turnstileToken }),
+      body: JSON.stringify({
+        card: normalized,
+        updateOf: card.updateOf || null,
+        turnstileToken,
+      }),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "Card submission failed.");
     return result;
   }
 
-  renderPreview(element, card) {
+  renderPreview(element, card, previewId = `catalog-preview-${card.id}`) {
     const definition = {
       ...card,
       developer: true,
@@ -169,7 +182,7 @@ export class CardCatalog {
     };
     this._runtime._renderDevCard(
       element,
-      `catalog-preview-${card.id}`,
+      previewId,
       definition,
       this._stateManager.getState(),
       this._sdk,
