@@ -56,7 +56,7 @@
       <div class="logo">
         <h1 class="title">Pit<span class="beacon">Beacon</span></h1>
         <p class="frc7250">By FRC 7250</p>
-        <p class="version" id="version">Version 26.7.25</p>
+        <p class="version" id="version">Version 26.9.4</p>
       </div>
       <div class="time-display" id="time-display">--:--:--</div>
       <div class="profile-switcher" id="profileSwitcher"></div>
@@ -84,7 +84,26 @@
             <rect x="14" y="14" width="7" height="7" rx="1"></rect>
           </svg>
         </button>
-
+        <button
+          class="mheader-btn"
+          id="catalogBtn"
+          title="Card Catalog"
+          aria-label="Card Catalog"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M5 8h14l1 13H4L5 8Z"></path>
+            <path d="M9 8V6a3 3 0 0 1 6 0v2"></path>
+          </svg>
+        </button>
         <!-- Card Manager Button -->
         <button
           class="mheader-btn"
@@ -463,6 +482,119 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
               accept=".json"
               style="display: none"
             />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Public card catalog -->
+    <div class="card-catalog-modal" id="cardCatalogModal">
+      <div class="card-catalog-shell">
+        <div class="card-manager-header">
+          <h2 class="card-manager-title">Card Catalog</h2>
+          <button
+            type="button"
+            class="card-catalog-submit-button"
+            id="cardCatalogSubmit"
+          >
+            Submit a Card
+          </button>
+          <button
+            class="card-manager-close"
+            id="cardCatalogClose"
+            aria-label="Close card catalog"
+          >
+            ✕
+          </button>
+        </div>
+        <div class="card-catalog-body">
+          <p class="card-catalog-status" id="cardCatalogStatus"></p>
+          <div class="card-catalog-list" id="cardCatalogList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-catalog-detail-modal" id="cardCatalogDetailModal">
+      <div class="card-catalog-detail-shell">
+        <div class="card-manager-header">
+          <h2 class="card-manager-title">Card Details</h2>
+          <button class="card-manager-close" id="cardCatalogDetailClose" aria-label="Close card details">✕</button>
+        </div>
+        <div class="card-catalog-detail-body">
+          <div class="card-catalog-detail-preview" id="cardCatalogDetailPreview"></div>
+          <div class="card-catalog-detail-info">
+            <h2 id="cardCatalogDetailTitle"></h2>
+            <p id="cardCatalogDetailDescription"></p>
+            <label class="catalog-card-version-label">Version <select id="cardCatalogDetailVersion"></select></label>
+            <div id="cardCatalogDetailSettings"></div>
+            <button class="card-catalog-detail-save" id="cardCatalogDetailSave">Save to My Cards</button>
+            <p class="card-catalog-save-status" id="cardCatalogDetailStatus"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-upload-modal" id="cardUploadModal">
+      <div class="card-upload-shell">
+        <div class="card-manager-header">
+          <h2 class="card-manager-title">Submit a Card</h2>
+          <button
+            class="card-manager-close"
+            id="cardUploadClose"
+            aria-label="Close card submission"
+          >
+            ✕
+          </button>
+        </div>
+        <form class="card-upload-form" id="cardUploadForm">
+          <label class="card-upload-label" for="cardUploadLocalCard"
+            >Saved card</label
+          >
+          <select id="cardUploadLocalCard" required>
+            <option value="">Select a saved card...</option>
+          </select>
+          <label class="card-upload-label" for="cardUploadAuthor">Author</label>
+          <input
+            id="cardUploadAuthor"
+            type="text"
+            maxlength="80"
+            placeholder="Your name or team (optional)"
+          />
+          <label class="card-upload-label" for="cardUploadDescription"
+            >Description</label
+          >
+          <textarea
+            id="cardUploadDescription"
+            maxlength="500"
+            rows="3"
+            placeholder="What does this card do? (optional)"
+          ></textarea>
+          <small class="card-upload-help"
+            >Settings are detected from
+            <code>sdk.configurable("name", defaultValue)</code> calls in the
+            card JavaScript.</small
+          >
+          <button type="submit" class="card-upload-submit-button">
+            Submit for Review
+          </button>
+          <p class="card-catalog-status" id="cardUploadStatus"></p>
+        </form>
+      </div>
+    </div>
+
+    <div class="card-update-modal" id="cardUpdateModal">
+      <div class="card-update-shell">
+        <div class="card-manager-header">
+          <h2 class="card-manager-title">Request Card Update</h2>
+          <button class="card-manager-close" id="cardUpdateClose" aria-label="Close update request">✕</button>
+        </div>
+        <div class="card-update-body">
+          <p id="cardUpdateMessage"></p>
+          <label class="card-upload-label" for="cardUpdateVersion">New version</label>
+          <input id="cardUpdateVersion" type="text" inputmode="numeric" placeholder="e.g. 1.0.1" />
+          <div class="card-update-actions">
+            <button type="button" class="card-update-cancel" id="cardUpdateCancel">Cancel</button>
+            <button type="button" class="card-update-confirm" id="cardUpdateConfirm">Request Update</button>
           </div>
         </div>
       </div>
