@@ -214,6 +214,80 @@ Returns a small set of app-level settings your card can read, e.g.
 `{ teamNumber, matchAlarmSound, noteAlarmSound }`. Use this instead of a
 dedicated "get team number" call — e.g. `(await sdk.getConfig()).teamNumber`.
 
+### User-configurable card settings
+
+Use `sdk.configurable(name, defaultValue, options)` for values that should
+be editable by the person using the card. The catalog detects these calls
+from your JavaScript when you upload the card and creates the controls
+automatically. The selected values are saved locally per card and are used
+in the catalog preview, Card Registry, and layout.
+
+```js
+const teamNumber = sdk.configurable("teamNumber", 7250, {
+  label: "Team Number",
+  min: 1,
+  max: 99999,
+});
+
+const sheetTab = sdk.configurable("sheetTab", "Trivia", {
+  label: "Google Sheet Tab",
+});
+
+const showPredictions = sdk.configurable("showPredictions", true, {
+  label: "Show Predictions",
+});
+```
+
+The function returns the user's selected value, or the default value when
+the card has not been configured yet. Use the returned value directly in
+the rest of your card code:
+
+```js
+const teamNumber = sdk.configurable("teamNumber", 7250);
+const url = `https://example.com/team/${teamNumber}`;
+```
+
+The type is inferred from the default value:
+
+| Default value | Control |
+|---|---|
+| `"text"` | Text input |
+| `7250` | Number input |
+| `true` or `false` | Checkbox |
+| `"#2f3070"` | Color input |
+
+Optional properties are:
+
+| Property | Meaning |
+|---|---|
+| `label` | Human-readable control label |
+| `type` | Explicitly set `text`, `number`, `checkbox`, `color`, or `select` |
+| `min`, `max`, `step` | Number input limits and increment |
+| `options` | Values for a `select` control |
+
+For a dropdown, provide the type and options explicitly:
+
+```js
+const alliance = sdk.configurable("alliance", "red", {
+  label: "Alliance",
+  type: "select",
+  options: ["red", "blue"],
+});
+```
+
+Keep the setting name stable after publishing a card. Changing it creates
+a new setting and can make existing users' saved value stop applying.
+Only use literal names and default values in the call so the catalog can
+discover them reliably. Dynamic calls such as
+`sdk.configurable(variableName, value)` cannot be detected automatically.
+
+The upload form does not require a separate settings JSON file. Upload the
+card JavaScript containing the calls above, and the metadata is generated
+from the code. A card's JavaScript can also call
+`sdk.getSetting(name, fallback)` to read the current value, but
+`sdk.configurable()` is preferred because it both declares and reads the
+setting.
+
 ### Custom refresh — `updateCard`
 
 **The default behavior:** PitBeacon polls for fresh match/event data on a
@@ -289,22 +363,24 @@ itself is async and can't be called synchronously inside `compareFn`.)
 ## 3. Configuring a Card for Your Own System
 
 Cards that call `fetchCustom` almost always need something specific to
-*you* — a URL, a sheet ID, an API key. The convention in PitBeacon
-templates is to put these as clearly-marked variables at the **top** of
-the JavaScript panel:
+*you* — a URL, a sheet ID, or an API key. Declare user-editable values with
+`sdk.configurable()` near the top of the JavaScript panel:
 
 ```js
-// ┌─ CONFIGURE THIS ──────────────────────────────────────────
-// Paste your own values below. Don't share this card publicly
-// if API_KEY is filled in — see the SDK guide for why.
-const SHEET_ID  = "PASTE_YOUR_SHEET_ID_HERE";
-const SHEET_TAB = "Matches";
-const API_KEY   = "";  // leave blank if your endpoint doesn't need one
-// └────────────────────────────────────────────────────────────
+const sheetId = sdk.configurable("sheetId", "PASTE_YOUR_SHEET_ID_HERE", {
+  label: "Google Sheet ID",
+});
+const sheetTab = sdk.configurable("sheetTab", "Matches", {
+  label: "Sheet Tab",
+});
+const apiKey = sdk.configurable("apiKey", "", {
+  label: "API Key",
+});
 ```
 
-Nothing elsewhere in the file should need to change — everything else
-just uses these constants.
+The catalog and Card Registry turn these declarations into editable
+controls. Do not put private credentials in a card: card code and settings
+are client-side and visible to anyone who can inspect the browser.
 
 ---
 

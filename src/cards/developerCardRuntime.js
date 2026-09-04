@@ -49,6 +49,8 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       html: def.html,
       css: def.css,
       js: def.js,
+      settings: def.settings || {},
+      settingsValues: def.settingsValues || {},
       render: (element, state, sdk) => {
         this._renderDevCard(element, id, def, state, sdk);
       },
@@ -57,7 +59,13 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
 
   _renderDevCard(element, id, def, state, sdk) {
     const defSignature =
-      (def.html || "") + "||" + (def.css || "") + "||" + (def.js || "");
+      (def.html || "") +
+      "||" +
+      (def.css || "") +
+      "||" +
+      (def.js || "") +
+      "||" +
+      JSON.stringify(def.settingsValues || {});
     const existing = this._sandboxes.get(id);
 
     if (existing && existing.defSignature === defSignature) {
@@ -134,6 +142,15 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
         computedStyle.getPropertyValue("--text-muted").trim() || "#a09b9b",
       "--text-dim":
         computedStyle.getPropertyValue("--text-dim").trim() || "#646262",
+      "--scrollbar-track":
+        computedStyle.getPropertyValue("--scrollbar-track").trim() ||
+        "rgba(255,255,255,0.03)",
+      "--scrollbar-thumb":
+        computedStyle.getPropertyValue("--scrollbar-thumb").trim() ||
+        "rgba(255,255,255,0.12)",
+      "--scrollbar-thumb-hover":
+        computedStyle.getPropertyValue("--scrollbar-thumb-hover").trim() ||
+        "rgba(255,255,255,0.22)",
     };
 
     // Build the sandbox document with theme colors injected
@@ -157,6 +174,18 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             --text-muted: ${themeColors["--text-muted"]};
             --text-dim: ${themeColors["--text-dim"]};
         }
+          ::-webkit-scrollbar { width: 5px; height: 5px; }
+          ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 99px;
+          }
+          ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 99px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+          }
         body { 
             font-family: 'Rubik', sans-serif; 
             background: var(--bg-surface, #2a2a2a);
@@ -183,6 +212,16 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
                 
                 getState: function() {
                     return this._state;
+                },
+
+                getSetting: function(name, fallback) {
+                  var settings = window.__pitbeaconCardSettings || {};
+                  return Object.prototype.hasOwnProperty.call(settings, name) ? settings[name] : fallback;
+                },
+
+                configurable: function(name, defaultValue, options) {
+                  var settings = window.__pitbeaconCardSettings || {};
+                  return Object.prototype.hasOwnProperty.call(settings, name) ? settings[name] : defaultValue;
                 },
                 
                 onStateChange: function(cb) {
@@ -383,8 +422,12 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             window.__pitbeaconSDK = sdk;
         })();
         
-        // User code - uses window.__pitbeaconSDK
-        ${def.js || ""}
+        // User code is scoped separately from the sandbox wrapper so card-level
+        // const/let declarations cannot collide with runtime internals.
+        (function() {
+          window.__pitbeaconCardSettings = ${JSON.stringify(def.settingsValues || {}).replace(/</g, "\\u003c")};
+          ${def.js || ""}
+        })();
     <\/script>
 </body>
 </html>`;
@@ -1125,8 +1168,10 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             window.__pitbeaconSDK = sdk;
         })();
 
-        // User code - uses window.__pitbeaconSDK
-        ${def.js || ""}
+        // User code is scoped separately from the sandbox wrapper.
+        (function() {
+          ${def.js || ""}
+        })();
     <\/script>
 </body>
 </html>`;
