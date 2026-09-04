@@ -401,9 +401,12 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             window.__pitbeaconSDK = sdk;
         })();
         
-        // User code - uses window.__pitbeaconSDK and window.__pitbeaconCardSettings
-        window.__pitbeaconCardSettings = ${JSON.stringify(def.settingsValues || {}).replace(/</g, "\\u003c")};
-        ${def.js || ""}
+        // User code is scoped separately from the sandbox wrapper so card-level
+        // const/let declarations cannot collide with runtime internals.
+        (function() {
+          window.__pitbeaconCardSettings = ${JSON.stringify(def.settingsValues || {}).replace(/</g, "\\u003c")};
+          ${def.js || ""}
+        })();
     <\/script>
 </body>
 </html>`;
@@ -1144,8 +1147,10 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             window.__pitbeaconSDK = sdk;
         })();
 
-        // User code - uses window.__pitbeaconSDK
-        ${def.js || ""}
+        // User code is scoped separately from the sandbox wrapper.
+        (function() {
+          ${def.js || ""}
+        })();
     <\/script>
 </body>
 </html>`;

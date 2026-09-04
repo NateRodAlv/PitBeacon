@@ -492,12 +492,24 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       <div class="card-catalog-shell">
         <div class="card-manager-header">
           <h2 class="card-manager-title">Card Catalog</h2>
-          <button class="card-manager-close" id="cardCatalogClose" aria-label="Close card catalog">✕</button>
+          <button
+            type="button"
+            class="card-catalog-submit-button"
+            id="cardCatalogSubmit"
+          >
+            Submit a Card
+          </button>
+          <button
+            class="card-manager-close"
+            id="cardCatalogClose"
+            aria-label="Close card catalog"
+          >
+            ✕
+          </button>
         </div>
         <div class="card-catalog-body">
           <p class="card-catalog-status" id="cardCatalogStatus"></p>
           <div class="card-catalog-list" id="cardCatalogList"></div>
-          <button type="button" class="card-catalog-submit-button" id="cardCatalogSubmit">Submit a Card</button>
         </div>
       </div>
     </div>
@@ -506,19 +518,45 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       <div class="card-upload-shell">
         <div class="card-manager-header">
           <h2 class="card-manager-title">Submit a Card</h2>
-          <button class="card-manager-close" id="cardUploadClose" aria-label="Close card submission">✕</button>
+          <button
+            class="card-manager-close"
+            id="cardUploadClose"
+            aria-label="Close card submission"
+          >
+            ✕
+          </button>
         </div>
         <form class="card-upload-form" id="cardUploadForm">
-          <label class="card-upload-label" for="cardUploadLocalCard">Saved card</label>
+          <label class="card-upload-label" for="cardUploadLocalCard"
+            >Saved card</label
+          >
           <select id="cardUploadLocalCard" required>
             <option value="">Select a saved card...</option>
           </select>
           <label class="card-upload-label" for="cardUploadAuthor">Author</label>
-          <input id="cardUploadAuthor" type="text" maxlength="80" placeholder="Your name or team (optional)" />
-          <label class="card-upload-label" for="cardUploadDescription">Description</label>
-          <textarea id="cardUploadDescription" maxlength="500" rows="3" placeholder="What does this card do? (optional)"></textarea>
-          <small class="card-upload-help">Settings are detected from <code>sdk.configurable("name", defaultValue)</code> calls in the card JavaScript.</small>
-          <button type="submit" class="card-upload-submit-button">Submit for Review</button>
+          <input
+            id="cardUploadAuthor"
+            type="text"
+            maxlength="80"
+            placeholder="Your name or team (optional)"
+          />
+          <label class="card-upload-label" for="cardUploadDescription"
+            >Description</label
+          >
+          <textarea
+            id="cardUploadDescription"
+            maxlength="500"
+            rows="3"
+            placeholder="What does this card do? (optional)"
+          ></textarea>
+          <small class="card-upload-help"
+            >Settings are detected from
+            <code>sdk.configurable("name", defaultValue)</code> calls in the
+            card JavaScript.</small
+          >
+          <button type="submit" class="card-upload-submit-button">
+            Submit for Review
+          </button>
           <p class="card-catalog-status" id="cardUploadStatus"></p>
         </form>
       </div>
