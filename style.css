@@ -20,7 +20,6 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
 }
 
-
 * {
   box-sizing: border-box;
   font-family: "Rubik", sans-serif;
@@ -2105,7 +2104,7 @@ input[type="checkbox"]:checked::before {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 24px;
+  padding: 0;
   max-width: 760px;
   width: min(92vw, 760px);
   max-height: 86vh;
@@ -2114,10 +2113,13 @@ input[type="checkbox"]:checked::before {
 }
 .card-manager-header {
   display: flex;
-  max-height: 60px;
-  justify-content: flex-start;
+  min-height: 58px;
+  justify-content: space-between;
   align-items: center;
-  padding-bottom: 12px;
+  gap: 12px;
+  border-radius: 12px 12px 0 0;
+  padding: 12px 16px;
+  background: var(--bg-raised);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -2129,21 +2131,31 @@ input[type="checkbox"]:checked::before {
   margin: 0;
 }
 .card-manager-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   background: none;
   border: none;
   color: var(--text-dim);
   font-size: 1.3rem;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
+  border-radius: 5px;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
 }
 .card-manager-close:hover {
+  background: var(--bg-input);
   color: var(--text-primary);
 }
 
 .card-manager-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 0;
+  padding: 12px;
 }
 .card-manager-list {
   display: flex;
@@ -2168,6 +2180,7 @@ input[type="checkbox"]:checked::before {
 .card-manager-developer-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 12px;
   align-items: start;
 }
 .card-manager-empty {
@@ -2185,6 +2198,45 @@ input[type="checkbox"]:checked::before {
   border: 1px solid var(--border);
   flex-wrap: wrap;
   gap: 6px;
+}
+.card-manager-developer-grid .card-manager-item {
+  align-items: stretch;
+  flex-direction: column;
+  padding: 0;
+  min-height: 340px;
+  overflow: hidden;
+}
+.card-manager-developer-grid .card-manager-item-info {
+  width: 100%;
+  padding: 10px 12px 8px;
+  align-content: flex-start;
+}
+.card-manager-developer-card {
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+.card-manager-developer-card:hover,
+.card-manager-developer-card:focus-visible {
+  border-color: var(--border-accent);
+  outline: none;
+  transform: translateY(-2px);
+}
+.card-manager-item-description {
+  flex-basis: 100%;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-manager-developer-grid .card-manager-item-actions {
+  width: 100%;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
 }
 .card-manager-item-info {
   display: flex;
@@ -2343,7 +2395,9 @@ input[type="checkbox"]:checked::before {
   height: 32px;
   padding: 0;
   border-radius: 5px;
-  transition: color 0.15s, background-color 0.15s;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
 }
 .card-catalog-shell .card-manager-close:hover,
 .card-upload-shell .card-manager-close:hover {
@@ -2381,11 +2435,23 @@ input[type="checkbox"]:checked::before {
   min-width: 340px;
   max-width: 420px;
   max-height: none;
+  min-height: 340px;
   background: var(--bg-raised);
   border: 1px solid var(--border);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+.catalog-card-item:hover,
+.catalog-card-item:focus-visible {
+  border-color: var(--border-accent);
+  outline: none;
+  transform: translateY(-2px);
 }
 .catalog-card-info {
   display: flex;
@@ -2400,6 +2466,20 @@ input[type="checkbox"]:checked::before {
 .catalog-card-info span {
   color: var(--text-muted);
   font-size: 0.75rem;
+}
+.catalog-card-version-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+}
+.catalog-card-version {
+  min-width: 0;
+  width: 100px;
+  padding: 4px 6px;
+  font-size: 0.7rem;
 }
 .catalog-card-settings,
 .card-manager-card-settings {
@@ -2449,7 +2529,7 @@ input[type="checkbox"]:checked::before {
   height: 18px;
   min-width: 18px;
   padding: 0;
-  margin-left: 75%;
+  margin: 0 60% 0;
   border-radius: 3px;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -2469,11 +2549,127 @@ input[type="checkbox"]:checked::before {
 }
 .catalog-card-preview {
   width: 100%;
-  height: 210px;
-  max-height: 210px;
+  height: 280px;
+  max-height: 280px;
   overflow: hidden;
   border-top: 1px solid var(--border);
   background: var(--bg-surface);
+}
+.card-catalog-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.8);
+}
+.card-catalog-detail-modal.active {
+  display: flex;
+}
+.card-catalog-detail-shell {
+  width: min(1100px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+.card-catalog-detail-shell .card-manager-header {
+  padding: 12px 20px;
+}
+.card-catalog-detail-shell .card-manager-title {
+  font-size: 1rem;
+}
+.card-catalog-detail-body {
+  display: grid;
+  overflow-y: auto;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+  min-height: 520px;
+}
+.card-catalog-detail-preview {
+  min-height: 520px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg-base);
+  padding: 18px;
+}
+.card-catalog-detail-preview iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 520px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--bg-surface);
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 12px 30px rgba(0, 0, 0, 0.22);
+}
+.card-catalog-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--bg-surface);
+}
+.card-catalog-detail-info h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+  font-size: 1.3rem;
+}
+.card-catalog-detail-info p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.card-catalog-detail-info #cardCatalogDetailDescription {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.card-catalog-detail-info #cardCatalogDetailSettings {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-raised);
+}
+.card-catalog-detail-info #cardCatalogDetailSettings:empty {
+  display: none;
+}
+.card-catalog-detail-info .card-settings-controls {
+  max-height: none;
+  overflow: visible;
+}
+.card-catalog-detail-info > .catalog-card-version-label {
+  margin-top: 4px;
+}
+.card-catalog-detail-info .catalog-card-version-label select {
+  width: 100%;
+}
+.card-catalog-detail-save {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.card-catalog-detail-save:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.card-catalog-detail-save:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 .catalog-card-preview iframe {
   display: block;
@@ -2514,10 +2710,10 @@ input[type="checkbox"]:checked::before {
   display: none;
 }
 .card-manager-card-preview {
-  flex-basis: 100%;
   width: 100%;
-  height: 220px;
-  max-height: 220px;
+  min-height: 240px;
+  height: 360px;
+  max-height: 480px;
   margin-top: 8px;
   overflow: hidden;
   border-top: 1px solid var(--border);
@@ -2587,12 +2783,16 @@ input[type="checkbox"]:checked::before {
   font-size: 0.8rem;
   margin: 0 auto;
   font-weight: 600;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
 }
 .card-catalog-submit-button {
-  display:flexbox;
-  margin: 14px;
-  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 0 auto;
   padding: 9px 16px;
 }
 .card-upload-submit-button {
@@ -2629,6 +2829,77 @@ input[type="checkbox"]:checked::before {
 .card-upload-shell .card-upload-form {
   margin: 0;
 }
+.card-update-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1003;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.78);
+}
+.card-update-modal.active {
+  display: flex;
+}
+.card-update-shell {
+  width: min(420px, calc(100% - 28px));
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.4);
+}
+.card-update-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+.card-update-body p {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.card-update-body input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: "Rubik", sans-serif;
+}
+.card-update-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+.card-update-actions button {
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Rubik", sans-serif;
+  font-size: 0.78rem;
+}
+.card-update-cancel {
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+}
+.card-update-confirm {
+  border: 1px solid var(--border-accent);
+  background: var(--accent);
+  color: var(--text-primary);
+}
+.card-update-cancel:hover,
+.card-update-confirm:hover {
+  background: var(--accent-hover);
+  color: var(--text-primary);
+}
 
 @media (max-width: 620px) {
   .card-manager-shell,
@@ -2658,6 +2929,25 @@ input[type="checkbox"]:checked::before {
   .card-manager-item-actions button {
     flex: 1;
     min-height: 30px;
+  }
+  .card-catalog-detail-body {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(92vh - 58px);
+    overflow-y: auto;
+  }
+  .card-catalog-detail-preview,
+  .card-catalog-detail-preview iframe {
+    min-height: 300px;
+    height: 300px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-catalog-detail-preview {
+    padding: 12px;
+  }
+  .card-catalog-detail-info {
+    padding: 16px;
   }
 }
 
@@ -2748,77 +3038,77 @@ input[type="checkbox"]:checked::before {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-dim);
-.card-upload-settings-builder {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--bg-raised);
-}
-.card-upload-settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.card-upload-settings-header button,
-.card-upload-setting-remove {
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-input);
-  color: var(--text-muted);
-  cursor: pointer;
-  font-family: "Rubik", sans-serif;
-  font-size: 0.7rem;
-}
-.card-upload-settings-header button:hover,
-.card-upload-setting-remove:hover {
-  background: var(--accent-hover);
-  color: var(--text-primary);
-}
-.card-upload-setting-row {
-  display: grid;
-  grid-template-columns: 1.1fr 1.1fr 0.8fr 1fr auto;
-  gap: 5px;
-  align-items: center;
-  padding: 7px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-surface);
-}
-.card-upload-setting-row input,
-.card-upload-setting-row select {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  padding: 5px 6px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg-input);
-  color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
-  font-size: 0.7rem;
-}
-.card-upload-setting-extra {
-  display: contents;
-}
-.card-upload-setting-extra[hidden] {
-  display: none;
-}
-.card-upload-help {
-  color: var(--text-muted);
-  font-size: 0.7rem;
-}
-.card-upload-help code {
-  color: var(--text-primary);
-}
+  .card-upload-settings-builder {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg-raised);
+  }
+  .card-upload-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--text-primary);
+    font-family: "Rubik", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .card-upload-settings-header button,
+  .card-upload-setting-remove {
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-input);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: "Rubik", sans-serif;
+    font-size: 0.7rem;
+  }
+  .card-upload-settings-header button:hover,
+  .card-upload-setting-remove:hover {
+    background: var(--accent-hover);
+    color: var(--text-primary);
+  }
+  .card-upload-setting-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1.1fr 0.8fr 1fr auto;
+    gap: 5px;
+    align-items: center;
+    padding: 7px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-surface);
+  }
+  .card-upload-setting-row input,
+  .card-upload-setting-row select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 5px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-family: "Rubik", sans-serif;
+    font-size: 0.7rem;
+  }
+  .card-upload-setting-extra {
+    display: contents;
+  }
+  .card-upload-setting-extra[hidden] {
+    display: none;
+  }
+  .card-upload-help {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  .card-upload-help code {
+    color: var(--text-primary);
+  }
   text-transform: uppercase;
   .card-upload-setting-row {
     grid-template-columns: 1fr 1fr;

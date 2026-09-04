@@ -8,7 +8,11 @@ import { DeveloperCardRuntime } from "./src/cards/developerCardRuntime.js";
 import { DataSourceManager } from "./src/data/sources.js";
 import { LayoutRenderer } from "./src/ui/layoutRenderer.js";
 import { DocsModal } from "./src/ui/docsModal.js";
-import { CardCatalog, detectConfigurableSettings } from "./src/data/cardCatalog.js";
+import {
+  CardCatalog,
+  cardFingerprint,
+  detectConfigurableSettings,
+} from "./src/data/cardCatalog.js";
 
 const docsModal = new DocsModal();
 
@@ -1461,6 +1465,12 @@ function saveCardSettingValues(cardId, values) {
   localStorage.setItem("cardSettings", JSON.stringify(saved));
 }
 
+function suggestNextCardVersion(version) {
+  const match = String(version || "1.0.0").match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (!match) return "1.0.1";
+  return `${match[1]}.${match[2]}.${Number(match[3]) + 1}`;
+}
+
 function renderCardSettingsControls(container, card, values, onChange) {
   const settings = Object.entries(card.settings || detectConfigurableSettings(card.js || ""));
   if (!settings.length) return;
@@ -1516,62 +1526,74 @@ async function renderCardCatalog(modal) {
 
   try {
     const cards = await cardCatalog.listApproved();
+    const groupedCards = [...cards.reduce((groups, card) => {
+      if (!groups.has(card.id)) groups.set(card.id, []);
+      groups.get(card.id).push(card);
+      return groups;
+    }, new Map()).values()];
     status.textContent = cards.length ? "" : "No approved community cards yet.";
-    cards.forEach((card) => {
+    groupedCards.forEach((versions) => {
+      versions.sort((left, right) => String(right.version).localeCompare(String(left.version), undefined, { numeric: true }));
+      let card = versions[0];
       const item = document.createElement("article");
       item.className = "catalog-card-item";
-      item.innerHTML = `<div class="catalog-card-info"><strong></strong><span></span></div><div class="catalog-card-preview"></div><div class="catalog-card-settings"></div><div class="catalog-card-actions"><button type="button" class="catalog-card-save">Save to My Cards</button><span class="catalog-card-save-status" role="status"></span></div>`;
+      item.tabIndex = 0;
+      item.innerHTML = `<div class="catalog-card-info"><strong></strong><span></span></div><div class="catalog-card-preview"></div>`;
       item.querySelector("strong").textContent = card.label;
       item.querySelector("span").textContent = card.description || "Community card";
       list.appendChild(item);
-      const settingValues = getCardSettingValues(card);
-      const renderPreview = (values) => {
-        card.settingsValues = values;
-        cardCatalog.renderPreview(item.querySelector(".catalog-card-preview"), card);
-      };
-      renderPreview(settingValues);
-      renderCardSettingsControls(
-        item.querySelector(".catalog-card-settings"),
-        card,
-        settingValues,
-        renderPreview,
-      );
-      const saveButton = item.querySelector(".catalog-card-save");
-      const saveStatus = item.querySelector(".catalog-card-save-status");
-      saveButton.addEventListener("click", () => {
-        const existing = registry.get(card.id);
-        if (existing?.builtin) {
-          saveStatus.textContent = "Card ID is already used by a built-in card.";
-          return;
-        }
-        config.developerCards[card.id] = {
-          label: card.label,
-          description: card.description,
-          icon: card.icon,
-          version: card.version,
-          settings: card.settings,
-          settingsValues: settingValues,
-          html: card.html,
-          css: card.css,
-          js: card.js,
-        };
-        localStorage.setItem(
-          "developerCards",
-          JSON.stringify(config.developerCards),
-        );
-        if (existing) registry.unregister(card.id);
-        registry.register(
-          card.id,
-          devCardRuntime.createCardDefinition(card.id, config.developerCards[card.id]),
-        );
-        saveButton.disabled = true;
-        saveStatus.textContent = "Saved. Add it from the Layout Editor.";
-        renderLayout();
+      cardCatalog.renderPreview(item.querySelector(".catalog-card-preview"), card, `catalog-tile-${card.id}`);
+      const open = () => openCatalogCardDetails(versions);
+      item.addEventListener("click", open);
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); open(); }
       });
     });
   } catch (error) {
     status.textContent = error.message;
   }
+}
+
+function openCatalogCardDetails(versions) {
+  const modal = document.getElementById("cardCatalogDetailModal");
+  const title = modal.querySelector("#cardCatalogDetailTitle");
+  const description = modal.querySelector("#cardCatalogDetailDescription");
+  const versionSelect = modal.querySelector("#cardCatalogDetailVersion");
+  const preview = modal.querySelector("#cardCatalogDetailPreview");
+  const settings = modal.querySelector("#cardCatalogDetailSettings");
+  const saveButton = modal.querySelector("#cardCatalogDetailSave");
+  const saveStatus = modal.querySelector("#cardCatalogDetailStatus");
+  versions = [...versions].sort((left, right) => String(right.version).localeCompare(String(left.version), undefined, { numeric: true }));
+  versionSelect.innerHTML = versions.map((version) => `<option value="${version.version}">${version.version}</option>`).join("");
+  let card = versions[0];
+  let settingValues;
+  const render = () => {
+    title.textContent = card.label;
+    description.textContent = card.description || "Community card";
+    settingValues = getCardSettingValues(card);
+    settings.innerHTML = "";
+    cardCatalog.renderPreview(preview, card, `catalog-detail-${card.id}`);
+    renderCardSettingsControls(settings, card, settingValues, (values) => {
+      card.settingsValues = values;
+      cardCatalog.renderPreview(preview, card, `catalog-detail-${card.id}`);
+    });
+    saveButton.disabled = false;
+    saveStatus.textContent = "";
+  };
+  versionSelect.onchange = () => { card = versions.find((version) => version.version === versionSelect.value) || versions[0]; render(); };
+  saveButton.onclick = () => {
+    const existing = registry.get(card.id);
+    if (existing?.builtin) { saveStatus.textContent = "Card ID is already used by a built-in card."; return; }
+    config.developerCards[card.id] = { label: card.label, description: card.description, icon: card.icon, version: card.version, settings: card.settings, settingsValues: settingValues, html: card.html, css: card.css, js: card.js };
+    localStorage.setItem("developerCards", JSON.stringify(config.developerCards));
+    if (existing) registry.unregister(card.id);
+    registry.register(card.id, devCardRuntime.createCardDefinition(card.id, config.developerCards[card.id]));
+    saveButton.disabled = true;
+    saveStatus.textContent = "Saved. Add it from the Layout Editor.";
+    renderLayout();
+  };
+  modal.classList.add("active");
+  render();
 }
 
 function setupCardUpload(modal) {
@@ -1609,7 +1631,28 @@ function setupCardUpload(modal) {
       status.textContent = "Submitting for review...";
       for (const card of cards) {
         const settings = detectConfigurableSettings(card.js || "");
-        await cardCatalog.submit({ ...card, authorName, description, settings });
+        const submission = { ...card, authorName, description, settings };
+        const approvedCards = await cardCatalog.listApproved();
+        const existingVersions = approvedCards.filter((approved) => approved.id === card.id);
+        const sameVersion = existingVersions.find((approved) => cardFingerprint(approved) === cardFingerprint(submission));
+        if (sameVersion) {
+          status.textContent = `Version ${sameVersion.version} is already approved.`;
+          continue;
+        }
+        let updateOf = null;
+        if (existingVersions.length) {
+          const latest = [...existingVersions].sort((left, right) =>
+            String(right.version).localeCompare(String(left.version), undefined, { numeric: true }),
+          )[0];
+          if (!confirm(`This card already exists. Request an update to ${latest.version}?`)) continue;
+          const nextVersion = await requestCardUpdateVersion(
+            latest.version,
+          );
+          if (!nextVersion?.trim()) continue;
+          submission.version = nextVersion.trim();
+          updateOf = { id: latest.id, version: latest.version };
+        }
+        await cardCatalog.submit({ ...submission, updateOf });
       }
       status.textContent =
         "Submitted. It will appear after moderation.";
@@ -1617,6 +1660,34 @@ function setupCardUpload(modal) {
     } catch (error) {
       status.textContent = error.message;
     }
+  });
+}
+
+function requestCardUpdateVersion(latestVersion) {
+  const modal = document.getElementById("cardUpdateModal");
+  const message = document.getElementById("cardUpdateMessage");
+  const input = document.getElementById("cardUpdateVersion");
+  const confirmButton = document.getElementById("cardUpdateConfirm");
+  const cancelButton = document.getElementById("cardUpdateCancel");
+  if (!modal || !input || !confirmButton || !cancelButton) return Promise.resolve(null);
+
+  message.textContent = `This card already exists at version ${latestVersion}. Choose a new version to request an update.`;
+  input.value = suggestNextCardVersion(latestVersion);
+  modal.classList.add("active");
+
+  return new Promise((resolve) => {
+    const finish = (value) => {
+      modal.classList.remove("active");
+      confirmButton.removeEventListener("click", onConfirm);
+      cancelButton.removeEventListener("click", onCancel);
+      resolve(value);
+    };
+    const onConfirm = () => finish(input.value.trim() || null);
+    const onCancel = () => finish(null);
+    confirmButton.addEventListener("click", onConfirm);
+    cancelButton.addEventListener("click", onCancel);
+    input.focus();
+    input.select();
   });
 }
 
@@ -1629,17 +1700,19 @@ function renderCardManager(modal) {
       const def = registry.get(id);
       const isDev = def.developer || false;
       const isHidden = config.hiddenSections.includes(id);
+      const localCard = config.developerCards[id];
       return `<div class="card-manager-item" data-card-id="${id}">
             <div class="card-manager-item-info">
               ${isDev ? `<label class="card-manager-export-select" title="Select ${id} for export"><input type="checkbox" class="card-export-checkbox" data-card-id="${id}"> Export</label>` : ""}
                 <span class="card-manager-item-icon">📄</span>
                 <span class="card-manager-item-id">${id}</span>
                 <span class="card-manager-item-label">${def.label}</span>
+                ${isDev && localCard?.description ? `<span class="card-manager-item-description">${localCard.description}</span>` : ""}
                 ${isDev ? '<span class="card-manager-item-badge">Developer</span>' : ""}
                 ${def.builtin ? '<span class="card-manager-item-badge builtin">Built-in</span>' : ""}
                 ${isHidden ? '<span class="card-manager-item-badge" style="background:rgba(200,50,50,0.2);color:rgb(220,80,80);">Hidden</span>' : ""}
             </div>
-              ${isDev ? '<div class="card-manager-card-preview"></div><div class="card-manager-card-settings"></div>' : ""}
+              ${isDev ? '<div class="card-manager-card-preview"></div>' : ""}
             <div class="card-manager-item-actions">
                 ${isDev ? `<button class="card-manager-item-delete" data-card-id="${id}">Delete</button>` : ""}
                 <button class="card-manager-item-toggle" data-card-id="${id}">
@@ -1668,30 +1741,20 @@ function renderCardManager(modal) {
     const item = preview.closest(".card-manager-item");
     const id = item.dataset.cardId;
     const card = { id, ...config.developerCards[id] };
-    const values = getCardSettingValues(card);
-    const renderPreview = (nextValues) => {
-      card.settingsValues = nextValues;
-      config.developerCards[id].settingsValues = nextValues;
-      localStorage.setItem(
-        "developerCards",
-        JSON.stringify(config.developerCards),
-      );
-      const currentDefinition = registry.get(id);
-      if (currentDefinition) registry.unregister(id);
-      registry.register(
-        id,
-        devCardRuntime.createCardDefinition(id, config.developerCards[id]),
-      );
-      cardCatalog.renderPreview(preview, card);
-      renderLayout();
-    };
-    renderPreview(values);
-    renderCardSettingsControls(
-      item.querySelector(".card-manager-card-settings"),
-      card,
-      values,
-      renderPreview,
-    );
+    cardCatalog.renderPreview(preview, card, `registry-tile-${id}`);
+    const openDetails = () => openCatalogCardDetails([card]);
+    item.classList.add("card-manager-developer-card");
+    item.tabIndex = 0;
+    item.addEventListener("click", (event) => {
+      if (event.target.closest("button, input, label")) return;
+      openDetails();
+    });
+    item.addEventListener("keydown", (event) => {
+      if ((event.key === "Enter" || event.key === " ") && !event.target.closest("button, input, label")) {
+        event.preventDefault();
+        openDetails();
+      }
+    });
   });
 
   list.querySelectorAll(".card-manager-item-toggle").forEach((btn) => {
@@ -1841,6 +1904,14 @@ document.getElementById("cardCatalogModal")?.addEventListener("click", (e) => {
   }
 });
 
+document.getElementById("cardCatalogDetailClose")?.addEventListener("click", () => {
+  document.getElementById("cardCatalogDetailModal").classList.remove("active");
+});
+
+document.getElementById("cardCatalogDetailModal")?.addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove("active");
+});
+
 document.getElementById("cardCatalogSubmit")?.addEventListener("click", () => {
   document.getElementById("cardUploadModal").classList.add("active");
 });
@@ -1851,6 +1922,10 @@ document.getElementById("cardUploadClose")?.addEventListener("click", () => {
 
 document.getElementById("cardUploadModal")?.addEventListener("click", (e) => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove("active");
+});
+
+document.getElementById("cardUpdateClose")?.addEventListener("click", () => {
+  document.getElementById("cardUpdateCancel")?.click();
 });
 
 document.getElementById("devCardClose")?.addEventListener("click", () => {

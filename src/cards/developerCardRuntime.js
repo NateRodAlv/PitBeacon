@@ -142,6 +142,15 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
         computedStyle.getPropertyValue("--text-muted").trim() || "#a09b9b",
       "--text-dim":
         computedStyle.getPropertyValue("--text-dim").trim() || "#646262",
+      "--scrollbar-track":
+        computedStyle.getPropertyValue("--scrollbar-track").trim() ||
+        "rgba(255,255,255,0.03)",
+      "--scrollbar-thumb":
+        computedStyle.getPropertyValue("--scrollbar-thumb").trim() ||
+        "rgba(255,255,255,0.12)",
+      "--scrollbar-thumb-hover":
+        computedStyle.getPropertyValue("--scrollbar-thumb-hover").trim() ||
+        "rgba(255,255,255,0.22)",
     };
 
     // Build the sandbox document with theme colors injected
@@ -165,6 +174,18 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
             --text-muted: ${themeColors["--text-muted"]};
             --text-dim: ${themeColors["--text-dim"]};
         }
+          ::-webkit-scrollbar { width: 5px; height: 5px; }
+          ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 99px;
+          }
+          ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 99px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+          }
         body { 
             font-family: 'Rubik', sans-serif; 
             background: var(--bg-surface, #2a2a2a);

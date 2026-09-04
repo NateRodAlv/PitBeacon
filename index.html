@@ -514,6 +514,26 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       </div>
     </div>
 
+    <div class="card-catalog-detail-modal" id="cardCatalogDetailModal">
+      <div class="card-catalog-detail-shell">
+        <div class="card-manager-header">
+          <h2 class="card-manager-title">Card Details</h2>
+          <button class="card-manager-close" id="cardCatalogDetailClose" aria-label="Close card details">✕</button>
+        </div>
+        <div class="card-catalog-detail-body">
+          <div class="card-catalog-detail-preview" id="cardCatalogDetailPreview"></div>
+          <div class="card-catalog-detail-info">
+            <h2 id="cardCatalogDetailTitle"></h2>
+            <p id="cardCatalogDetailDescription"></p>
+            <label class="catalog-card-version-label">Version <select id="cardCatalogDetailVersion"></select></label>
+            <div id="cardCatalogDetailSettings"></div>
+            <button class="card-catalog-detail-save" id="cardCatalogDetailSave">Save to My Cards</button>
+            <p class="card-catalog-save-status" id="cardCatalogDetailStatus"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="card-upload-modal" id="cardUploadModal">
       <div class="card-upload-shell">
         <div class="card-manager-header">
@@ -559,6 +579,24 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
           </button>
           <p class="card-catalog-status" id="cardUploadStatus"></p>
         </form>
+      </div>
+    </div>
+
+    <div class="card-update-modal" id="cardUpdateModal">
+      <div class="card-update-shell">
+        <div class="card-manager-header">
+          <h2 class="card-manager-title">Request Card Update</h2>
+          <button class="card-manager-close" id="cardUpdateClose" aria-label="Close update request">✕</button>
+        </div>
+        <div class="card-update-body">
+          <p id="cardUpdateMessage"></p>
+          <label class="card-upload-label" for="cardUpdateVersion">New version</label>
+          <input id="cardUpdateVersion" type="text" inputmode="numeric" placeholder="e.g. 1.0.1" />
+          <div class="card-update-actions">
+            <button type="button" class="card-update-cancel" id="cardUpdateCancel">Cancel</button>
+            <button type="button" class="card-update-confirm" id="cardUpdateConfirm">Request Update</button>
+          </div>
+        </div>
       </div>
     </div>
 
