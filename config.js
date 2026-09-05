@@ -21,7 +21,6 @@ export const config = {
   layoutProfiles: {},
   autoSwapEnabled: false,
   autoSwapInterval: 30,
-  // Set these to the public Supabase project values after creating the backend.
   supabaseUrl: "https://mbojqtezmtngsehtyzpa.supabase.co",
   supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ib2pxdGV6bXRuZ3NlaHR5enBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNzcxNjAsImV4cCI6MjEwMzk1MzE2MH0.5PArCN5Nz9Aubc2t5iPas4qlo9oLDWxyJ8tMC_e7h90",
   cardSubmitFunctionUrl: "https://mbojqtezmtngsehtyzpa.supabase.co/functions/v1/index",
