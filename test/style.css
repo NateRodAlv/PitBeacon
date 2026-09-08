@@ -79,7 +79,7 @@ html {
 .logo-img {
   width: calc(500px + 1vw);
   max-height: 120px;
-  margin: -3rem 5px 5px -1rem;
+  margin: -3rem -3rem 5px -3rem;
   display: flex;
 }
 
