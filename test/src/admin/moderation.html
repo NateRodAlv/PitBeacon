@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>PitBeacon — Card Moderation</title>
+<style>
+  :root {
+    --bg-base: rgb(22, 22, 22);
+    --bg-surface: rgb(30, 30, 30);
+    --bg-raised: rgb(40, 40, 40);
+    --bg-input: rgb(50, 50, 50);
+    --accent: rgb(47, 48, 112);
+    --accent-hover: rgb(60, 62, 140);
+    --border: rgba(255, 255, 255, 0.07);
+    --border-accent: rgba(47, 48, 112, 0.6);
+    --text-primary: rgb(240, 240, 240);
+    --text-muted: rgb(160, 155, 155);
+    --text-dim: rgb(100, 98, 98);
+    --good: rgb(88, 176, 122);
+    --warn: rgb(214, 168, 74);
+    --bad: rgb(199, 84, 80);
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg-base); color: var(--text-primary);
+    font-family: 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  button {
+    font-family: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--bg-raised); color: var(--text-primary); padding: 8px 14px; font-size: 13px;
+  }
+  button:hover { background: var(--bg-input); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--border-accent); }
+  button.primary:hover { background: var(--accent-hover); }
+  button.danger { background: rgba(199,84,80,0.15); border-color: rgba(199,84,80,0.4); color: rgb(240,190,188); }
+  button.danger:hover { background: rgba(199,84,80,0.28); }
+  input[type=email], textarea {
+    font-family: inherit; background: var(--bg-input); color: var(--text-primary);
+    border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px;
+  }
+  textarea { width: 100%; resize: vertical; min-height: 56px; }
+  a { color: rgb(150, 155, 220); }
+
+  /* ---- login screen ---- */
+  #loginScreen {
+    height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
+  }
+  #loginScreen .box {
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 28px 30px; width: 320px; display: flex; flex-direction: column; gap: 10px;
+  }
+  #loginScreen h1 { font-size: 16px; margin: 0 0 4px; }
+  #loginScreen p { color: var(--text-muted); font-size: 12.5px; margin: 0 0 6px; line-height: 1.5; }
+  #loginStatus { font-size: 12.5px; color: var(--text-muted); min-height: 16px; }
+  .loginTabs { display: flex; gap: 4px; margin-bottom: 4px; }
+  .loginTabs button { flex: 1; padding: 6px 4px; font-size: 12px; background: var(--bg-raised); }
+  .loginTabs button.active { background: var(--accent); border-color: var(--border-accent); }
+  .loginMode { display: flex; flex-direction: column; gap: 10px; }
+  .loginMode.hidden { display: none; }
+  .linkBtn { background: none; border: none; padding: 0; color: rgb(150,155,220); font-size: 12px; text-align: left; }
+  .linkBtn:hover { background: none; text-decoration: underline; }
+
+  /* ---- app shell ---- */
+  #app { display: none; height: 100%; grid-template-columns: 300px 1fr; grid-template-rows: 48px 1fr; }
+  #app.visible { display: grid; }
+  header {
+    grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--bg-surface);
+  }
+  header .title { font-size: 13.5px; font-weight: 600; letter-spacing: .2px; }
+  header .who { font-size: 12px; color: var(--text-dim); }
+  header .whoWrap { display: flex; align-items: center; gap: 10px; }
+
+  #sidebar {
+    border-right: 1px solid var(--border); background: var(--bg-surface); overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .tabs button { flex: 1; border-radius: 0; border: none; border-bottom: 2px solid transparent; background: transparent; font-size: 12px; padding: 10px 4px; color: var(--text-muted); }
+  .tabs button.active { color: var(--text-primary); border-bottom-color: var(--accent-hover); }
+  #queueList { flex: 1; overflow-y: auto; }
+  .queueEmpty { padding: 24px 16px; color: var(--text-dim); font-size: 12.5px; line-height: 1.6; }
+  .qItem {
+    padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+  }
+  .qItem:hover { background: var(--bg-raised); }
+  .qItem.selected { background: var(--bg-input); border-left: 3px solid var(--accent-hover); padding-left: 11px; }
+  .qItem .label { font-size: 13px; font-weight: 500; }
+  .qItem .meta { font-size: 11px; color: var(--text-dim); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 1px 6px; border-radius: 10px; font-size: 10px; line-height: 1.6; }
+  .badge.new { background: rgba(88,176,122,0.18); color: var(--good); }
+  .badge.update { background: rgba(214,168,74,0.18); color: var(--warn); }
+  .badge.flagged { background: rgba(199,84,80,0.18); color: var(--bad); }
+  .badge.count { background: var(--bg-input); color: var(--text-muted); }
+
+  #detail { overflow-y: auto; padding: 20px 26px 60px; }
+  #detailEmpty { color: var(--text-dim); padding: 40px; text-align: center; font-size: 13px; }
+  .detailHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+  .detailHeader h2 { margin: 0 0 4px; font-size: 19px; }
+  .detailHeader .sub { color: var(--text-muted); font-size: 12.5px; }
+  .metaGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 8px 18px; margin: 14px 0 18px; }
+  .metaGrid div { font-size: 12px; }
+  .metaGrid .k { color: var(--text-dim); display: block; margin-bottom: 2px; }
+  .metaGrid .v { color: var(--text-primary); word-break: break-word; }
+
+  .panel { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
+  .panel > .panelHead { padding: 9px 14px; font-size: 12px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); }
+  .panel > .panelBody { padding: 12px 14px; }
+
+  .flagList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .flagList li { display: flex; gap: 8px; font-size: 12.5px; padding: 6px 8px; border-radius: 6px; background: var(--bg-raised); }
+  .flagDot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .flagDot.high { background: var(--bad); }
+  .flagDot.med { background: var(--warn); }
+  .flagDot.info { background: var(--text-dim); }
+  .flagList .none { color: var(--text-dim); font-style: italic; padding: 4px 8px; }
+
+  .codeTabs { display: flex; gap: 4px; padding: 8px 14px 0; }
+  .codeTabs button { padding: 5px 12px; font-size: 12px; }
+  .codeTabs button.active { background: var(--bg-input); }
+  pre.code {
+    margin: 0; padding: 12px 14px; font-family: var(--mono); font-size: 12px; line-height: 1.55;
+    overflow-x: auto; white-space: pre; max-height: 420px; overflow-y: auto; color: #d8d8d8;
+  }
+  pre.code .add { background: rgba(88,176,122,0.16); display: block; }
+  pre.code .rem { background: rgba(199,84,80,0.16); display: block; text-decoration: none; }
+  pre.code .ctx { display: block; }
+  .diffMeta { font-size: 11px; color: var(--text-dim); padding: 0 14px 10px; }
+
+  .previewBar { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
+  .previewBar label { display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+  iframe.preview { width: 100%; height: 340px; border: none; background: #1e1e1e; display: block; }
+  .previewLog { max-height: 90px; overflow-y: auto; font-family: var(--mono); font-size: 11px; padding: 8px 14px; color: var(--text-dim); border-top: 1px solid var(--border); }
+
+  .actionBar { display: flex; flex-direction: column; gap: 10px; }
+  .actionButtons { display: flex; gap: 10px; flex-wrap: wrap; }
+  .reviewedNote { font-size: 12px; color: var(--text-dim); background: var(--bg-raised); border-radius: 6px; padding: 8px 10px; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="box">
+    <h1>PitBeacon — Card Moderation</h1>
+    <p>Sign in with an email that's on the <code>moderators</code> allowlist in Supabase.</p>
+
+    <div class="loginTabs">
+      <button id="tabPassword" class="active">Password</button>
+      <button id="tabMagicLink">Magic link</button>
+    </div>
+
+    <div id="modePassword" class="loginMode">
+      <input type="email" id="pwEmail" placeholder="you@example.com" autocomplete="email" />
+      <input type="password" id="pwPassword" placeholder="Password" autocomplete="current-password" />
+      <button class="primary" id="pwSignInBtn">Sign in</button>
+      <button class="linkBtn" id="pwForgotBtn">Forgot / never set a password? Email me a reset link</button>
+    </div>
+
+    <div id="modeMagicLink" class="loginMode hidden">
+      <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" />
+      <button class="primary" id="loginBtn">Send magic link</button>
+    </div>
+
+    <div id="loginStatus"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="title">Card Moderation</div>
+    <div class="whoWrap">
+      <span class="who" id="whoAmI"></span>
+      <button id="signOutBtn">Sign out</button>
+    </div>
+  </header>
+  <div id="sidebar">
+    <div class="tabs">
+      <button data-status="pending" class="active">Pending</button>
+      <button data-status="flagged">Flagged</button>
+      <button data-status="approved">Approved</button>
+      <button data-status="rejected">Rejected</button>
+    </div>
+    <div id="queueList"><div class="queueEmpty">Loading…</div></div>
+  </div>
+  <div id="detail">
+    <div id="detailEmpty">Select a card from the queue to review it.</div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+// Same public anon key already shipped in this app's config.js — safe to
+// reuse. Read/write access to anything beyond approved cards is enforced
+// entirely by Supabase RLS + the `moderators` table (see moderation-schema.sql),
+// not by keeping this key secret.
+const SUPABASE_URL = 'https://mbojqtezmtngsehtyzpa.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ib2pxdGV6bXRuZ3NlaHR5enBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNzcxNjAsImV4cCI6MjEwMzk1MzE2MH0.5PArCN5Nz9Aubc2t5iPas4qlo9oLDWxyJ8tMC_e7h90';
+
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const loginScreen = document.getElementById('loginScreen');
+const appEl = document.getElementById('app');
+const loginStatus = document.getElementById('loginStatus');
+
+// ---- mode toggle ----
+const tabPassword = document.getElementById('tabPassword');
+const tabMagicLink = document.getElementById('tabMagicLink');
+const modePassword = document.getElementById('modePassword');
+const modeMagicLink = document.getElementById('modeMagicLink');
+
+function setLoginMode(mode) {
+  const isPw = mode === 'password';
+  tabPassword.classList.toggle('active', isPw);
+  tabMagicLink.classList.toggle('active', !isPw);
+  modePassword.classList.toggle('hidden', !isPw);
+  modeMagicLink.classList.toggle('hidden', isPw);
+  loginStatus.textContent = '';
+}
+tabPassword.addEventListener('click', () => setLoginMode('password'));
+tabMagicLink.addEventListener('click', () => setLoginMode('magiclink'));
+
+// ---- password sign-in ----
+document.getElementById('pwSignInBtn').addEventListener('click', async () => {
+  const email = document.getElementById('pwEmail').value.trim();
+  const password = document.getElementById('pwPassword').value;
+  if (!email || !password) { loginStatus.textContent = 'Enter both email and password.'; return; }
+  loginStatus.textContent = 'Signing in…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) loginStatus.textContent = `Error: ${error.message}`;
+  // On success onAuthStateChange takes over and swaps the screen.
+});
+
+document.getElementById('pwPassword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('pwSignInBtn').click();
+});
+
+// ---- forgot / set password ----
+// Sends a recovery link. Clicking it signs the moderator in and Supabase
+// treats the session as a "recovery" session, so we prompt for a new
+// password once — this doubles as the way to set a password the very
+// first time, since moderators are usually created email-only via
+// Authentication → Users → Add user in the dashboard.
+document.getElementById('pwForgotBtn').addEventListener('click', async () => {
+  const email = (document.getElementById('pwEmail').value || '').trim();
+  if (!email) { loginStatus.textContent = 'Enter your email above first, then click this.'; return; }
+  loginStatus.textContent = 'Sending reset link…';
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+  loginStatus.textContent = error ? `Error: ${error.message}` : `Reset link sent to ${email}. Check your inbox.`;
+});
+
+// ---- magic link ----
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) return;
+  loginStatus.textContent = 'Sending…';
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
+  loginStatus.textContent = error ? `Error: ${error.message}` : `Magic link sent to ${email}. Check your inbox.`;
+});
+
+document.getElementById('signOutBtn').addEventListener('click', () => sb.auth.signOut());
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    // Arrived here via a reset/first-time-password link. Ask for a new
+    // password once, then continue into the app with it set.
+    const newPassword = window.prompt('Set a password for this account (min 6 characters):');
+    if (newPassword && newPassword.length >= 6) {
+      const { error } = await sb.auth.updateUser({ password: newPassword });
+      loginStatus.textContent = error ? `Error setting password: ${error.message}` : 'Password set. You can use it next time.';
+    }
+  }
+  if (session) {
+    loginScreen.style.display = 'none';
+    appEl.classList.add('visible');
+    document.getElementById('whoAmI').textContent = session.user.email;
+    initApp();
+  } else {
+    loginScreen.style.display = 'flex';
+    appEl.classList.remove('visible');
+  }
+});
+
+// ---------------------------------------------------------------------
+// App state
+// ---------------------------------------------------------------------
+let currentStatus = 'pending';
+let queue = [];
+let selected = null;
+let approvedCache = null; // cached list of currently-approved cards, for diff + id-collision checks
+let appInitialized = false;
+
+function initApp() {
+  if (appInitialized) { loadQueue(); return; }
+  appInitialized = true;
+
+  document.querySelectorAll('.tabs button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentStatus = btn.dataset.status;
+      selected = null;
+      renderDetail();
+      loadQueue();
+    });
+  });
+
+  loadQueue();
+}
+
+async function loadApprovedCache() {
+  if (approvedCache) return approvedCache;
+  const { data, error } = await sb.from('cards').select('*').eq('status', 'approved');
+  approvedCache = error ? [] : (data || []);
+  return approvedCache;
+}
+
+async function loadQueue() {
+  const listEl = document.getElementById('queueList');
+  listEl.innerHTML = '<div class="queueEmpty">Loading…</div>';
+  const { data, error } = await sb.from('cards')
+    .select('*')
+    .eq('status', currentStatus)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    listEl.innerHTML = `<div class="queueEmpty">Couldn't load the queue.<br><br>${escapeHtml(error.message)}<br><br>Check that moderation-schema.sql has been run and your email is in the <code>moderators</code> table.</div>`;
+    return;
+  }
+
+  queue = data || [];
+  if (currentStatus === 'pending') await loadApprovedCache();
+
+  if (queue.length === 0) {
+    listEl.innerHTML = `<div class="queueEmpty">Nothing in "${currentStatus}" right now.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  queue.forEach(card => {
+    const item = document.createElement('div');
+    item.className = 'qItem';
+    const isUpdate = !!card.update_of;
+    item.innerHTML = `
+      <div class="label">${escapeHtml(card.label || card.id || '(untitled)')}</div>
+      <div class="meta">
+        <span class="badge ${isUpdate ? 'update' : 'new'}">${isUpdate ? 'update' : 'new card'}</span>
+        <span>${escapeHtml(card.author_name || 'unknown author')}</span>
+        <span>·</span>
+        <span>${timeAgo(card.created_at)}</span>
+      </div>`;
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.qItem').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      selected = card;
+      renderDetail();
+    });
+    listEl.appendChild(item);
+  });
+}
+
+// ---------------------------------------------------------------------
+// Static analysis — flags for the moderator to look at, never auto-blocks
+// ---------------------------------------------------------------------
+function scanCard(card, approvedList) {
+  const flags = [];
+  const html = card.html || '', css = card.css || '', js = card.js || '';
+  const all = html + '\n' + css + '\n' + js;
+
+  const add = (sev, msg) => flags.push({ sev, msg });
+
+  if (/\beval\s*\(/.test(js)) add('high', 'Calls eval() — arbitrary code execution.');
+  if (/new\s+Function\s*\(/.test(js)) add('high', 'Uses the Function() constructor — arbitrary code execution.');
+  if (/document\.cookie/i.test(all)) add('high', 'References document.cookie.');
+  if (/window\.top|window\.parent\s*\.\s*(location|document)|top\s*\.\s*location/.test(all)) {
+    add('high', 'References window.top / parent.location / top.location — possible sandbox-escape attempt.');
+  }
+  if (/\blocalStorage\b|\bsessionStorage\b|\bindexedDB\b/.test(js)) {
+    add('med', 'Accesses browser storage APIs directly instead of sdk.storage (shouldn\u2019t normally be reachable from the sandbox, but code may be trying).');
+  }
+  if (/<script[^>]+src\s*=/i.test(html)) add('med', 'HTML includes an externally-sourced <script> tag.');
+  if (/javascript\s*:/i.test(all)) add('med', 'Contains a javascript: URI.');
+  if (/postMessage\s*\(/.test(js) && !/window\.parent\s*\.\s*postMessage/.test(js)) {
+    add('info', 'Calls postMessage() outside the normal SDK bridge pattern — worth a manual look.');
+  }
+  const b64 = all.match(/[A-Za-z0-9+/]{300,}={0,2}/g);
+  if (b64) add('med', `Contains ${b64.length} long base64-like blob(s) (300+ chars) — could be legitimate (image data) or obfuscated payload.`);
+
+  const urls = Array.from(new Set((all.match(/https?:\/\/[^\s'"`)]+/g) || [])));
+  if (urls.length) {
+    add('info', `References ${urls.length} external URL(s): ${urls.slice(0, 6).join(', ')}${urls.length > 6 ? '…' : ''}`);
+  }
+
+  // ID collision / squatting check
+  if (approvedList && card.id) {
+    const clash = approvedList.find(a => a.id === card.id && a.pk !== card.pk);
+    if (clash && !card.update_of) {
+      add('high', `An approved card already uses id "${card.id}", and this submission isn't marked as an update to it. Possible impersonation — verify the author.`);
+    }
+    const labelClash = approvedList.find(a => a.label && card.label &&
+      a.label.trim().toLowerCase() === card.label.trim().toLowerCase() && a.id !== card.id);
+    if (labelClash) add('med', `Label matches an existing approved card ("${labelClash.label}", id "${labelClash.id}") with a different id.`);
+  }
+
+  return flags;
+}
+
+// ---------------------------------------------------------------------
+// Line diff (simple LCS) for update submissions
+// ---------------------------------------------------------------------
+function lineDiff(oldStr, newStr) {
+  const a = (oldStr || '').split('\n');
+  const b = (newStr || '').split('\n');
+  const n = a.length, m = b.length;
+  const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const out = [];
+  let i = 0, j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) { out.push({ t: 'ctx', l: a[i] }); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { out.push({ t: 'rem', l: a[i] }); i++; }
+    else { out.push({ t: 'add', l: b[j] }); j++; }
+  }
+  while (i < n) { out.push({ t: 'rem', l: a[i++] }); }
+  while (j < m) { out.push({ t: 'add', l: b[j++] }); }
+  return out;
+}
+
+function renderDiffLines(diffLines) {
+  if (!diffLines.length) return '<span class="ctx">(no content)</span>';
+  return diffLines.map(d => {
+    const prefix = d.t === 'add' ? '+ ' : d.t === 'rem' ? '- ' : '  ';
+    const cls = d.t === 'add' ? 'add' : d.t === 'rem' ? 'rem' : 'ctx';
+    return `<span class="${cls}">${escapeHtml(prefix + d.l)}</span>`;
+  }).join('\n');
+}
+
+// ---------------------------------------------------------------------
+// Detail panel
+// ---------------------------------------------------------------------
+let activeCodeTab = 'html';
+
+async function renderDetail() {
+  const el = document.getElementById('detail');
+  if (!selected) {
+    el.innerHTML = '<div id="detailEmpty">Select a card from the queue to review it.</div>';
+    return;
+  }
+  const card = selected;
+  const approvedList = await loadApprovedCache();
+  const original = card.update_of ? approvedList.find(a => a.id === card.update_of) : null;
+  const flags = scanCard(card, approvedList);
+  const highCount = flags.filter(f => f.sev === 'high').length;
+
+  el.innerHTML = `
+    <div class="detailHeader">
+      <div>
+        <h2>${escapeHtml(card.label || card.id)}</h2>
+        <div class="sub">id: <code>${escapeHtml(card.id || '')}</code> · submitted ${timeAgo(card.created_at)} ${card.update_of ? `· update of <code>${escapeHtml(card.update_of)}</code>` : ''}</div>
+      </div>
+      <div class="badge ${highCount ? 'flagged' : (card.update_of ? 'update' : 'new')}">
+        ${highCount ? `${highCount} high-severity flag${highCount > 1 ? 's' : ''}` : (card.update_of ? 'update' : 'new card')}
+      </div>
+    </div>
+
+    <div class="metaGrid">
+      <div><span class="k">Author</span><span class="v">${escapeHtml(card.author_name || '—')}</span></div>
+      <div><span class="k">Version</span><span class="v">${escapeHtml(card.version || '—')}</span></div>
+      <div><span class="k">Icon</span><span class="v">${escapeHtml(card.icon || '—')}</span></div>
+      <div><span class="k">Status</span><span class="v">${escapeHtml(card.status)}</span></div>
+    </div>
+
+    ${card.description ? `<div class="panel"><div class="panelBody" style="font-size:13px;color:var(--text-muted)">${escapeHtml(card.description)}</div></div>` : ''}
+
+    <div class="panel">
+      <div class="panelHead">Automated flags <span style="font-weight:400;color:var(--text-dim)">for your review — nothing here auto-approves or auto-rejects</span></div>
+      <div class="panelBody">
+        <ul class="flagList">
+          ${flags.length ? flags.map(f => `<li><span class="flagDot ${f.sev}"></span><span>${escapeHtml(f.msg)}</span></li>`).join('')
+                         : '<li class="none">No automated flags. Still read the code below.</li>'}
+        </ul>
+      </div>
+    </div>
+
+    ${card.settings ? `<div class="panel"><div class="panelHead">Settings schema</div><pre class="code">${escapeHtml(JSON.stringify(card.settings, null, 2))}</pre></div>` : ''}
+
+    <div class="panel">
+      <div class="panelHead">
+        Code ${original ? '<span style="font-weight:400;color:var(--text-dim)">— diff vs. currently-approved version</span>' : ''}
+        <span></span>
+      </div>
+      <div class="codeTabs" id="codeTabs">
+        ${['html','css','js'].map(t => `<button data-t="${t}" class="${t === activeCodeTab ? 'active' : ''}">${t.toUpperCase()}</button>`).join('')}
+      </div>
+      <div id="codeBody"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panelHead">
+        Sandboxed preview
+        <span></span>
+      </div>
+      <div class="previewBar">
+        <label><input type="checkbox" id="liveNetToggle" /> Allow this preview to make real network requests (fetchCustom)</label>
+        <button id="reloadPreviewBtn">Reload preview</button>
+      </div>
+      <iframe class="preview" id="previewFrame" sandbox="allow-scripts"></iframe>
+      <div class="previewLog" id="previewLog"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panelHead">Decision</div>
+      <div class="panelBody actionBar">
+        ${card.status !== 'pending' && card.reviewed_by ? `<div class="reviewedNote">Last reviewed by ${escapeHtml(card.reviewed_by)} ${timeAgo(card.reviewed_at)}${card.moderator_note ? ' — “' + escapeHtml(card.moderator_note) + '”' : ''}</div>` : ''}
+        <textarea id="modNote" placeholder="Optional note (visible in the audit trail, not to the author)"></textarea>
+        <div class="actionButtons">
+          <button class="primary" id="approveBtn">Approve</button>
+          <button id="flagBtn">Flag for changes</button>
+          <button class="danger" id="rejectBtn">Reject</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  renderCodeTab(card, original);
+  document.getElementById('codeTabs').querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => { activeCodeTab = btn.dataset.t; renderDetail(); });
+  });
+
+  document.getElementById('approveBtn').addEventListener('click', () => decide(card, 'approved'));
+  document.getElementById('flagBtn').addEventListener('click', () => decide(card, 'flagged'));
+  document.getElementById('rejectBtn').addEventListener('click', () => decide(card, 'rejected'));
+  document.getElementById('reloadPreviewBtn').addEventListener('click', () => loadPreview(card));
+
+  loadPreview(card);
+}
+
+function renderCodeTab(card, original) {
+  const body = document.getElementById('codeBody');
+  const field = activeCodeTab; // html | css | js
+  const newVal = card[field] || '';
+  if (original) {
+    const diff = lineDiff(original[field] || '', newVal);
+    const added = diff.filter(d => d.t === 'add').length;
+    const removed = diff.filter(d => d.t === 'rem').length;
+    body.innerHTML = `<div class="diffMeta">+${added} / -${removed} lines</div><pre class="code">${renderDiffLines(diff)}</pre>`;
+  } else {
+    body.innerHTML = `<pre class="code">${escapeHtml(newVal) || '<span style="color:var(--text-dim)">(empty)</span>'}</pre>`;
+  }
+}
+
+// ---------------------------------------------------------------------
+// Sandboxed, isolated preview
+// Mirrors the real SDK bridge protocol (see developerCardRuntime.js) so
+// unmodified card code runs, but every response comes from an in-memory
+// mock — nothing here touches real localStorage, and outbound network
+// calls are refused unless the moderator explicitly opts in per-preview.
+// ---------------------------------------------------------------------
+let previewHandler = null;
+
+const MOCK_STATE = {
+  teamNumber: 7250,
+  fullDate: new Date().toISOString(),
+  isTestMode: true,
+  currentEventData: { key: '2026demo', name: 'Demo Regional (mock data)' },
+  currentMatches: [
+    { matchNumber: 12, compLevel: 'qm', time: Date.now() / 1000 + 900, redTeams: [1, 2, 3], blueTeams: [7250, 5, 6] },
+  ],
+  currentRankings: [{ rank: 1, teamNumber: 7250, wins: 5, losses: 1, ties: 0 }],
+  currentTeamSummaryData: { teamNumber: 7250, nickname: 'Mock Team', batteryVoltage: 12.6 },
+};
+
+function logPreview(msg) {
+  const el = document.getElementById('previewLog');
+  if (!el) return;
+  const line = document.createElement('div');
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function loadPreview(card) {
+  const iframe = document.getElementById('previewFrame');
+  const allowLiveNet = document.getElementById('liveNetToggle').checked;
+  document.getElementById('previewLog').innerHTML = '';
+
+  if (previewHandler) window.removeEventListener('message', previewHandler);
+
+  const cardScript = `
+    (function() {
+      var sdk = {
+        _callbacks: [], _state: null, _cardTimer: null, _lastCardSnapshot: null,
+        getState: function() { return this._state; },
+        getSetting: function(name, fallback) {
+          var settings = window.__pitbeaconCardSettings || {};
+          return Object.prototype.hasOwnProperty.call(settings, name) ? settings[name] : fallback;
+        },
+        configurable: function(name, defaultValue) {
+          var settings = window.__pitbeaconCardSettings || {};
+          return Object.prototype.hasOwnProperty.call(settings, name) ? settings[name] : defaultValue;
+        },
+        onStateChange: function(cb) {
+          this._callbacks.push(cb);
+          if (this._state) cb(this._state);
+          return function() {}.bind(this);
+        },
+        fetchDataSource: function(name) {
+          return new Promise(function(resolve, reject) {
+            var id = Date.now() + Math.random();
+            var handler = function(e) {
+              if (e.data.type === 'fetchResponse' && e.data.id === id) {
+                window.removeEventListener('message', handler);
+                if (e.data.error) reject(new Error(e.data.error)); else resolve(e.data.data);
+              }
+            };
+            window.addEventListener('message', handler);
+            window.parent.postMessage({ type: 'fetchDataSource', id: id, name: name }, '*');
+          });
+        },
+        getDataSourceNames: function() {
+          return new Promise(function(resolve) {
+            var id = Date.now() + '-' + Math.random();
+            var handler = function(e) {
+              if (e.data.type === 'getDataSourceNamesResponse' && e.data.id === id) {
+                window.removeEventListener('message', handler); resolve(e.data.names || []);
+              }
+            };
+            window.addEventListener('message', handler);
+            window.parent.postMessage({ type: 'getDataSourceNames', id: id }, '*');
+          });
+        },
+        fetchCustom: function(url, options) {
+          options = options || {};
+          return new Promise(function(resolve) {
+            var id = Date.now() + '-' + Math.random();
+            var handler = function(e) {
+              if (e.data.type === 'fetchCustomResponse' && e.data.id === id) {
+                window.removeEventListener('message', handler); resolve(e.data.result);
+              }
+            };
+            window.addEventListener('message', handler);
+            window.parent.postMessage({ type: 'fetchCustom', id: id, url: url, method: options.method || 'GET' }, '*');
+          });
+        },
+        triggerAlarm: function(nameOrPreset) {
+          window.parent.postMessage({ type: 'triggerAlarm', nameOrPreset: nameOrPreset }, '*');
+        },
+        getAlarmSounds: function() {
+          return new Promise(function(resolve) {
+            window.parent.postMessage({ type: 'getAlarmSounds' }, '*');
+            resolve(['alarm1', 'alarm2']);
+          });
+        },
+        notify: function(message, type) {
+          window.parent.postMessage({ type: 'notify', message: message, notificationType: type || 'message' }, '*');
+        },
+        storage: {
+          get: function(key) {
+            return new Promise(function(resolve) {
+              var id = Date.now() + '-' + Math.random();
+              var handler = function(e) {
+                if (e.data.type === 'storageGetResponse' && e.data.id === id) {
+                  window.removeEventListener('message', handler); resolve(e.data.value);
+                }
+              };
+              window.addEventListener('message', handler);
+              window.parent.postMessage({ type: 'storageGet', id: id, key: key }, '*');
+            });
+          },
+          set: function(key, value) {
+            return new Promise(function(resolve) {
+              var id = Date.now() + '-' + Math.random();
+              var handler = function(e) {
+                if (e.data.type === 'storageSetResponse' && e.data.id === id) {
+                  window.removeEventListener('message', handler); resolve(e.data.success);
+                }
+              };
+              window.addEventListener('message', handler);
+              window.parent.postMessage({ type: 'storageSet', id: id, key: key, value: value }, '*');
+            });
+          },
+          delete: function(key) {
+            return new Promise(function(resolve) {
+              var id = Date.now() + '-' + Math.random();
+              var handler = function(e) {
+                if (e.data.type === 'storageDeleteResponse' && e.data.id === id) {
+                  window.removeEventListener('message', handler); resolve(e.data.success);
+                }
+              };
+              window.addEventListener('message', handler);
+              window.parent.postMessage({ type: 'storageDelete', id: id, key: key }, '*');
+            });
+          }
+        },
+        getConfig: function() {
+          return new Promise(function(resolve) {
+            var id = Date.now() + '-' + Math.random();
+            var handler = function(e) {
+              if (e.data.type === 'getConfigResponse' && e.data.id === id) {
+                window.removeEventListener('message', handler); resolve(e.data.config || {});
+              }
+            };
+            window.addEventListener('message', handler);
+            window.parent.postMessage({ type: 'getConfig', id: id }, '*');
+          });
+        },
+        updateCard: function(interval, refreshCallback, compareFn) {
+          if (typeof interval !== 'number' || interval <= 0) return;
+          if (this._cardTimer) clearInterval(this._cardTimer);
+          this._cardTimer = setInterval(function() {
+            if (!sdk._state) return;
+            try {
+              var snapshot = compareFn ? compareFn(sdk._state, sdk) : sdk._state;
+              var serialized = JSON.stringify(snapshot);
+              if (sdk._lastCardSnapshot === serialized) return;
+              sdk._lastCardSnapshot = serialized;
+              if (typeof refreshCallback === 'function') refreshCallback(sdk._state, sdk);
+            } catch (err) { console.error('Card refresh failed:', err); }
+          }, interval);
+        }
+      };
+      window.addEventListener('message', function(e) {
+        if (e.data.type === 'stateUpdate') {
+          sdk._state = e.data.state;
+          sdk._callbacks.forEach(function(cb) { cb(sdk._state); });
+        }
+      });
+      window.parent.postMessage({ type: 'getState' }, '*');
+      window.__pitbeaconSDK = sdk;
+    })();
+    (function() {
+      window.__pitbeaconCardSettings = ${JSON.stringify({})};
+      ${card.js || ''}
+    })();
+  `;
+
+  const doc = `<!doctype html><html><head><meta charset="utf-8">
+    <style>body{font-family:Rubik,sans-serif;background:#1e1e1e;color:#f0f0f0;padding:8px;margin:0;}${card.css || ''}</style>
+    </head><body>${card.html || '<p>No HTML defined</p>'}<script>${cardScript}<` + `/script></body></html>`;
+
+  previewHandler = async function(e) {
+    if (e.source !== iframe.contentWindow) return;
+    const d = e.data;
+    switch (d.type) {
+      case 'getState':
+        iframe.contentWindow.postMessage({ type: 'stateUpdate', state: MOCK_STATE }, '*');
+        break;
+      case 'getDataSourceNames':
+        iframe.contentWindow.postMessage({ type: 'getDataSourceNamesResponse', id: d.id, names: ['currentMatches','currentEventData','currentRankings','teamInfo','teamSummaryData'] }, '*');
+        break;
+      case 'fetchDataSource': {
+        const map = {
+          currentMatches: MOCK_STATE.currentMatches, currentEventData: MOCK_STATE.currentEventData,
+          currentRankings: MOCK_STATE.currentRankings, teamInfo: { teamNumber: 7250, nickname: 'Mock Team' },
+          teamSummaryData: MOCK_STATE.currentTeamSummaryData,
+        };
+        iframe.contentWindow.postMessage({ type: 'fetchResponse', id: d.id, data: map[d.name] ?? null }, '*');
+        break;
+      }
+      case 'fetchCustom':
+        if (!allowLiveNet) {
+          logPreview(`fetchCustom blocked: ${d.url} (enable "allow real network requests" to test it)`);
+          iframe.contentWindow.postMessage({ type: 'fetchCustomResponse', id: d.id, result: { ok: false, status: 0, error: 'Network calls are disabled during moderation preview.' } }, '*');
+        } else {
+          logPreview(`fetchCustom (live): ${d.method} ${d.url}`);
+          try {
+            const res = await fetch(d.url, { method: d.method });
+            const text = await res.text();
+            iframe.contentWindow.postMessage({ type: 'fetchCustomResponse', id: d.id, result: { ok: res.ok, status: res.status, data: text } }, '*');
+          } catch (err) {
+            iframe.contentWindow.postMessage({ type: 'fetchCustomResponse', id: d.id, result: { ok: false, status: 0, error: String(err) } }, '*');
+          }
+        }
+        break;
+      case 'triggerAlarm':
+        logPreview(`triggerAlarm("${d.nameOrPreset}") — no sound played in preview`);
+        break;
+      case 'notify':
+        logPreview(`notify [${d.notificationType}]: ${d.message}`);
+        break;
+      case 'storageGet':
+        iframe.contentWindow.postMessage({ type: 'storageGetResponse', id: d.id, value: previewStorage.get(d.key) ?? null }, '*');
+        break;
+      case 'storageSet':
+        previewStorage.set(d.key, d.value);
+        iframe.contentWindow.postMessage({ type: 'storageSetResponse', id: d.id, success: true }, '*');
+        break;
+      case 'storageDelete':
+        previewStorage.delete(d.key);
+        iframe.contentWindow.postMessage({ type: 'storageDeleteResponse', id: d.id, success: true }, '*');
+        break;
+      case 'getConfig':
+        iframe.contentWindow.postMessage({ type: 'getConfigResponse', id: d.id, config: { teamNumber: 7250, matchAlarmSound: 'alarm1', noteAlarmSound: 'alarm1', eventName: 'Demo Regional (mock)' } }, '*');
+        break;
+      case 'markSelfRefresh':
+        break;
+    }
+  };
+  window.addEventListener('message', previewHandler);
+  const previewStorage = new Map(); // in-memory only, reset every preview load — never real localStorage
+
+  iframe.srcdoc = doc;
+  logPreview('Preview loaded with mock match data. fetchCustom is ' + (allowLiveNet ? 'LIVE.' : 'blocked by default.'));
+}
+
+// ---------------------------------------------------------------------
+// Decisions
+// ---------------------------------------------------------------------
+async function decide(card, status) {
+  const note = document.getElementById('modNote').value.trim();
+  const { data: { user } } = await sb.auth.getUser();
+  const { error } = await sb.from('cards').update({
+    status,
+    reviewed_by: user?.email || null,
+    reviewed_at: new Date().toISOString(),
+    moderator_note: note || null,
+  }).eq('pk', card.pk);
+
+  if (error) {
+    alert(`Couldn't save: ${error.message}`);
+    return;
+  }
+  selected = null;
+  approvedCache = null; // status just changed, invalidate the cache used for diff/collision checks
+  renderDetail();
+  loadQueue();
+}
+
+// ---------------------------------------------------------------------
+// Small helpers
+// ---------------------------------------------------------------------
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function timeAgo(iso) {
+  if (!iso) return '—';
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+</script>
+</body>
+</html>
