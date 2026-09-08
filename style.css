@@ -75,11 +75,12 @@ html {
   justify-content: center;
   flex-shrink: 0;
 }
+
 .logo-img {
-  width: 500px;
-  height: 500px;
+  width: calc(500px + 1vw);
+  max-height: 120px;
   margin: -3rem 5px 5px -1rem;
-  display: block;
+  display: flex;
 }
 
 .title {
