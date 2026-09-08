@@ -75,6 +75,12 @@ html {
   justify-content: center;
   flex-shrink: 0;
 }
+.logo-img {
+  width: 30rem;
+  height: 30rem;
+  margin: -3rem 5px 5px -1rem;
+  display: block;
+}
 
 .title {
   font-family: "Quicksand", sans-serif;
