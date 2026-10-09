@@ -5,9 +5,13 @@ export function setCardAutoScroll(target, enabled, speed = 30) {
     target._cardAutoScroll = null;
     return;
   }
-  const scrollSpeed = Number.isFinite(Number(speed))
-    ? Math.min(120, Math.max(30, Number(speed)))
+  const requestedSpeed = Number(speed);
+  const boundedSpeed = Number.isFinite(requestedSpeed)
+    ? Math.min(120, Math.max(5, requestedSpeed))
     : 30;
+  const scrollSpeed = boundedSpeed < 30
+    ? Math.sqrt(boundedSpeed * 30)
+    : boundedSpeed;
   if (current) {
     current.speed = scrollSpeed;
     return;

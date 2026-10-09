@@ -117,9 +117,9 @@ export function createStatsCard() {
       },
       autoScrollSpeed: {
         type: "number",
-        label: "Scroll speed (px/sec)",
+        label: "Scroll speed",
         default: 30,
-        min: 30,
+        min: 5,
         max: 120,
         step: 1,
       },
