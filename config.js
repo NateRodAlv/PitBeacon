@@ -1,6 +1,8 @@
 export const config = {
   teamNumber: 7250,
   tbaapikey: "YOUR_AUTH_KEY",
+  match13apikey: "",
+  match13ProxyUrl: "https://pitbeacon.rodriguezalvaradonathan.workers.dev", 
   noteAlarmToggle: false,
   noteAlarmThreshold: 8,
   noteAlarmSound: "alarm1",
@@ -15,7 +17,7 @@ export const config = {
     "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
     "match-card": { x: 2, y: 0, width: 1, height: 3 },
     "leaderboard-card": { x: 1, y: 0, width: 1, height: 3 },
-    "statbotics-card": { x: 0, y: 1, width: 1, height: 2 },
+    "stats-card": { x: 0, y: 1, width: 1, height: 2 },
   },
   activeProfileName: "Default",
   layoutProfiles: {},
@@ -77,8 +79,8 @@ export const config = {
       builtin: true,
     },
     {
-      id: "statbotics-card",
-      label: "Statbotics",
+      id: "stats-card",
+      label: "Team Stats",
       icon: "chart-bar",
       selfRefresh: false,
       builtin: true,
@@ -96,6 +98,8 @@ export const CardSchema = {
   selfRefresh: "boolean?",
   builtin: "boolean?",
   developer: "boolean?", // true for user-created developer cards
+  settings: "object?",
+  settingsValues: "object?",
   html: "string?", // for developer cards
   css: "string?", // for developer cards
   js: "string?", // for developer cards

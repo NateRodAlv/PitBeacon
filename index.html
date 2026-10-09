@@ -57,6 +57,11 @@
         class="logo-img"
         xmlns="http://www.w3.org/2000/svg"
         id="eeozJEtgrYl1"
+        role="button"
+        tabindex="0"
+        aria-label="Toggle Easter eggs"
+        aria-pressed="false"
+        title="Enable Easter eggs"
         shape-rendering="geometricPrecision"
         text-rendering="geometricPrecision"
         viewBox="75 35 150 175"
@@ -101,6 +106,7 @@
               </mask>
             </g>
             <circle
+              id="logo-easter-egg-indicator"
               r="4.497"
               fill="#1d3780"
               stroke="#fff"
@@ -168,7 +174,7 @@
       </svg>
       <div class="logo">
         <p class="frc7250">By FRC 7250</p>
-        <p class="version" id="version">Version 26.9.8</p>
+        <p class="version" id="version">Version 26.10.9</p>
       </div>
       <div class="time-display" id="time-display">--:--:--</div>
       <div class="profile-switcher" id="profileSwitcher"></div>
@@ -354,8 +360,43 @@
         </div>
         <div class="settings-field">
           <label for="tbaapikey">TBA API Key</label>
-          <input type="text" id="tbaapikey" name="tbaapikey" value="TBA Key" />
+          <input
+            type="password"
+            id="tbaapikey"
+            name="tbaapikey"
+            value="TBA Key"
+            autocomplete="off"
+          />
         </div>
+        <div class="settings-field match13-key-field">
+          <label for="match13apikey">Match13 API Key</label>
+          <input
+            type="password"
+            id="match13apikey"
+            name="match13apikey"
+            autocomplete="off"
+            placeholder="Get a key at match13.com/account"
+          />
+          <small class="match13-proxy-notice">
+            GitHub Pages cannot call Match13 directly, so your API key will be
+            sent through PitBeacon's Cloudflare proxy to Match13 when team stats card
+            loads. The proxy forwards the key without storing it.
+          </small>
+        </div>
+      </div>
+      <div class="settingsdiv">
+        <div class="settings-section-title">Appearance</div>
+        <p class="settings-description">
+          Personalize the colors used throughout PitBeacon.
+        </p>
+        <button class="settings-appearance-btn" id="openCustomColorsBtn">
+          <span aria-hidden="true">🎨</span>
+          <span>
+            <strong>Customize colors</strong>
+            <small>Preview and reset individual interface colors</small>
+          </span>
+          <span class="settings-appearance-arrow" aria-hidden="true">›</span>
+        </button>
       </div>
       <div class="settingsdiv">
         <div class="settings-section-title">Alerts</div>
@@ -482,6 +523,59 @@
       <button class="savebutton" id="savebutton">Save</button>
     </div>
     <div class="layout-editor-modal" id="layoutEditorModal"></div>
+    <div class="custom-colors-modal" id="customColorsModal" aria-hidden="true">
+      <section
+        class="custom-colors-shell"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="customColorsTitle"
+      >
+        <header class="custom-colors-header">
+          <div>
+            <h2 id="customColorsTitle">Customize Colors</h2>
+            <p>Choose an interface color to preview it across PitBeacon.</p>
+          </div>
+          <button
+            class="card-manager-close"
+            id="customColorsClose"
+            aria-label="Close color editor"
+          >
+            ✕
+          </button>
+        </header>
+        <div class="custom-colors-body">
+          <label for="customColorVariable">Color to customize</label>
+          <div class="color-editor-controls">
+            <select id="customColorVariable">
+              <option value="--bg-base">Page background</option>
+              <option value="--bg-surface">Card and panel background</option>
+              <option value="--bg-raised">Raised surface</option>
+              <option value="--bg-input">Input background</option>
+              <option value="--accent">Accent</option>
+              <option value="--accent-hover">Accent hover</option>
+              <option value="--border">Borders</option>
+              <option value="--border-accent">Accent borders</option>
+              <option value="--text-primary">Primary text</option>
+              <option value="--text-muted">Muted text</option>
+              <option value="--text-dim">Dim text</option>
+            </select>
+            <input
+              type="color"
+              id="customColorPicker"
+              aria-label="Choose color"
+              value="#ffffff"
+            />
+            <output id="customColorHex" for="customColorPicker">#FFFFFF</output>
+            <button class="color-editor-reset" id="customColorReset">
+              Reset
+            </button>
+          </div>
+          <p class="custom-colors-hint">
+            Changes preview immediately and are saved in this browser.
+          </p>
+        </div>
+      </section>
+    </div>
 
     <!-- Developer Card Editor Modal -->
     <div class="dev-card-modal" id="devCardModal">

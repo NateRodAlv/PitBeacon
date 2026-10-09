@@ -1,3 +1,5 @@
+import { setCardAutoScroll } from "./autoScroll.js";
+
 // src/cards/builtin/leaderboardCard.js
 export function createLeaderboardCard() {
     return {
@@ -5,14 +7,34 @@ export function createLeaderboardCard() {
         label: 'Leaderboard',
         icon: 'trophy',
         builtin: true,
+        settings: {
+            autoScroll: {
+                type: 'checkbox',
+                label: 'Auto-scroll leaderboard',
+                default: false,
+            },
+            autoScrollSpeed: {
+                type: 'number',
+                label: 'Scroll speed',
+                default: 30,
+                min: 5,
+                max: 120,
+                step: 1,
+            },
+        },
         render: (element, state, sdk) => {
             const rankings = state.currentRankings || [];
             const teamNumber = sdk.getConfig('teamNumber');
+            const cardSettings = sdk.getCardSettings('leaderboard-card', {
+                autoScroll: false,
+                autoScrollSpeed: 30,
+            });
 
             // Clear element and add a wrapper with background
             element.innerHTML = '';
 
             if (!rankings || !rankings.length) {
+                setCardAutoScroll(element, false);
                 element.innerHTML = `<p class="inactive" style="padding:20px;text-align:center;color:var(--text-dim);font-style:italic;">No rankings available.</p>`;
                 return;
             }
@@ -45,6 +67,11 @@ export function createLeaderboardCard() {
             
             wrapper.appendChild(table);
             element.appendChild(wrapper);
+            setCardAutoScroll(
+                element,
+                cardSettings.autoScroll,
+                cardSettings.autoScrollSpeed,
+            );
         }
     };
 }
