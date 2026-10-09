@@ -27,6 +27,16 @@ export class SDK {
     return this._dataSources.getSourceNames();
   }
 
+  getCardSettings(cardId, defaults = {}) {
+    try {
+      const saved = JSON.parse(localStorage.getItem("cardSettings") || "{}");
+      return { ...defaults, ...(saved[cardId] || {}) };
+    } catch (error) {
+      console.warn(`Failed to load settings for card "${cardId}":`, error);
+      return defaults;
+    }
+  }
+
   async refreshTeamData() {
     if (typeof window.pitbeaconRefreshTeamData === "function") {
       return window.pitbeaconRefreshTeamData();
@@ -296,6 +306,8 @@ export class SDK {
   getConfig(key) {
     const exposedKeys = [
       "teamNumber",
+      "match13apikey",
+      "match13ProxyUrl",
       "matchAlarmSound",
       "noteAlarmSound",
       "eventName",
@@ -304,7 +316,7 @@ export class SDK {
     // 1. If no key is provided, return the filtered object
     if (key === undefined) {
       const safeConfig = {};
-      for (const k of exposedKeys) {
+      for (const k of exposedKeys.filter((name) => name !== "match13apikey")) {
         if (k in this._config) safeConfig[k] = this._config[k];
       }
       return safeConfig; // Return the actual object

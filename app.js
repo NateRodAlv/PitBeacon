@@ -32,6 +32,12 @@ const year = new Date().getFullYear();
 let fullDate = new Date();
 let pollingInterval = null;
 let timeUpdateInterval = null;
+let easterEggsEnabled = false;
+let easterEggTimer = null;
+let easterEggHideTimer = null;
+let activeEasterEgg = null;
+let duckWalkFrame = null;
+let duckJumpTimer = null;
 
 // Core setup
 
@@ -79,7 +85,7 @@ import { createRobotHealthCard } from "./src/cards/builtin/robotHealthCard.js";
 import { createBatteryCard } from "./src/cards/builtin/batteryCard.js";
 import { createPartsCard } from "./src/cards/builtin/partsCard.js";
 import { createCheckinCard } from "./src/cards/builtin/checkinCard.js";
-import { createStatboticsCard } from "./src/cards/builtin/statboticsCard.js";
+import { createStatsCard } from "./src/cards/builtin/statsCard.js";
 
 registry.register("webcast-card", createWebcastCard());
 registry.register("match-card", createMatchCard());
@@ -88,15 +94,17 @@ registry.register("robot-health-card", createRobotHealthCard());
 registry.register("battery-card", createBatteryCard());
 registry.register("parts-card", createPartsCard());
 registry.register("checkin-card", createCheckinCard());
-registry.register("statbotics-card", createStatboticsCard());
+registry.register("stats-card", createStatsCard());
 
 registry.register("__fallback__", FallbackCard);
 
 // Load saved state
 
 function loadSettings() {
+  easterEggsEnabled = localStorage.getItem("easterEggsEnabled") === "true";
   const savedTeamNumber = localStorage.getItem("teamNumber");
   const savedApiKey = localStorage.getItem("tbaapikey");
+  const savedMatch13ApiKey = localStorage.getItem("match13apikey");
   const savedTestMode = localStorage.getItem("testMode") === "true";
   const savedTestDate = localStorage.getItem("testDate");
   const savedTheme = localStorage.getItem("theme") || "dark";
@@ -131,6 +139,10 @@ function loadSettings() {
   if (savedApiKey) {
     config.tbaapikey = savedApiKey;
     document.getElementById("tbaapikey").value = savedApiKey;
+  }
+  if (savedMatch13ApiKey) {
+    config.match13apikey = savedMatch13ApiKey;
+    document.getElementById("match13apikey").value = savedMatch13ApiKey;
   }
 
   config.theme = savedTheme;
@@ -174,6 +186,31 @@ function loadSettings() {
       config.layoutProfiles = JSON.parse(savedProfiles);
     } catch (err) {
       config.layoutProfiles = {};
+    }
+  }
+
+  const migrateStatsCardId = (layout) => {
+    if (!layout || typeof layout !== "object") return;
+    if (Object.prototype.hasOwnProperty.call(layout, "statbotics-card")) {
+      if (!Object.prototype.hasOwnProperty.call(layout, "stats-card")) {
+        layout["stats-card"] = layout["statbotics-card"];
+      }
+      delete layout["statbotics-card"];
+    }
+  };
+  migrateStatsCardId(config.layout);
+  if (Array.isArray(config.hiddenSections)) {
+    config.hiddenSections = config.hiddenSections.map((id) =>
+      id === "statbotics-card" ? "stats-card" : id,
+    );
+  }
+  for (const profile of Object.values(config.layoutProfiles)) {
+    if (!profile || typeof profile !== "object") continue;
+    migrateStatsCardId(profile.layout);
+    if (Array.isArray(profile.hiddenCards)) {
+      profile.hiddenCards = profile.hiddenCards.map((id) =>
+        id === "statbotics-card" ? "stats-card" : id,
+      );
     }
   }
   config.activeProfileName = savedActiveProfile;
@@ -301,7 +338,7 @@ function switchToProfile(name) {
         "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
         "match-card": { x: 2, y: 0, width: 1, height: 3 },
         "leaderboard-card": { x: 1, y: 0, width: 1, height: 3 },
-        "statbotics-card": { x: 0, y: 1, width: 1, height: 2 },
+        "stats-card": { x: 0, y: 1, width: 1, height: 2 },
       },
       hiddenCards: [],
     };
@@ -414,6 +451,163 @@ function restartAutoSwap() {
 
 function renderLayout() {
   renderer.render(config, document.getElementById("container"));
+}
+
+function updateEasterEggToggle() {
+  const logo = document.querySelector(".logo-img");
+  if (!logo) return;
+  logo.classList.toggle("easter-eggs-enabled", easterEggsEnabled);
+  logo.setAttribute("aria-pressed", String(easterEggsEnabled));
+  logo.title = `${easterEggsEnabled ? "Disable" : "Enable"} Easter eggs`;
+}
+
+function scheduleEasterEgg() {
+  if (!easterEggsEnabled) return;
+  clearTimeout(easterEggTimer);
+  const delay = 3000 + Math.random() * 370;
+  easterEggTimer = setTimeout(showEasterEgg, delay);
+}
+
+function showEasterEgg() {
+  easterEggTimer = null;
+  if (!easterEggsEnabled) return;
+  if (activeEasterEgg?.classList.contains("walking")) {
+    scheduleEasterEgg();
+    return;
+  }
+
+  const container = document.getElementById("container");
+  const cards = Array.from(container.querySelectorAll(".card-container")).filter(
+    (card) => card.isConnected && card.getClientRects().length > 0,
+  );
+  if (!cards.length) {
+    scheduleEasterEgg();
+    return;
+  }
+
+  removeActiveDuck();
+  const card = cards[Math.floor(Math.random() * cards.length)];
+  const duck = document.createElement("div");
+  duck.className = "easter-egg-duck";
+  duck.setAttribute("role", "button");
+  duck.setAttribute("tabindex", "0");
+  duck.setAttribute("aria-label", "Make the duck walk");
+  duck.textContent = "🦆";
+  duck.addEventListener("click", (event) => {
+    event.stopPropagation();
+    startDuckWalk(duck);
+  });
+  duck.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      startDuckWalk(duck);
+    }
+  });
+
+  const cardRect = card.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  duck.style.right = `${cardRect.right - containerRect.left - Math.random() * 100 + container.scrollLeft}px`;
+  duck.style.bottom = `${cardRect.bottom - containerRect.top - Math.random() * 100 + container.scrollTop}px`;
+  container.appendChild(duck);
+  activeEasterEgg = duck;
+  requestAnimationFrame(() => duck.classList.add("visible"));
+
+  easterEggHideTimer = setTimeout(() => {
+    if (duck.classList.contains("walking")) return;
+    duck.classList.remove("visible");
+    setTimeout(() => {
+      if (!duck.classList.contains("walking")) {
+        duck.remove();
+        if (activeEasterEgg === duck) activeEasterEgg = null;
+      }
+    }, 350);
+  }, 5000);
+
+  scheduleEasterEgg();
+}
+
+function startDuckWalk(duck) {
+  if (!easterEggsEnabled || duck.classList.contains("walking")) return;
+  clearTimeout(easterEggHideTimer);
+  const bounds = duck.getBoundingClientRect();
+  duck.classList.add("walking");
+  duck.style.left = `${Math.max(0, Math.min(window.innerWidth - 48, bounds.left))}px`;
+  duck.style.bottom = "0px";
+  duck.style.right = "auto";
+  duck.style.top = "auto";
+  duck.style.setProperty("--duck-direction", "1");
+  document.body.appendChild(duck);
+
+  let direction = 1;
+  let lastTime = 0;
+  const walk = (time) => {
+    if (!duck.isConnected || !duck.classList.contains("walking")) return;
+    if (lastTime) {
+      const elapsed = Math.min(time - lastTime, 50);
+      let left = parseFloat(duck.style.left) + direction * elapsed * 0.08;
+      if (left <= 0 || left >= window.innerWidth - 48) {
+        direction *= -1;
+        duck.style.setProperty("--duck-direction", String(direction));
+        left = Math.max(0, Math.min(window.innerWidth - 48, left));
+      }
+      duck.style.left = `${left}px`;
+    }
+    lastTime = time;
+    duckWalkFrame = requestAnimationFrame(walk);
+  };
+  duckWalkFrame = requestAnimationFrame(walk);
+  scheduleDuckJump(duck);
+}
+
+function scheduleDuckJump(duck) {
+  clearTimeout(duckJumpTimer);
+  if (!easterEggsEnabled || !duck.classList.contains("walking")) return;
+  duckJumpTimer = setTimeout(() => {
+    if (!easterEggsEnabled || !duck.classList.contains("walking")) return;
+    duck.classList.remove("jumping");
+    void duck.offsetWidth;
+    duck.classList.add("jumping");
+    setTimeout(() => duck.classList.remove("jumping"), 1000);
+    scheduleDuckJump(duck);
+  }, 2000 + Math.random() * 4000);
+}
+
+function removeActiveDuck({ poof = false } = {}) {
+  const duck = activeEasterEgg;
+  activeEasterEgg = null;
+  cancelAnimationFrame(duckWalkFrame);
+  duckWalkFrame = null;
+  clearTimeout(duckJumpTimer);
+  duckJumpTimer = null;
+  if (!duck) return;
+  if (poof) {
+    const bounds = duck.getBoundingClientRect();
+    duck.classList.remove("walking", "jumping", "visible");
+    duck.style.position = "fixed";
+    duck.style.left = `${bounds.left}px`;
+    duck.style.top = `${bounds.top}px`;
+    duck.style.right = "auto";
+    duck.style.bottom = "auto";
+    duck.style.opacity = "1";
+    duck.style.transform = "none";
+    document.body.appendChild(duck);
+    duck.classList.add("duck-poof");
+    setTimeout(() => duck.remove(), 700);
+  } else {
+    duck.remove();
+  }
+}
+
+function setEasterEggsEnabled(enabled) {
+  easterEggsEnabled = enabled;
+  localStorage.setItem("easterEggsEnabled", String(enabled));
+  updateEasterEggToggle();
+
+  clearTimeout(easterEggTimer);
+  clearTimeout(easterEggHideTimer);
+  removeActiveDuck({ poof: !enabled });
+
+  if (enabled) scheduleEasterEgg();
 }
 
 function hasRealTbaKey() {
@@ -703,10 +897,22 @@ function setupListeners() {
   const errorContainer = document.getElementById("errorcontainer");
   const settings = document.getElementById("settings");
   const settingscontainer = document.getElementById("settingscontainer");
+  const customColorsModal = document.getElementById("customColorsModal");
   const savebutton = document.getElementById("savebutton");
   const testModeCheckbox = document.getElementById("testMode");
   const testDateInput = document.getElementById("testDate");
   const hideButton = document.getElementById("hideTopBtn");
+  const logo = document.querySelector(".logo-img");
+
+  const toggleEasterEggs = () => setEasterEggsEnabled(!easterEggsEnabled);
+  logo.addEventListener("click", toggleEasterEggs);
+  logo.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleEasterEggs();
+    }
+  });
+  updateEasterEggToggle();
 
   testModeCheckbox.addEventListener("change", () => {
     testDateInput.style.display = testModeCheckbox.checked ? "block" : "none";
@@ -725,9 +931,12 @@ function setupListeners() {
     docsModal.open();
   });
 
+  setupCustomColorsEditor(customColorsModal);
+
   savebutton.addEventListener("click", () => {
     config.teamNumber = document.getElementById("teamNumber").value;
     config.tbaapikey = document.getElementById("tbaapikey").value;
+    config.match13apikey = document.getElementById("match13apikey").value.trim();
     config.noteAlarmToggle = document.getElementById("noteAlarmToggle").checked;
     config.noteAlarmSound = document.getElementById("noteAlarmSound").value;
     config.matchAlarmToggle =
@@ -738,6 +947,7 @@ function setupListeners() {
 
     localStorage.setItem("teamNumber", config.teamNumber);
     localStorage.setItem("tbaapikey", config.tbaapikey);
+    localStorage.setItem("match13apikey", config.match13apikey);
     localStorage.setItem("theme", config.theme);
     localStorage.setItem(
       "noteAlarmToggle",
@@ -836,6 +1046,13 @@ function setupListeners() {
     openLayoutEditor();
   });
 
+  document.getElementById("openCustomColorsBtn")?.addEventListener("click", () => {
+    customColorsModal.classList.add("active");
+    customColorsModal.setAttribute("aria-hidden", "false");
+    updateCustomColorPicker();
+    customColorsModal.querySelector("#customColorVariable").focus();
+  });
+
   document.getElementById("cardsBtn")?.addEventListener("click", () => {
     openCardManager();
   });
@@ -902,21 +1119,6 @@ function renderLayoutEditor(modal) {
   const cols = config.gridCols || 3;
   const rows = config.gridRows || 3;
 
-  // Get current color values
-  const colorVars = [
-    "--bg-base",
-    "--bg-surface",
-    "--bg-raised",
-    "--bg-input",
-    "--accent",
-    "--accent-hover",
-    "--border",
-    "--border-accent",
-    "--text-primary",
-    "--text-muted",
-    "--text-dim",
-  ];
-
   // Create shell
   const shell = document.createElement("div");
   shell.className = "le-shell";
@@ -943,27 +1145,18 @@ function renderLayoutEditor(modal) {
                       .map((id) => {
                         const def = registry.get(id);
                         const inLayout = config.layout[id] !== undefined;
+                        const hasSettings = Object.keys(getCardSettingsDefinition(def)).length > 0;
                         return `<div class="le-palette-item ${inLayout ? "in-layout" : ""}" draggable="true" data-card-id="${id}" style="${inLayout ? "opacity:0.4;cursor:default;" : ""}">
                             ${getCardIconMarkup(id, def)}
                             <span class="le-card-label">${def.label}</span>
+                            ${hasSettings ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
                             ${inLayout ? " ✓" : ""}
                         </div>`;
                       })
                       .join("")}
                     ${cardIds.filter((id) => id !== "__fallback__").length === 0 ? '<div class="le-palette-empty">No cards available</div>' : ""}
                 </div>
-                <div class="le-palette-title" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">🎨 Colors</div>
-                <div class="le-color-controls" style="padding:8px 11px;">
-                    <label>
-                        Element
-                        <select id="leColorEl">
-                            ${colorVars.map((v) => `<option value="${v}">${v.replace("--", "")}</option>`).join("")}
-                        </select>
-                    </label>
-                    <input type="color" id="leColorPick">
-                    <span class="le-color-hex" id="leColorHex">#ffffff</span>
-                    <button class="le-color-reset" id="leColorReset">Reset</button>
-                </div>
+                <section class="le-card-settings" id="leCardSettings" hidden></section>
                 <div class="le-palette-title" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">💾 Actions</div>
                 <div style="padding:8px 11px;display:flex;flex-direction:column;gap:6px;">
                     <button class="btn-export" id="leExport" style="width:100%;padding:6px;">Export Layout</button>
@@ -980,6 +1173,7 @@ function renderLayoutEditor(modal) {
                         return `<div class="layout-item" data-card-id="${id}" style="grid-column:${pos.x + 1}/span ${pos.width};grid-row:${pos.y + 1}/span ${pos.height};">
                             <div class="layout-item-header">
                                 <span>${getCardIconMarkup(id, def)}<span class="le-card-label">${def.label}</span></span>
+                                ${Object.keys(getCardSettingsDefinition(def)).length ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
                                 <button class="le-remove-btn" data-card-id="${id}">✕</button>
                             </div>
                             <div class="layout-item-hint">${pos.width}×${pos.height}</div>
@@ -998,6 +1192,7 @@ function renderLayoutEditor(modal) {
   const colsInput = shell.querySelector("#leGridCols");
   const rowsInput = shell.querySelector("#leGridRows");
   const grid = shell.querySelector("#leGrid");
+  const cardSettingsPanel = shell.querySelector("#leCardSettings");
 
   function updateGrid() {
     const newCols = Math.max(2, Math.min(12, parseInt(colsInput.value) || 3));
@@ -1015,109 +1210,64 @@ function renderLayoutEditor(modal) {
   colsInput.addEventListener("change", updateGrid);
   rowsInput.addEventListener("change", updateGrid);
 
-  // Color controls
-  const colorEl = shell.querySelector("#leColorEl");
-  const colorPick = shell.querySelector("#leColorPick");
-  const colorHex = shell.querySelector("#leColorHex");
-  const colorReset = shell.querySelector("#leColorReset");
-
-  // Convert rgb to hex
-  function rgbToHex(rgb) {
-    const match = rgb.match(/\d+/g);
-    if (!match) return rgb;
-    return (
-      "#" +
-      match
-        .slice(0, 3)
-        .map((x) => parseInt(x).toString(16).padStart(2, "0"))
-        .join("")
-        .toUpperCase()
-    );
-  }
-
-  function updateColorPicker() {
-    const val = getComputedStyle(document.documentElement)
-      .getPropertyValue(colorEl.value)
-      .trim();
-    const hex = val.startsWith("rgb") ? rgbToHex(val) : val;
-    colorHex.textContent = hex;
-    if (hex.startsWith("#")) {
-      colorPick.value = hex;
-    }
-  }
-
-  colorEl.addEventListener("change", updateColorPicker);
-  updateColorPicker();
-
-  colorPick.addEventListener("input", () => {
-    colorHex.textContent = colorPick.value;
-    document.documentElement.style.setProperty(colorEl.value, colorPick.value);
-    // Save to localStorage
-    saveCustomColors();
-  });
-
-  colorReset.addEventListener("click", () => {
-    // Reset the selected color to the theme default
-    const theme = config.theme || "dark";
-    const defaultColors = {
-      dark: {
-        "--bg-base": "rgb(22, 22, 22)",
-        "--bg-surface": "rgb(30, 30, 30)",
-        "--bg-raised": "rgb(40, 40, 40)",
-        "--bg-input": "rgb(50, 50, 50)",
-        "--accent": "rgb(47, 48, 112)",
-        "--accent-hover": "rgb(60, 62, 140)",
-        "--border": "rgba(255, 255, 255, 0.07)",
-        "--border-accent": "rgba(47, 48, 112, 0.6)",
-        "--text-primary": "rgb(240, 240, 240)",
-        "--text-muted": "rgb(160, 155, 155)",
-        "--text-dim": "rgb(100, 98, 98)",
-      },
-      light: {
-        "--bg-base": "rgb(245, 245, 247)",
-        "--bg-surface": "rgb(235, 235, 238)",
-        "--bg-raised": "rgb(225, 225, 230)",
-        "--bg-input": "rgb(210, 210, 215)",
-        "--accent": "rgb(47, 48, 112)",
-        "--accent-hover": "rgb(70, 72, 160)",
-        "--border": "rgba(0, 0, 0, 0.1)",
-        "--border-accent": "rgba(47, 48, 112, 0.3)",
-        "--text-primary": "rgb(20, 20, 22)",
-        "--text-muted": "rgb(80, 85, 90)",
-        "--text-dim": "rgb(130, 135, 140)",
-      },
-      "high-contrast": {
-        "--bg-base": "rgb(0, 0, 0)",
-        "--bg-surface": "rgb(15, 15, 15)",
-        "--bg-raised": "rgb(30, 30, 30)",
-        "--bg-input": "rgb(50, 50, 50)",
-        "--accent": "rgb(0, 255, 255)",
-        "--accent-hover": "rgb(0, 200, 200)",
-        "--border": "rgba(0, 255, 255, 0.3)",
-        "--border-accent": "rgba(0, 255, 255, 0.6)",
-        "--text-primary": "rgb(255, 255, 255)",
-        "--text-muted": "rgb(200, 200, 200)",
-        "--text-dim": "rgb(150, 150, 150)",
-      },
-    };
-
-    const defaultVal = defaultColors[theme]?.[colorEl.value];
-    if (defaultVal) {
-      document.documentElement.style.setProperty(colorEl.value, defaultVal);
-      // Remove from custom colors
-      const customColors = JSON.parse(
-        localStorage.getItem("customColors") || "{}",
-      );
-      delete customColors[colorEl.value];
-      localStorage.setItem("customColors", JSON.stringify(customColors));
-      updateColorPicker();
-      displayMessage(`Reset ${colorEl.value} to default`, "message");
-    }
-  });
-
   // Close
   shell.querySelector("#leClose").addEventListener("click", () => {
     closeLayoutEditor();
+  });
+
+  shell.querySelectorAll(".le-settings-btn").forEach((button) => {
+    button.addEventListener("mousedown", (event) => event.stopPropagation());
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const card = registry.get(button.dataset.cardId);
+      if (!card) return;
+
+      const settings = getCardSettingsDefinition(card);
+      if (!Object.keys(settings).length) return;
+      cardSettingsPanel.hidden = false;
+      cardSettingsPanel.replaceChildren();
+
+      const header = document.createElement("div");
+      header.className = "le-card-settings-header";
+      const title = document.createElement("strong");
+      title.textContent = `${card.label} settings`;
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "le-card-settings-close";
+      closeButton.setAttribute("aria-label", "Close card settings");
+      closeButton.textContent = "×";
+      closeButton.addEventListener("click", () => {
+        cardSettingsPanel.hidden = true;
+        cardSettingsPanel.replaceChildren();
+      });
+      header.append(title, closeButton);
+      cardSettingsPanel.appendChild(header);
+
+      const hint = document.createElement("p");
+      hint.className = "le-card-settings-hint";
+      hint.textContent = "Changes are saved automatically and apply immediately.";
+      cardSettingsPanel.appendChild(hint);
+
+      const values = getCardSettingValues(card);
+      renderCardSettingsControls(cardSettingsPanel, card, values, (nextValues) => {
+        card.settingsValues = nextValues;
+        if (card.developer && config.developerCards[card.id]) {
+          config.developerCards[card.id].settingsValues = nextValues;
+          localStorage.setItem(
+            "developerCards",
+            JSON.stringify(config.developerCards),
+          );
+        }
+        renderer.updateCards(stateManager.getState());
+      });
+    });
+  });
+
+  shell.querySelectorAll(".le-palette-item").forEach((item) => {
+    item.addEventListener("dragstart", (event) => {
+      if (event.target.closest(".le-settings-btn")) event.preventDefault();
+    });
   });
 
   modal.addEventListener("click", (e) => {
@@ -1195,7 +1345,7 @@ function renderLayoutEditor(modal) {
   // ─── Export ────────────────────────────────────────────────────────────
   shell.querySelector("#leExport").addEventListener("click", () => {
     const exportData = {
-      version: "26.9.8",
+      version: "26.10.9",
       gridCols: config.gridCols,
       gridRows: config.gridRows,
       layout: config.layout,
@@ -1299,6 +1449,116 @@ function getCustomColors() {
     if (val) result[v] = val;
   });
   return result;
+}
+
+function rgbToHex(rgb) {
+  const match = rgb.match(/\d+/g);
+  if (!match) return rgb;
+  return (
+    "#" +
+    match
+      .slice(0, 3)
+      .map((value) => parseInt(value).toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase()
+  );
+}
+
+function updateCustomColorPicker() {
+  const colorEl = document.getElementById("customColorVariable");
+  const colorPick = document.getElementById("customColorPicker");
+  const colorHex = document.getElementById("customColorHex");
+  if (!colorEl || !colorPick || !colorHex) return;
+
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(colorEl.value)
+    .trim();
+  const hex = value.startsWith("rgb") ? rgbToHex(value) : value;
+  colorHex.textContent = hex;
+  if (hex.startsWith("#")) colorPick.value = hex;
+}
+
+function setupCustomColorsEditor(modal) {
+  const colorEl = modal.querySelector("#customColorVariable");
+  const colorPick = modal.querySelector("#customColorPicker");
+  const colorReset = modal.querySelector("#customColorReset");
+  const closeButton = modal.querySelector("#customColorsClose");
+
+  colorEl.addEventListener("change", updateCustomColorPicker);
+  colorPick.addEventListener("input", () => {
+    document.documentElement.style.setProperty(colorEl.value, colorPick.value);
+    document.getElementById("customColorHex").textContent = colorPick.value;
+    saveCustomColors();
+  });
+
+  colorReset.addEventListener("click", () => {
+    const defaultColors = {
+      dark: {
+        "--bg-base": "rgb(22, 22, 22)",
+        "--bg-surface": "rgb(30, 30, 30)",
+        "--bg-raised": "rgb(40, 40, 40)",
+        "--bg-input": "rgb(50, 50, 50)",
+        "--accent": "rgb(47, 48, 112)",
+        "--accent-hover": "rgb(60, 62, 140)",
+        "--border": "rgba(255, 255, 255, 0.07)",
+        "--border-accent": "rgba(47, 48, 112, 0.6)",
+        "--text-primary": "rgb(240, 240, 240)",
+        "--text-muted": "rgb(160, 155, 155)",
+        "--text-dim": "rgb(100, 98, 98)",
+      },
+      light: {
+        "--bg-base": "rgb(245, 245, 247)",
+        "--bg-surface": "rgb(235, 235, 238)",
+        "--bg-raised": "rgb(225, 225, 230)",
+        "--bg-input": "rgb(210, 210, 215)",
+        "--accent": "rgb(47, 48, 112)",
+        "--accent-hover": "rgb(70, 72, 160)",
+        "--border": "rgba(0, 0, 0, 0.1)",
+        "--border-accent": "rgba(47, 48, 112, 0.3)",
+        "--text-primary": "rgb(20, 20, 22)",
+        "--text-muted": "rgb(80, 85, 90)",
+        "--text-dim": "rgb(130, 135, 140)",
+      },
+      "high-contrast": {
+        "--bg-base": "rgb(0, 0, 0)",
+        "--bg-surface": "rgb(15, 15, 15)",
+        "--bg-raised": "rgb(30, 30, 30)",
+        "--bg-input": "rgb(50, 50, 50)",
+        "--accent": "rgb(0, 255, 255)",
+        "--accent-hover": "rgb(0, 200, 200)",
+        "--border": "rgba(0, 255, 255, 0.3)",
+        "--border-accent": "rgba(0, 255, 255, 0.6)",
+        "--text-primary": "rgb(255, 255, 255)",
+        "--text-muted": "rgb(200, 200, 200)",
+        "--text-dim": "rgb(150, 150, 150)",
+      },
+    };
+    const variable = colorEl.value;
+    const defaultValue = defaultColors[config.theme || "dark"]?.[variable];
+    if (!defaultValue) return;
+
+    document.documentElement.style.setProperty(variable, defaultValue);
+    const customColors = JSON.parse(
+      localStorage.getItem("customColors") || "{}",
+    );
+    delete customColors[variable];
+    localStorage.setItem("customColors", JSON.stringify(customColors));
+    updateCustomColorPicker();
+    displayMessage(`Reset ${variable} to default`, "message");
+  });
+
+  const close = () => {
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.getElementById("openCustomColorsBtn").focus();
+  };
+  closeButton.addEventListener("click", close);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) close();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal.classList.contains("active")) close();
+  });
 }
 
 function closeLayoutEditor() {
@@ -1445,15 +1705,18 @@ function getCardSettingValues(card) {
     saved = JSON.parse(localStorage.getItem("cardSettings") || "{}")[card.id] || {};
   } catch {}
   const values = {};
-  const settings = Object.keys(card.settings || {}).length
-    ? card.settings
-    : detectConfigurableSettings(card.js || "");
+  const settings = getCardSettingsDefinition(card);
   card.settings = settings;
   Object.entries(settings).forEach(([key, definition]) => {
     const setting = typeof definition === "string" ? { type: "text", default: definition } : definition || {};
-    values[key] = saved[key] ?? setting.default ?? (setting.type === "checkbox" ? false : "");
+    values[key] = saved[key] ?? card.settingsValues?.[key] ?? setting.default ?? (setting.type === "checkbox" ? false : "");
   });
   return values;
+}
+
+function getCardSettingsDefinition(card) {
+  if (Object.keys(card?.settings || {}).length) return card.settings;
+  return detectConfigurableSettings(card?.js || "");
 }
 
 function saveCardSettingValues(cardId, values) {
@@ -1472,7 +1735,7 @@ function suggestNextCardVersion(version) {
 }
 
 function renderCardSettingsControls(container, card, values, onChange) {
-  const settings = Object.entries(card.settings || detectConfigurableSettings(card.js || ""));
+  const settings = Object.entries(getCardSettingsDefinition(card));
   if (!settings.length) return;
   const wrapper = document.createElement("div");
   wrapper.className = "card-settings-controls";
@@ -1876,10 +2139,11 @@ setupListeners();
 setupCardUpload(document.getElementById("cardUploadModal"));
 restartAutoSwap();
 renderLayout();
+if (easterEggsEnabled) scheduleEasterEgg();
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionTag = document.getElementById("version");
-  if (versionTag) versionTag.textContent = "Version 26.9.8";
+  if (versionTag) versionTag.textContent = "Version 26.10.9";
 });
 
 // ─── Modal Closes ─────────────────────────────────────────────────────────
