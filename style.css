@@ -376,6 +376,15 @@ html {
   text-align: left;
   font-family: "Rubik", sans-serif;
 }
+.match13-key-field {
+  flex-wrap: wrap;
+}
+.match13-key-field small {
+  flex-basis: 100%;
+  margin-top: -6px;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
 
 input,
 select {
@@ -1277,6 +1286,13 @@ input[type="checkbox"]:checked::before {
   border: 1px solid var(--border);
 }
 
+#card-stats-card {
+  padding: 10px 12px;
+  background-color: var(--bg-surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
 #card-leaderboard-card .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -1330,56 +1346,47 @@ input[type="checkbox"]:checked::before {
   aspect-ratio: 16 / 9;
 }
 
-/* ─── Statbotics ────────────────────────────────────────────────────────── */
+/* ─── Team Stats ────────────────────────────────────────────────────────── */
 
-.statbotics-shell {
+.stats-shell {
   display: flex;
   flex-direction: column;
   height: 100%;
   font-family: "Rubik", sans-serif;
 }
-.statbotics-body {
+.stats-body {
   flex: 1;
   overflow-y: auto;
   padding: 4px 0;
 }
-.statbotics-loading {
+.stats-message,
+.stats-error {
   color: var(--text-dim);
   font-size: 0.85rem;
   text-align: center;
-  padding: 20px;
-  font-family: "Rubik", sans-serif;
-}
-.statbotics-error {
-  color: rgb(220, 80, 80);
-  font-size: 0.85rem;
   padding: 14px;
-  text-align: center;
   font-family: "Rubik", sans-serif;
 }
-.statbotics-hint {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  margin-top: 4px;
-  font-family: "Rubik", sans-serif;
+.stats-error {
+  color: rgb(220, 80, 80);
 }
 
-.sb-header-team {
+.stats-team-heading {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 12px 0;
+  margin: 0 0 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
-.sb-team-num {
+.stats-team-heading strong {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.3px;
   font-family: "Rubik", sans-serif;
 }
-.sb-year-badge {
+.stats-year {
   font-size: 0.68rem;
   font-weight: 500;
   color: var(--text-dim);
@@ -1390,86 +1397,31 @@ input[type="checkbox"]:checked::before {
   font-family: "Rubik", sans-serif;
 }
 
-.sb-section-title {
+.stats-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0 0 14px;
+  padding: 8px 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+.stats-primary-value {
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+.stats-section-title {
   font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
-  margin-bottom: 8px;
+  margin: 12px 0 5px;
   font-family: "Rubik", sans-serif;
 }
-.sb-epa-row {
-  margin-bottom: 10px;
-}
-.sb-epa-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.sb-epa-val {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1;
-  letter-spacing: -1px;
-  font-family: "Rubik", sans-serif;
-}
-.sb-epa-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
-}
-.sb-epa-sub {
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
-}
-
-.sb-breakdown {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.sb-breakdown-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 7px 4px;
-  gap: 3px;
-}
-.sb-breakdown-val {
-  font-size: 1rem;
-  font-weight: 700;
-  font-family: "Rubik", sans-serif;
-}
-.sb-breakdown-val.auto {
-  color: rgb(100, 180, 255);
-}
-.sb-breakdown-val.teleop {
-  color: rgb(130, 220, 140);
-}
-.sb-breakdown-val.endgame {
-  color: rgb(255, 190, 70);
-}
-.sb-breakdown-label {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-family: "Rubik", sans-serif;
-}
-
-.sb-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 10px 0;
-}
-.sb-stat-row {
+.stats-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1477,35 +1429,35 @@ input[type="checkbox"]:checked::before {
   padding: 5px 0;
   border-bottom: 1px solid var(--border);
 }
-.sb-stat-row:last-of-type {
+.stats-row:last-of-type {
   border-bottom: none;
 }
-.sb-label {
+.stats-label {
   color: var(--text-muted);
   font-family: "Rubik", sans-serif;
 }
-.sb-value {
+.stats-value {
   color: var(--text-primary);
   font-weight: 600;
   font-family: "Rubik", sans-serif;
 }
-.sb-accent {
+.stats-accent {
   color: var(--accent);
   filter: brightness(1.4);
 }
 
-.sb-footer {
+.stats-footer {
   margin-top: 12px;
   text-align: center;
 }
-.sb-link {
+.stats-link {
   font-size: 0.72rem;
   color: var(--text-dim);
   text-decoration: none;
   transition: color 0.15s;
   font-family: "Rubik", sans-serif;
 }
-.sb-link:hover {
+.stats-link:hover {
   color: var(--text-primary);
 }
 

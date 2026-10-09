@@ -79,7 +79,7 @@ import { createRobotHealthCard } from "./src/cards/builtin/robotHealthCard.js";
 import { createBatteryCard } from "./src/cards/builtin/batteryCard.js";
 import { createPartsCard } from "./src/cards/builtin/partsCard.js";
 import { createCheckinCard } from "./src/cards/builtin/checkinCard.js";
-import { createStatboticsCard } from "./src/cards/builtin/statboticsCard.js";
+import { createStatsCard } from "./src/cards/builtin/statsCard.js";
 
 registry.register("webcast-card", createWebcastCard());
 registry.register("match-card", createMatchCard());
@@ -88,7 +88,7 @@ registry.register("robot-health-card", createRobotHealthCard());
 registry.register("battery-card", createBatteryCard());
 registry.register("parts-card", createPartsCard());
 registry.register("checkin-card", createCheckinCard());
-registry.register("statbotics-card", createStatboticsCard());
+registry.register("stats-card", createStatsCard());
 
 registry.register("__fallback__", FallbackCard);
 
@@ -97,6 +97,7 @@ registry.register("__fallback__", FallbackCard);
 function loadSettings() {
   const savedTeamNumber = localStorage.getItem("teamNumber");
   const savedApiKey = localStorage.getItem("tbaapikey");
+  const savedMatch13ApiKey = localStorage.getItem("match13apikey");
   const savedTestMode = localStorage.getItem("testMode") === "true";
   const savedTestDate = localStorage.getItem("testDate");
   const savedTheme = localStorage.getItem("theme") || "dark";
@@ -131,6 +132,10 @@ function loadSettings() {
   if (savedApiKey) {
     config.tbaapikey = savedApiKey;
     document.getElementById("tbaapikey").value = savedApiKey;
+  }
+  if (savedMatch13ApiKey) {
+    config.match13apikey = savedMatch13ApiKey;
+    document.getElementById("match13apikey").value = savedMatch13ApiKey;
   }
 
   config.theme = savedTheme;
@@ -174,6 +179,31 @@ function loadSettings() {
       config.layoutProfiles = JSON.parse(savedProfiles);
     } catch (err) {
       config.layoutProfiles = {};
+    }
+  }
+
+  const migrateStatsCardId = (layout) => {
+    if (!layout || typeof layout !== "object") return;
+    if (Object.prototype.hasOwnProperty.call(layout, "statbotics-card")) {
+      if (!Object.prototype.hasOwnProperty.call(layout, "stats-card")) {
+        layout["stats-card"] = layout["statbotics-card"];
+      }
+      delete layout["statbotics-card"];
+    }
+  };
+  migrateStatsCardId(config.layout);
+  if (Array.isArray(config.hiddenSections)) {
+    config.hiddenSections = config.hiddenSections.map((id) =>
+      id === "statbotics-card" ? "stats-card" : id,
+    );
+  }
+  for (const profile of Object.values(config.layoutProfiles)) {
+    if (!profile || typeof profile !== "object") continue;
+    migrateStatsCardId(profile.layout);
+    if (Array.isArray(profile.hiddenCards)) {
+      profile.hiddenCards = profile.hiddenCards.map((id) =>
+        id === "statbotics-card" ? "stats-card" : id,
+      );
     }
   }
   config.activeProfileName = savedActiveProfile;
@@ -301,7 +331,7 @@ function switchToProfile(name) {
         "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
         "match-card": { x: 2, y: 0, width: 1, height: 3 },
         "leaderboard-card": { x: 1, y: 0, width: 1, height: 3 },
-        "statbotics-card": { x: 0, y: 1, width: 1, height: 2 },
+        "stats-card": { x: 0, y: 1, width: 1, height: 2 },
       },
       hiddenCards: [],
     };
@@ -728,6 +758,7 @@ function setupListeners() {
   savebutton.addEventListener("click", () => {
     config.teamNumber = document.getElementById("teamNumber").value;
     config.tbaapikey = document.getElementById("tbaapikey").value;
+    config.match13apikey = document.getElementById("match13apikey").value.trim();
     config.noteAlarmToggle = document.getElementById("noteAlarmToggle").checked;
     config.noteAlarmSound = document.getElementById("noteAlarmSound").value;
     config.matchAlarmToggle =
@@ -738,6 +769,7 @@ function setupListeners() {
 
     localStorage.setItem("teamNumber", config.teamNumber);
     localStorage.setItem("tbaapikey", config.tbaapikey);
+    localStorage.setItem("match13apikey", config.match13apikey);
     localStorage.setItem("theme", config.theme);
     localStorage.setItem(
       "noteAlarmToggle",

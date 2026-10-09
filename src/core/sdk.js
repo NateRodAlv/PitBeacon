@@ -296,6 +296,7 @@ export class SDK {
   getConfig(key) {
     const exposedKeys = [
       "teamNumber",
+      "match13apikey",
       "matchAlarmSound",
       "noteAlarmSound",
       "eventName",
@@ -304,7 +305,7 @@ export class SDK {
     // 1. If no key is provided, return the filtered object
     if (key === undefined) {
       const safeConfig = {};
-      for (const k of exposedKeys) {
+      for (const k of exposedKeys.filter((name) => name !== "match13apikey")) {
         if (k in this._config) safeConfig[k] = this._config[k];
       }
       return safeConfig; // Return the actual object
