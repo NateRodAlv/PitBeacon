@@ -2,7 +2,7 @@ export const config = {
   teamNumber: 7250,
   tbaapikey: "YOUR_AUTH_KEY",
   match13apikey: "",
-  match13ProxyUrl: "", // Maintainer-configured Cloudflare Worker URL; never ask users for this.
+  match13ProxyUrl: "https://pitbeacon.rodriguezalvaradonathan.workers.dev", 
   noteAlarmToggle: false,
   noteAlarmThreshold: 8,
   noteAlarmSound: "alarm1",
