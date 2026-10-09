@@ -54,6 +54,14 @@ html {
 #container[style*="display: grid"] {
   overflow: auto;
 }
+#container {
+  position: relative;
+  isolation: isolate;
+}
+.card-container {
+  position: relative;
+  z-index: 1;
+}
 
 /* Header */
 
@@ -81,6 +89,77 @@ html {
   max-height: 120px;
   margin: -3rem -3rem 5px -3rem;
   display: flex;
+  cursor: pointer;
+}
+
+#logo-easter-egg-indicator {
+  transition: fill 0.2s ease;
+}
+.logo-img.easter-eggs-enabled #logo-easter-egg-indicator {
+  fill: #3c68eb;
+}
+.logo-img:focus-visible {
+  outline: 2px solid #3c68eb;
+  outline-offset: 2px;
+}
+
+.easter-egg-duck {
+  position: absolute;
+  z-index: 0;
+  width: 48px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font-size: 38px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(8px) rotate(-12deg);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.easter-egg-duck.visible {
+  opacity: 1;
+  transform: translateY(0) rotate(0deg);
+}
+.easter-egg-duck.walking {
+  position: fixed;
+  z-index: 10000;
+  width: 52px;
+  height: 52px;
+  opacity: 1;
+  transform: scaleX(var(--duck-direction, 1));
+  transition: none;
+  animation: duck-walk-bob 0.35s ease-in-out infinite alternate;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 35%));
+}
+.easter-egg-duck.jumping {
+  animation: duck-jump-spin 0.95s ease-in-out;
+}
+.easter-egg-duck.duck-poof {
+  pointer-events: none;
+  animation: duck-poof 0.65s ease-out forwards;
+}
+.easter-egg-duck.duck-poof::after {
+  content: "💥";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 46px;
+}
+@keyframes duck-walk-bob {
+  from { margin-bottom: 0; }
+  to { margin-bottom: 4px; }
+}
+@keyframes duck-jump-spin {
+  0% { transform: translateY(0) rotate(0) scaleX(var(--duck-direction, 1)); }
+  40% { transform: translateY(-95px) rotate(360deg) scaleX(var(--duck-direction, 1)); }
+  70% { transform: translateY(-70px) rotate(720deg) scaleX(var(--duck-direction, 1)); }
+  100% { transform: translateY(0) rotate(1080deg) scaleX(var(--duck-direction, 1)); }
+}
+@keyframes duck-poof {
+  to { opacity: 0; transform: scale(2.1) rotate(180deg); }
 }
 
 .title {

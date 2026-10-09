@@ -57,6 +57,11 @@
         class="logo-img"
         xmlns="http://www.w3.org/2000/svg"
         id="eeozJEtgrYl1"
+        role="button"
+        tabindex="0"
+        aria-label="Toggle Easter eggs"
+        aria-pressed="false"
+        title="Enable Easter eggs"
         shape-rendering="geometricPrecision"
         text-rendering="geometricPrecision"
         viewBox="75 35 150 175"
@@ -101,6 +106,7 @@
               </mask>
             </g>
             <circle
+              id="logo-easter-egg-indicator"
               r="4.497"
               fill="#1d3780"
               stroke="#fff"
@@ -365,7 +371,6 @@
             autocomplete="off"
             placeholder="Get a key at match13.com/account"
           />
-          <small>Stored in this browser and visible to browser users. Match13 may block direct browser requests (CORS).</small>
         </div>
       </div>
       <div class="settingsdiv">
@@ -507,11 +512,7 @@
       <button class="savebutton" id="savebutton">Save</button>
     </div>
     <div class="layout-editor-modal" id="layoutEditorModal"></div>
-    <div
-      class="custom-colors-modal"
-      id="customColorsModal"
-      aria-hidden="true"
-    >
+    <div class="custom-colors-modal" id="customColorsModal" aria-hidden="true">
       <section
         class="custom-colors-shell"
         role="dialog"
