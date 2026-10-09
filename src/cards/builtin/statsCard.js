@@ -153,6 +153,9 @@ export function createStatsCard() {
       const match13ApiKey = String(sdk.getConfig("match13apikey") || "")
         .trim()
         .replace(/^Bearer\s+/i, "");
+      const match13ProxyUrl = String(sdk.getConfig("match13ProxyUrl") || "")
+        .trim()
+        .replace(/\/+$/, "");
       const year = state.fullDate instanceof Date
         ? state.fullDate.getFullYear()
         : new Date().getFullYear();
@@ -170,12 +173,16 @@ export function createStatsCard() {
           setMessage(body, "Match13 API keys should start with m13_live_. Check that the complete key was copied into Settings.", true);
           return;
         }
+        if (!match13ProxyUrl) {
+          setMessage(body, "PitBeacon's Match13 proxy has not been configured yet. Please try again later.", true);
+          return;
+        }
 
         refreshButton.disabled = true;
         setMessage(body, "Loading Match13 team stats…");
         try {
           const response = await fetch(
-            `https://actions.match13.com/v1/teams/${teamNumber}/years/${year}`,
+            `${match13ProxyUrl}/v1/teams/${teamNumber}/years/${year}`,
             { headers: { Authorization: `Bearer ${match13ApiKey}` } },
           );
           const responseText = await response.text();
@@ -220,7 +227,7 @@ export function createStatsCard() {
           );
         } catch (error) {
           const message = error instanceof TypeError
-            ? `Could not reach Match13 from this browser. Its API does not allow direct cross-origin requests; a CORS-enabled proxy is required. ${error.message}`
+            ? `Could not reach Match13 through PitBeacon's proxy. Please try again later. ${error.message}`
             : error.message || "An unexpected error occurred.";
           setMessage(body, message, true);
         } finally {
@@ -229,7 +236,7 @@ export function createStatsCard() {
       };
 
       refreshButton.onclick = loadData;
-      const loadKey = `${teamNumber}:${year}:${match13ApiKey}`;
+      const loadKey = `${teamNumber}:${year}:${match13ApiKey}:${match13ProxyUrl}`;
       if (element._statsLoadKey !== loadKey) {
         element._statsLoadKey = loadKey;
         await loadData();

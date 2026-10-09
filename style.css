@@ -464,6 +464,15 @@ html {
   color: var(--text-dim);
   font-size: 0.72rem;
 }
+.match13-key-field .match13-proxy-notice {
+  margin-top: 0;
+  padding: 9px 10px;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  line-height: 1.45;
+}
 .settings-description {
   margin: -8px 0 0;
   color: var(--text-dim);
