@@ -27,6 +27,16 @@ export class SDK {
     return this._dataSources.getSourceNames();
   }
 
+  getCardSettings(cardId, defaults = {}) {
+    try {
+      const saved = JSON.parse(localStorage.getItem("cardSettings") || "{}");
+      return { ...defaults, ...(saved[cardId] || {}) };
+    } catch (error) {
+      console.warn(`Failed to load settings for card "${cardId}":`, error);
+      return defaults;
+    }
+  }
+
   async refreshTeamData() {
     if (typeof window.pitbeaconRefreshTeamData === "function") {
       return window.pitbeaconRefreshTeamData();

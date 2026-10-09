@@ -1,3 +1,5 @@
+import { setCardAutoScroll } from "./autoScroll.js";
+
 function formatValue(value, digits = 1) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "–";
   return value.toFixed(digits).replace(/\.?0+$/, "");
@@ -27,6 +29,7 @@ function appendSection(container, title) {
 }
 
 function setMessage(container, message, isError = false) {
+  setCardAutoScroll(container, false);
   container.replaceChildren();
   const text = document.createElement("p");
   text.className = isError ? "stats-error" : "stats-message";
@@ -106,6 +109,21 @@ export function createStatsCard() {
     label: "Team Stats",
     icon: "chart-bar",
     builtin: true,
+    settings: {
+      autoScroll: {
+        type: "checkbox",
+        label: "Auto-scroll team stats",
+        default: false,
+      },
+      autoScrollSpeed: {
+        type: "number",
+        label: "Scroll speed (px/sec)",
+        default: 30,
+        min: 30,
+        max: 120,
+        step: 1,
+      },
+    },
     render: async (element, state, sdk) => {
       if (!element._statsCardInitialized) {
         element.innerHTML = `
@@ -123,6 +141,15 @@ export function createStatsCard() {
       const body = element.querySelector(".stats-body");
       const refreshButton = element.querySelector(".pit-add-btn");
       const teamNumber = String(sdk.getConfig("teamNumber") || "").trim();
+      const cardSettings = sdk.getCardSettings("stats-card", {
+        autoScroll: false,
+        autoScrollSpeed: 30,
+      });
+      setCardAutoScroll(
+        body,
+        cardSettings.autoScroll,
+        cardSettings.autoScrollSpeed,
+      );
       const match13ApiKey = String(sdk.getConfig("match13apikey") || "")
         .trim()
         .replace(/^Bearer\s+/i, "");
@@ -186,6 +213,11 @@ export function createStatsCard() {
             throw new Error("Match13 returned an invalid team stats response.");
           }
           renderSeason(body, responseData, teamNumber, year);
+          setCardAutoScroll(
+            body,
+            cardSettings.autoScroll,
+            cardSettings.autoScrollSpeed,
+          );
         } catch (error) {
           const message = error instanceof TypeError
             ? `Could not reach Match13 from this browser. Its API does not allow direct cross-origin requests; a CORS-enabled proxy is required. ${error.message}`

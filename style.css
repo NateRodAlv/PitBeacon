@@ -1912,6 +1912,83 @@ input[type="checkbox"]:checked::before {
   font-style: italic;
   text-align: center;
 }
+.le-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.le-settings-btn:hover,
+.le-settings-btn:focus-visible {
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+.layout-item-header .le-settings-btn,
+.layout-item-header .le-remove-btn {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+}
+.le-card-settings {
+  flex: 0 0 auto;
+  max-height: 42%;
+  overflow-y: auto;
+  margin: 7px;
+  padding: 9px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+.le-card-settings[hidden] {
+  display: none;
+}
+.le-card-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.le-card-settings-header strong {
+  color: var(--text-primary);
+  font-size: 0.78rem;
+}
+.le-card-settings-close {
+  padding: 1px 6px;
+  color: var(--text-dim);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.le-card-settings-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.le-card-settings-hint {
+  margin: 4px 0 8px;
+  color: var(--text-dim);
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+.le-card-settings .card-settings-controls {
+  max-height: none;
+  overflow: visible;
+}
+.le-card-settings .card-setting-field input[type="checkbox"] {
+  margin: 0 0 0 auto;
+}
 
 /* Canvas */
 .le-canvas {

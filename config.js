@@ -97,6 +97,8 @@ export const CardSchema = {
   selfRefresh: "boolean?",
   builtin: "boolean?",
   developer: "boolean?", // true for user-created developer cards
+  settings: "object?",
+  settingsValues: "object?",
   html: "string?", // for developer cards
   css: "string?", // for developer cards
   js: "string?", // for developer cards

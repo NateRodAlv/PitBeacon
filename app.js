@@ -970,15 +970,18 @@ function renderLayoutEditor(modal) {
                       .map((id) => {
                         const def = registry.get(id);
                         const inLayout = config.layout[id] !== undefined;
+                        const hasSettings = Object.keys(getCardSettingsDefinition(def)).length > 0;
                         return `<div class="le-palette-item ${inLayout ? "in-layout" : ""}" draggable="true" data-card-id="${id}" style="${inLayout ? "opacity:0.4;cursor:default;" : ""}">
                             ${getCardIconMarkup(id, def)}
                             <span class="le-card-label">${def.label}</span>
+                            ${hasSettings ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
                             ${inLayout ? " ✓" : ""}
                         </div>`;
                       })
                       .join("")}
                     ${cardIds.filter((id) => id !== "__fallback__").length === 0 ? '<div class="le-palette-empty">No cards available</div>' : ""}
                 </div>
+                <section class="le-card-settings" id="leCardSettings" hidden></section>
                 <div class="le-palette-title" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">💾 Actions</div>
                 <div style="padding:8px 11px;display:flex;flex-direction:column;gap:6px;">
                     <button class="btn-export" id="leExport" style="width:100%;padding:6px;">Export Layout</button>
@@ -995,6 +998,7 @@ function renderLayoutEditor(modal) {
                         return `<div class="layout-item" data-card-id="${id}" style="grid-column:${pos.x + 1}/span ${pos.width};grid-row:${pos.y + 1}/span ${pos.height};">
                             <div class="layout-item-header">
                                 <span>${getCardIconMarkup(id, def)}<span class="le-card-label">${def.label}</span></span>
+                                ${Object.keys(getCardSettingsDefinition(def)).length ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
                                 <button class="le-remove-btn" data-card-id="${id}">✕</button>
                             </div>
                             <div class="layout-item-hint">${pos.width}×${pos.height}</div>
@@ -1013,6 +1017,7 @@ function renderLayoutEditor(modal) {
   const colsInput = shell.querySelector("#leGridCols");
   const rowsInput = shell.querySelector("#leGridRows");
   const grid = shell.querySelector("#leGrid");
+  const cardSettingsPanel = shell.querySelector("#leCardSettings");
 
   function updateGrid() {
     const newCols = Math.max(2, Math.min(12, parseInt(colsInput.value) || 3));
@@ -1033,6 +1038,61 @@ function renderLayoutEditor(modal) {
   // Close
   shell.querySelector("#leClose").addEventListener("click", () => {
     closeLayoutEditor();
+  });
+
+  shell.querySelectorAll(".le-settings-btn").forEach((button) => {
+    button.addEventListener("mousedown", (event) => event.stopPropagation());
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const card = registry.get(button.dataset.cardId);
+      if (!card) return;
+
+      const settings = getCardSettingsDefinition(card);
+      if (!Object.keys(settings).length) return;
+      cardSettingsPanel.hidden = false;
+      cardSettingsPanel.replaceChildren();
+
+      const header = document.createElement("div");
+      header.className = "le-card-settings-header";
+      const title = document.createElement("strong");
+      title.textContent = `${card.label} settings`;
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "le-card-settings-close";
+      closeButton.setAttribute("aria-label", "Close card settings");
+      closeButton.textContent = "×";
+      closeButton.addEventListener("click", () => {
+        cardSettingsPanel.hidden = true;
+        cardSettingsPanel.replaceChildren();
+      });
+      header.append(title, closeButton);
+      cardSettingsPanel.appendChild(header);
+
+      const hint = document.createElement("p");
+      hint.className = "le-card-settings-hint";
+      hint.textContent = "Changes are saved automatically and apply immediately.";
+      cardSettingsPanel.appendChild(hint);
+
+      const values = getCardSettingValues(card);
+      renderCardSettingsControls(cardSettingsPanel, card, values, (nextValues) => {
+        card.settingsValues = nextValues;
+        if (card.developer && config.developerCards[card.id]) {
+          config.developerCards[card.id].settingsValues = nextValues;
+          localStorage.setItem(
+            "developerCards",
+            JSON.stringify(config.developerCards),
+          );
+        }
+        renderer.updateCards(stateManager.getState());
+      });
+    });
+  });
+
+  shell.querySelectorAll(".le-palette-item").forEach((item) => {
+    item.addEventListener("dragstart", (event) => {
+      if (event.target.closest(".le-settings-btn")) event.preventDefault();
+    });
   });
 
   modal.addEventListener("click", (e) => {
@@ -1470,15 +1530,18 @@ function getCardSettingValues(card) {
     saved = JSON.parse(localStorage.getItem("cardSettings") || "{}")[card.id] || {};
   } catch {}
   const values = {};
-  const settings = Object.keys(card.settings || {}).length
-    ? card.settings
-    : detectConfigurableSettings(card.js || "");
+  const settings = getCardSettingsDefinition(card);
   card.settings = settings;
   Object.entries(settings).forEach(([key, definition]) => {
     const setting = typeof definition === "string" ? { type: "text", default: definition } : definition || {};
-    values[key] = saved[key] ?? setting.default ?? (setting.type === "checkbox" ? false : "");
+    values[key] = saved[key] ?? card.settingsValues?.[key] ?? setting.default ?? (setting.type === "checkbox" ? false : "");
   });
   return values;
+}
+
+function getCardSettingsDefinition(card) {
+  if (Object.keys(card?.settings || {}).length) return card.settings;
+  return detectConfigurableSettings(card?.js || "");
 }
 
 function saveCardSettingValues(cardId, values) {
@@ -1497,7 +1560,7 @@ function suggestNextCardVersion(version) {
 }
 
 function renderCardSettingsControls(container, card, values, onChange) {
-  const settings = Object.entries(card.settings || detectConfigurableSettings(card.js || ""));
+  const settings = Object.entries(getCardSettingsDefinition(card));
   if (!settings.length) return;
   const wrapper = document.createElement("div");
   wrapper.className = "card-settings-controls";
