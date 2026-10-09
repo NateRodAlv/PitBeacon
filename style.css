@@ -385,6 +385,54 @@ html {
   color: var(--text-dim);
   font-size: 0.72rem;
 }
+.settings-description {
+  margin: -8px 0 0;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.settings-appearance-btn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 12px;
+  color: var(--text-primary);
+  text-align: left;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.settings-appearance-btn:hover,
+.settings-appearance-btn:focus-visible {
+  background: var(--bg-input);
+  border-color: var(--border-accent);
+}
+.settings-appearance-btn > span:first-child {
+  font-size: 1.25rem;
+}
+.settings-appearance-btn > span:nth-child(2) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+.settings-appearance-btn strong {
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.settings-appearance-btn small {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+}
+.settings-appearance-arrow {
+  color: var(--text-dim);
+  font-size: 1.4rem;
+}
 
 input,
 select {
@@ -1611,6 +1659,65 @@ input[type="checkbox"]:checked::before {
   display: flex;
 }
 
+.custom-colors-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.7);
+}
+.custom-colors-modal.active {
+  display: flex;
+}
+.custom-colors-shell {
+  width: min(100%, 480px);
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.custom-colors-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+.custom-colors-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.custom-colors-header p {
+  margin: 5px 0 0;
+  color: var(--text-dim);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+.custom-colors-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+}
+.custom-colors-body > label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.custom-colors-hint {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+
 .le-shell {
   display: flex;
   flex-direction: column;
@@ -1956,74 +2063,57 @@ input[type="checkbox"]:checked::before {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   z-index: 10;
 }
-/* ─── Layout Editor Color Controls ──────────────────────────────────────── */
+/* ─── Custom Colors Modal ───────────────────────────────────────────────── */
 
-.le-color-controls {
+.color-editor-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
-.le-color-controls label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.7rem;
-  color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
+.color-editor-controls select {
+  flex: 1;
+  min-width: 180px;
 }
 
-.le-color-controls select {
-  padding: 3px 6px;
-  font-size: 0.7rem;
-  min-width: 80px;
-  height: 26px;
-  background: var(--bg-input);
+.color-editor-controls input[type="color"] {
+  width: 42px;
+  height: 38px;
+  padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--text-primary);
-}
-
-.le-color-controls input[type="color"] {
-  width: 30px;
-  height: 26px;
-  padding: 2px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--bg-input);
   cursor: pointer;
 }
 
-.le-color-controls input[type="color"]::-webkit-color-swatch-wrapper {
+.color-editor-controls input[type="color"]::-webkit-color-swatch-wrapper {
   padding: 0;
 }
 
-.le-color-controls input[type="color"]::-webkit-color-swatch {
+.color-editor-controls input[type="color"]::-webkit-color-swatch {
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
-.le-color-hex {
-  font-size: 0.7rem;
-  font-family: "Courier New", monospace;
+.color-editor-controls output {
+  min-width: 64px;
   color: var(--text-muted);
-  min-width: 50px;
+  font: 0.78rem "Courier New", monospace;
 }
 
-.le-color-reset {
+.color-editor-reset {
   background: rgba(200, 50, 50, 0.15);
   border: 1px solid rgba(200, 50, 50, 0.2);
   color: rgb(200, 80, 80);
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-family: "Rubik", sans-serif;
   transition: all 0.15s;
 }
-.le-color-reset:hover {
+.color-editor-reset:hover {
   background: rgba(200, 50, 50, 0.25);
 }
 .le-remove-btn {

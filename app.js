@@ -733,6 +733,7 @@ function setupListeners() {
   const errorContainer = document.getElementById("errorcontainer");
   const settings = document.getElementById("settings");
   const settingscontainer = document.getElementById("settingscontainer");
+  const customColorsModal = document.getElementById("customColorsModal");
   const savebutton = document.getElementById("savebutton");
   const testModeCheckbox = document.getElementById("testMode");
   const testDateInput = document.getElementById("testDate");
@@ -754,6 +755,8 @@ function setupListeners() {
   document.getElementById("devEditorGuideBtn").addEventListener("click", () => {
     docsModal.open();
   });
+
+  setupCustomColorsEditor(customColorsModal);
 
   savebutton.addEventListener("click", () => {
     config.teamNumber = document.getElementById("teamNumber").value;
@@ -868,6 +871,13 @@ function setupListeners() {
     openLayoutEditor();
   });
 
+  document.getElementById("openCustomColorsBtn")?.addEventListener("click", () => {
+    customColorsModal.classList.add("active");
+    customColorsModal.setAttribute("aria-hidden", "false");
+    updateCustomColorPicker();
+    customColorsModal.querySelector("#customColorVariable").focus();
+  });
+
   document.getElementById("cardsBtn")?.addEventListener("click", () => {
     openCardManager();
   });
@@ -934,21 +944,6 @@ function renderLayoutEditor(modal) {
   const cols = config.gridCols || 3;
   const rows = config.gridRows || 3;
 
-  // Get current color values
-  const colorVars = [
-    "--bg-base",
-    "--bg-surface",
-    "--bg-raised",
-    "--bg-input",
-    "--accent",
-    "--accent-hover",
-    "--border",
-    "--border-accent",
-    "--text-primary",
-    "--text-muted",
-    "--text-dim",
-  ];
-
   // Create shell
   const shell = document.createElement("div");
   shell.className = "le-shell";
@@ -983,18 +978,6 @@ function renderLayoutEditor(modal) {
                       })
                       .join("")}
                     ${cardIds.filter((id) => id !== "__fallback__").length === 0 ? '<div class="le-palette-empty">No cards available</div>' : ""}
-                </div>
-                <div class="le-palette-title" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">🎨 Colors</div>
-                <div class="le-color-controls" style="padding:8px 11px;">
-                    <label>
-                        Element
-                        <select id="leColorEl">
-                            ${colorVars.map((v) => `<option value="${v}">${v.replace("--", "")}</option>`).join("")}
-                        </select>
-                    </label>
-                    <input type="color" id="leColorPick">
-                    <span class="le-color-hex" id="leColorHex">#ffffff</span>
-                    <button class="le-color-reset" id="leColorReset">Reset</button>
                 </div>
                 <div class="le-palette-title" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">💾 Actions</div>
                 <div style="padding:8px 11px;display:flex;flex-direction:column;gap:6px;">
@@ -1046,106 +1029,6 @@ function renderLayoutEditor(modal) {
 
   colsInput.addEventListener("change", updateGrid);
   rowsInput.addEventListener("change", updateGrid);
-
-  // Color controls
-  const colorEl = shell.querySelector("#leColorEl");
-  const colorPick = shell.querySelector("#leColorPick");
-  const colorHex = shell.querySelector("#leColorHex");
-  const colorReset = shell.querySelector("#leColorReset");
-
-  // Convert rgb to hex
-  function rgbToHex(rgb) {
-    const match = rgb.match(/\d+/g);
-    if (!match) return rgb;
-    return (
-      "#" +
-      match
-        .slice(0, 3)
-        .map((x) => parseInt(x).toString(16).padStart(2, "0"))
-        .join("")
-        .toUpperCase()
-    );
-  }
-
-  function updateColorPicker() {
-    const val = getComputedStyle(document.documentElement)
-      .getPropertyValue(colorEl.value)
-      .trim();
-    const hex = val.startsWith("rgb") ? rgbToHex(val) : val;
-    colorHex.textContent = hex;
-    if (hex.startsWith("#")) {
-      colorPick.value = hex;
-    }
-  }
-
-  colorEl.addEventListener("change", updateColorPicker);
-  updateColorPicker();
-
-  colorPick.addEventListener("input", () => {
-    colorHex.textContent = colorPick.value;
-    document.documentElement.style.setProperty(colorEl.value, colorPick.value);
-    // Save to localStorage
-    saveCustomColors();
-  });
-
-  colorReset.addEventListener("click", () => {
-    // Reset the selected color to the theme default
-    const theme = config.theme || "dark";
-    const defaultColors = {
-      dark: {
-        "--bg-base": "rgb(22, 22, 22)",
-        "--bg-surface": "rgb(30, 30, 30)",
-        "--bg-raised": "rgb(40, 40, 40)",
-        "--bg-input": "rgb(50, 50, 50)",
-        "--accent": "rgb(47, 48, 112)",
-        "--accent-hover": "rgb(60, 62, 140)",
-        "--border": "rgba(255, 255, 255, 0.07)",
-        "--border-accent": "rgba(47, 48, 112, 0.6)",
-        "--text-primary": "rgb(240, 240, 240)",
-        "--text-muted": "rgb(160, 155, 155)",
-        "--text-dim": "rgb(100, 98, 98)",
-      },
-      light: {
-        "--bg-base": "rgb(245, 245, 247)",
-        "--bg-surface": "rgb(235, 235, 238)",
-        "--bg-raised": "rgb(225, 225, 230)",
-        "--bg-input": "rgb(210, 210, 215)",
-        "--accent": "rgb(47, 48, 112)",
-        "--accent-hover": "rgb(70, 72, 160)",
-        "--border": "rgba(0, 0, 0, 0.1)",
-        "--border-accent": "rgba(47, 48, 112, 0.3)",
-        "--text-primary": "rgb(20, 20, 22)",
-        "--text-muted": "rgb(80, 85, 90)",
-        "--text-dim": "rgb(130, 135, 140)",
-      },
-      "high-contrast": {
-        "--bg-base": "rgb(0, 0, 0)",
-        "--bg-surface": "rgb(15, 15, 15)",
-        "--bg-raised": "rgb(30, 30, 30)",
-        "--bg-input": "rgb(50, 50, 50)",
-        "--accent": "rgb(0, 255, 255)",
-        "--accent-hover": "rgb(0, 200, 200)",
-        "--border": "rgba(0, 255, 255, 0.3)",
-        "--border-accent": "rgba(0, 255, 255, 0.6)",
-        "--text-primary": "rgb(255, 255, 255)",
-        "--text-muted": "rgb(200, 200, 200)",
-        "--text-dim": "rgb(150, 150, 150)",
-      },
-    };
-
-    const defaultVal = defaultColors[theme]?.[colorEl.value];
-    if (defaultVal) {
-      document.documentElement.style.setProperty(colorEl.value, defaultVal);
-      // Remove from custom colors
-      const customColors = JSON.parse(
-        localStorage.getItem("customColors") || "{}",
-      );
-      delete customColors[colorEl.value];
-      localStorage.setItem("customColors", JSON.stringify(customColors));
-      updateColorPicker();
-      displayMessage(`Reset ${colorEl.value} to default`, "message");
-    }
-  });
 
   // Close
   shell.querySelector("#leClose").addEventListener("click", () => {
@@ -1331,6 +1214,116 @@ function getCustomColors() {
     if (val) result[v] = val;
   });
   return result;
+}
+
+function rgbToHex(rgb) {
+  const match = rgb.match(/\d+/g);
+  if (!match) return rgb;
+  return (
+    "#" +
+    match
+      .slice(0, 3)
+      .map((value) => parseInt(value).toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase()
+  );
+}
+
+function updateCustomColorPicker() {
+  const colorEl = document.getElementById("customColorVariable");
+  const colorPick = document.getElementById("customColorPicker");
+  const colorHex = document.getElementById("customColorHex");
+  if (!colorEl || !colorPick || !colorHex) return;
+
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(colorEl.value)
+    .trim();
+  const hex = value.startsWith("rgb") ? rgbToHex(value) : value;
+  colorHex.textContent = hex;
+  if (hex.startsWith("#")) colorPick.value = hex;
+}
+
+function setupCustomColorsEditor(modal) {
+  const colorEl = modal.querySelector("#customColorVariable");
+  const colorPick = modal.querySelector("#customColorPicker");
+  const colorReset = modal.querySelector("#customColorReset");
+  const closeButton = modal.querySelector("#customColorsClose");
+
+  colorEl.addEventListener("change", updateCustomColorPicker);
+  colorPick.addEventListener("input", () => {
+    document.documentElement.style.setProperty(colorEl.value, colorPick.value);
+    document.getElementById("customColorHex").textContent = colorPick.value;
+    saveCustomColors();
+  });
+
+  colorReset.addEventListener("click", () => {
+    const defaultColors = {
+      dark: {
+        "--bg-base": "rgb(22, 22, 22)",
+        "--bg-surface": "rgb(30, 30, 30)",
+        "--bg-raised": "rgb(40, 40, 40)",
+        "--bg-input": "rgb(50, 50, 50)",
+        "--accent": "rgb(47, 48, 112)",
+        "--accent-hover": "rgb(60, 62, 140)",
+        "--border": "rgba(255, 255, 255, 0.07)",
+        "--border-accent": "rgba(47, 48, 112, 0.6)",
+        "--text-primary": "rgb(240, 240, 240)",
+        "--text-muted": "rgb(160, 155, 155)",
+        "--text-dim": "rgb(100, 98, 98)",
+      },
+      light: {
+        "--bg-base": "rgb(245, 245, 247)",
+        "--bg-surface": "rgb(235, 235, 238)",
+        "--bg-raised": "rgb(225, 225, 230)",
+        "--bg-input": "rgb(210, 210, 215)",
+        "--accent": "rgb(47, 48, 112)",
+        "--accent-hover": "rgb(70, 72, 160)",
+        "--border": "rgba(0, 0, 0, 0.1)",
+        "--border-accent": "rgba(47, 48, 112, 0.3)",
+        "--text-primary": "rgb(20, 20, 22)",
+        "--text-muted": "rgb(80, 85, 90)",
+        "--text-dim": "rgb(130, 135, 140)",
+      },
+      "high-contrast": {
+        "--bg-base": "rgb(0, 0, 0)",
+        "--bg-surface": "rgb(15, 15, 15)",
+        "--bg-raised": "rgb(30, 30, 30)",
+        "--bg-input": "rgb(50, 50, 50)",
+        "--accent": "rgb(0, 255, 255)",
+        "--accent-hover": "rgb(0, 200, 200)",
+        "--border": "rgba(0, 255, 255, 0.3)",
+        "--border-accent": "rgba(0, 255, 255, 0.6)",
+        "--text-primary": "rgb(255, 255, 255)",
+        "--text-muted": "rgb(200, 200, 200)",
+        "--text-dim": "rgb(150, 150, 150)",
+      },
+    };
+    const variable = colorEl.value;
+    const defaultValue = defaultColors[config.theme || "dark"]?.[variable];
+    if (!defaultValue) return;
+
+    document.documentElement.style.setProperty(variable, defaultValue);
+    const customColors = JSON.parse(
+      localStorage.getItem("customColors") || "{}",
+    );
+    delete customColors[variable];
+    localStorage.setItem("customColors", JSON.stringify(customColors));
+    updateCustomColorPicker();
+    displayMessage(`Reset ${variable} to default`, "message");
+  });
+
+  const close = () => {
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+    document.getElementById("openCustomColorsBtn").focus();
+  };
+  closeButton.addEventListener("click", close);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) close();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal.classList.contains("active")) close();
+  });
 }
 
 function closeLayoutEditor() {
