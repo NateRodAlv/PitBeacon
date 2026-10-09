@@ -307,6 +307,7 @@ export class SDK {
     const exposedKeys = [
       "teamNumber",
       "match13apikey",
+      "match13ProxyUrl",
       "matchAlarmSound",
       "noteAlarmSound",
       "eventName",
