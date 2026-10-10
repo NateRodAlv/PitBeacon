@@ -547,7 +547,7 @@ function startDuckWalk(duck) {
       let left = parseFloat(duck.style.left) + direction * elapsed * 0.08;
       if (left <= 0 || left >= window.innerWidth - 48) {
         direction *= -1;
-        duck.style.setProperty("--duck-direction", String(direction));
+        duck.style.setProperty("--duck-direction", String(direction * -1));
         left = Math.max(0, Math.min(window.innerWidth - 48, left));
       }
       duck.style.left = `${left}px`;
