@@ -547,7 +547,7 @@ function startDuckWalk(duck) {
       let left = parseFloat(duck.style.left) + direction * elapsed * 0.08;
       if (left <= 0 || left >= window.innerWidth - 48) {
         direction *= -1;
-        duck.style.setProperty("--duck-direction", String(direction));
+        duck.style.setProperty("--duck-direction", String(direction * -1));
         left = Math.max(0, Math.min(window.innerWidth - 48, left));
       }
       duck.style.left = `${left}px`;
@@ -1345,7 +1345,7 @@ function renderLayoutEditor(modal) {
   // ─── Export ────────────────────────────────────────────────────────────
   shell.querySelector("#leExport").addEventListener("click", () => {
     const exportData = {
-      version: "26.10.9",
+      version: "26.10.24",
       gridCols: config.gridCols,
       gridRows: config.gridRows,
       layout: config.layout,
@@ -2089,9 +2089,19 @@ function renderCardManager(modal) {
       reader.onload = (ev) => {
         try {
           const data = JSON.parse(ev.target.result);
-          Object.entries(data).forEach(([id, def]) => {
+          const importedCards = Object.entries(data);
+          importedCards.forEach(([id]) => {
+            const existingCard = registry.get(id);
+            if (existingCard && !existingCard.developer) {
+              throw new Error(`Cannot import over non-developer card "${id}".`);
+            }
+          });
+
+          importedCards.forEach(([id, def]) => {
+            const cardDefinition = devCardRuntime.createCardDefinition(id, def);
+            cardDefinition.allowOverride = true;
             config.developerCards[id] = def;
-            registry.register(id, devCardRuntime.createCardDefinition(id, def));
+            registry.register(id, cardDefinition);
           });
           localStorage.setItem(
             "developerCards",
@@ -2143,7 +2153,7 @@ if (easterEggsEnabled) scheduleEasterEgg();
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionTag = document.getElementById("version");
-  if (versionTag) versionTag.textContent = "Version 26.10.9";
+  if (versionTag) versionTag.textContent = "Version 26.10.24";
 });
 
 // ─── Modal Closes ─────────────────────────────────────────────────────────
