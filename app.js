@@ -2089,9 +2089,19 @@ function renderCardManager(modal) {
       reader.onload = (ev) => {
         try {
           const data = JSON.parse(ev.target.result);
-          Object.entries(data).forEach(([id, def]) => {
+          const importedCards = Object.entries(data);
+          importedCards.forEach(([id]) => {
+            const existingCard = registry.get(id);
+            if (existingCard && !existingCard.developer) {
+              throw new Error(`Cannot import over non-developer card "${id}".`);
+            }
+          });
+
+          importedCards.forEach(([id, def]) => {
+            const cardDefinition = devCardRuntime.createCardDefinition(id, def);
+            cardDefinition.allowOverride = true;
             config.developerCards[id] = def;
-            registry.register(id, devCardRuntime.createCardDefinition(id, def));
+            registry.register(id, cardDefinition);
           });
           localStorage.setItem(
             "developerCards",
