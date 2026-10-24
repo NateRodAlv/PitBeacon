@@ -1345,7 +1345,7 @@ function renderLayoutEditor(modal) {
   // ─── Export ────────────────────────────────────────────────────────────
   shell.querySelector("#leExport").addEventListener("click", () => {
     const exportData = {
-      version: "26.10.9",
+      version: "26.10.24",
       gridCols: config.gridCols,
       gridRows: config.gridRows,
       layout: config.layout,
@@ -2153,7 +2153,7 @@ if (easterEggsEnabled) scheduleEasterEgg();
 
 document.addEventListener("DOMContentLoaded", () => {
   const versionTag = document.getElementById("version");
-  if (versionTag) versionTag.textContent = "Version 26.10.9";
+  if (versionTag) versionTag.textContent = "Version 26.10.24";
 });
 
 // ─── Modal Closes ─────────────────────────────────────────────────────────
