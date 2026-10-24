@@ -1,0 +1,3 @@
+name = "pitbeacon-match13-proxy"
+main = "src/index.js"
+compatibility_date = "2026-10-09"
