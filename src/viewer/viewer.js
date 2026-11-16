@@ -48,7 +48,7 @@ const LIGHT_SCALE = Math.PI;
   function normalizeViewerSettings(value) {
     const settings = value && typeof value === "object" ? value : {};
     return {
-      displayStyle: ["solid", "edges", "wireframe", "xray", "toon", "blueprint", "clay"].includes(settings.displayStyle) ? settings.displayStyle : DEFAULT_VIEWER_SETTINGS.displayStyle,
+      displayStyle: ["solid", "edges", "wireframe", "xray", "blueprint"].includes(settings.displayStyle) ? settings.displayStyle : DEFAULT_VIEWER_SETTINGS.displayStyle,
       lightingPreset: Object.prototype.hasOwnProperty.call(LIGHTING_PRESETS, settings.lightingPreset) ? settings.lightingPreset : DEFAULT_VIEWER_SETTINGS.lightingPreset,
       lightSky: /^#[0-9a-f]{6}$/i.test(settings.lightSky || "") ? settings.lightSky : DEFAULT_VIEWER_SETTINGS.lightSky,
       lightGround: /^#[0-9a-f]{6}$/i.test(settings.lightGround || "") ? settings.lightGround : DEFAULT_VIEWER_SETTINGS.lightGround,
@@ -1162,20 +1162,7 @@ const LIGHT_SCALE = Math.PI;
         alphaTest: base.alphaTest,
       };
       let material;
-      if (mode === "toon") {
-        material = new THREE.MeshToonMaterial({
-          ...common,
-          color: base.color ? base.color.clone() : 0xffffff,
-          map: base.map || null,
-          vertexColors: !!base.vertexColors,
-          emissive: base.color ? base.color.clone().multiplyScalar(0.22) : 0x333333,
-          emissiveMap: base.emissiveMap || null,
-        });
-      } else if (mode === "clay") {
-        material = new THREE.MeshLambertMaterial({ ...common, color: 0xf0b991, emissive: 0x654b3b });
-      } else {
-        material = new THREE.MeshBasicMaterial({ side: base.side, color: 0x09243b });
-      }
+      material = new THREE.MeshBasicMaterial({ side: base.side, color: 0x09243b });
       byMode.set(mode, material);
       return material;
     };
@@ -1186,7 +1173,7 @@ const LIGHT_SCALE = Math.PI;
       const originals = mesh.userData.rbvBaseMaterials;
       const nextMaterials = originals.map((mat) => {
         if (!mat) return mat;
-        if (style === "toon" || style === "clay" || style === "blueprint") return styleMaterial(mat, style);
+        if (style === "blueprint") return styleMaterial(mat, style);
         if (seen.has(mat)) return mat;
         seen.add(mat);
         if (!mat.userData.rbvOriginalStyle) {
