@@ -1312,6 +1312,7 @@ const LIGHT_SCALE = Math.PI;
             ...connector,
             name: previous?.name || connector.name,
             value: Number(previous?.value) || connector.value,
+            reverseDirection: previous?.reverseDirection === true,
             motion: connector.motion,
             _motion: connector.motion,
           };
@@ -1408,7 +1409,7 @@ const LIGHT_SCALE = Math.PI;
         const axis = new THREE.Vector3(...(mech.axisVector || [1, 0, 0])).normalize();
         if (mech.type === "rotate") {
           o.position.fromArray(it.p);
-          o.quaternion.copy(it.q).multiply(new THREE.Quaternion().setFromAxisAngle(axis, rad));
+          o.quaternion.copy(it.q).multiply(new THREE.Quaternion().setFromAxisAngle(axis, rad * (mech.reverseDirection ? -1 : 1)));
         } else {
           o.position.fromArray(it.p).addScaledVector(axis, mech.value);
           o.quaternion.copy(it.q);
@@ -1537,6 +1538,22 @@ const LIGHT_SCALE = Math.PI;
       if (mech.jointType === "fixed") slider.disabled = true;
       if (!present) slider.disabled = true;
       const out = el("output", { text: formatValue(mech) });
+      const reverseButton = mech.source === "urdf" && mech.type === "rotate"
+        ? el("button", {
+            type: "button",
+            class: "rbv-btn rbv-btn-ghost rbv-edit-only",
+            text: mech.reverseDirection ? "Direction reversed" : "Reverse direction",
+            "aria-label": "Reverse rotation direction for " + mech.name,
+            "aria-pressed": String(mech.reverseDirection === true),
+            onclick: (event) => {
+              mech.reverseDirection = !mech.reverseDirection;
+              event.currentTarget.textContent = mech.reverseDirection ? "Direction reversed" : "Reverse direction";
+              event.currentTarget.setAttribute("aria-pressed", String(mech.reverseDirection));
+              setMechanismValue(mech, mech.value);
+              saveSetup();
+            },
+          })
+        : null;
       slider.addEventListener("input", () => { setMechanismValue(mech, slider.value); saveSetup(); });
       const row = el("div", { class: "rbv-mech-row" + (present ? "" : " missing") },
         el("div", { class: "rbv-mech-head" },
@@ -1545,6 +1562,7 @@ const LIGHT_SCALE = Math.PI;
             el("div", { class: "rbv-mech-node", text: connectorDetails })),
           el("div", { class: "rbv-mech-actions" },
             el("button", { type: "button", class: "rbv-btn", text: "Zero", onclick: () => { setMechanismValue(mech, 0); saveSetup(); } }),
+            reverseButton,
             mech.source !== "urdf" && mech.jointType !== "fixed" ? el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "Edit", onclick: () => { editingMechanismId = editingMechanismId === mech.id ? null : mech.id; renderMechanisms(); } }) : null,
             el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "×", "aria-label": "Remove", onclick: () => {
               if (bases.has(mech.id)) setMechanismValue(mech, 0);
@@ -1618,6 +1636,7 @@ const LIGHT_SCALE = Math.PI;
         type: connector.type,
         axis: connector.axis,
         axisVector: connector.axisVector,
+        reverseDirection: connector.reverseDirection === true,
         range: connector.range,
         min: connector.min,
         max: connector.max,
@@ -1634,6 +1653,7 @@ const LIGHT_SCALE = Math.PI;
     if (!Array.isArray(m.nodes)) { m.nodes = m.node ? [m.node] : []; m.space = "local"; } // first-version controls keep their original behaviour
     delete m.node;
     m.source = ["urdf", "manual"].includes(m.source) ? m.source : "legacy";
+    m.reverseDirection = m.reverseDirection === true;
     if (m.source === "manual") m.partId = String(m.partId || m.nodes[0] || "");
     m.space = m.space || "world"; m.pivotMode = ["center", "origin", "cursor"].includes(m.pivotMode) ? m.pivotMode : "center";
     m.pivot = Array.isArray(m.pivot) && m.pivot.length >= 3 ? m.pivot.slice(0, 3).map((v) => Number.isFinite(Number(v)) ? Number(v) : 0) : [0, 0, 0];
