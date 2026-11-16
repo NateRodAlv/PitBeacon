@@ -1757,10 +1757,10 @@ const LIGHT_SCALE = Math.PI;
   }
 
   // ───────── Wiring ─────────
-  $("rbvFile").addEventListener("change", async (e) => {
+  ["rbvFile", "rbvFolder"].forEach((id) => $(id).addEventListener("change", async (e) => {
     const files = e.target.files; if (!files || !files.length) return;
     try { await readFiles(files); } finally { e.target.value = ""; }
-  });
+  }));
   ["dragover", "drop"].forEach((t) => stage.addEventListener(t, (e) => {
     e.preventDefault();
     if (t === "drop" && e.dataTransfer && e.dataTransfer.files.length) readFiles(e.dataTransfer.files);

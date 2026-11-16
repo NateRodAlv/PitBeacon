@@ -26,17 +26,34 @@ function origin(element) {
 }
 
 function resolveFile(uri, files) {
-  const clean = decodeURIComponent(uri).replace(/^package:\/\//i, "").replace(/^file:\/\//i, "").split(/[?#]/)[0];
-  const target = clean.replace(/\\/g, "/").replace(/^\/+/, "").toLowerCase();
-  const exact = files.find((file) => file.name.replace(/\\/g, "/").toLowerCase() === target);
-  if (exact) return exact;
-  const matches = files.filter((file) => {
-    const name = file.name.replace(/\\/g, "/").toLowerCase();
-    return name === target || name.endsWith("/" + target) || name.endsWith("/" + target.split("/").pop());
-  });
-  if (matches.length === 1) return matches[0];
-  if (matches.length > 1) throw new Error(`More than one selected file matches URDF mesh "${uri}".`);
-  throw new Error(`URDF mesh "${uri}" is missing. Select the URDF with all referenced mesh files.`);
+  const packageUri = /^package:\/\//i.test(uri);
+  const clean = decodeURIComponent(uri.split(/[?#]/)[0])
+    .replace(/^package:\/\//i, "")
+    .replace(/^file:\/\//i, "")
+    .replace(/\\/g, "/");
+  const normalize = (path) => path.split("/").reduce((parts, part) => {
+    if (!part || part === ".") return parts;
+    if (part === "..") parts.pop();
+    else parts.push(part.toLowerCase());
+    return parts;
+  }, []).join("/");
+  const target = normalize(clean);
+  const targets = [target];
+  if (packageUri && target.includes("/")) targets.push(target.slice(target.indexOf("/") + 1));
+  const basename = target.split("/").pop();
+  if (basename && !targets.includes(basename)) targets.push(basename);
+  const candidates = files.map((file) => ({ file, path: normalize(file.name) }));
+  const matches = candidates.flatMap((candidate) => targets
+    .filter((path) => candidate.path === path || candidate.path.endsWith("/" + path))
+    .map((path) => ({ ...candidate, score: path.split("/").length })));
+  if (matches.length) {
+    const bestScore = Math.max(...matches.map((match) => match.score));
+    const best = matches.filter((match) => match.score === bestScore);
+    const uniqueFiles = Array.from(new Map(best.map((match) => [match.file, match.file])).values());
+    if (uniqueFiles.length === 1) return uniqueFiles[0];
+    throw new Error(`More than one selected file matches URDF mesh "${uri}". Select the URDF folder to preserve its mesh paths.`);
+  }
+  throw new Error(`URDF mesh "${uri}" is missing. Select the URDF folder, or select the URDF together with all referenced mesh files.`);
 }
 
 function materialFor(visual, materials) {

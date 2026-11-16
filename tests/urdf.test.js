@@ -5,6 +5,19 @@ function urdfFile(xml) {
   return { name: "robot.urdf", buffer: new TextEncoder().encode(xml).buffer };
 }
 
+function stlFile(name, size = 1) {
+  const stl = `solid triangle
+  facet normal 0 0 1
+    outer loop
+      vertex 0 0 0
+      vertex ${size} 0 0
+      vertex 0 ${size} 0
+    endloop
+  endfacet
+endsolid triangle`;
+  return { name, buffer: new TextEncoder().encode(stl).buffer };
+}
+
 describe("URDF parsing", () => {
   it("builds link visuals and imports typed joint connectors", async () => {
     const model = await parseURDF([urdfFile(`
@@ -41,6 +54,23 @@ describe("URDF parsing", () => {
         <link name="base"><visual><geometry><mesh filename="package://robot/meshes/base.stl"/></geometry></visual></link>
       </robot>
     `)])).rejects.toThrow("is missing");
+  });
+
+  it("resolves package mesh paths against relative paths from a selected export folder", async () => {
+    const model = await parseURDF([
+      urdfFile(`
+        <robot name="test">
+          <link name="base">
+            <visual><geometry><mesh filename="package://robot/meshes/base.stl"/></geometry></visual>
+          </link>
+        </robot>
+      `),
+      stlFile("export/meshes/base.stl", 1),
+      stlFile("export/other/base.stl", 2),
+    ]);
+
+    const position = model.rootLink.userData.rbvVisuals.children[0].geometry.attributes.position;
+    expect(Math.max(...position.array)).toBe(1);
   });
 
   it("rejects disconnected link graphs", async () => {
