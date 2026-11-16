@@ -127,7 +127,7 @@ async function loadVisualGeometry(geometryElement, files, material) {
   return object;
 }
 
-function jointControl(joint, motion, childLink) {
+function jointControl(joint, motion, childLink, parentBranch, childBranch) {
   const name = joint.getAttribute("name")?.trim();
   const jointType = joint.getAttribute("type")?.trim();
   const id = "urdf:" + name;
@@ -168,6 +168,8 @@ function jointControl(joint, motion, childLink) {
     source: "urdf",
     partId: childLink.name,
     motion,
+    parentBranch,
+    childBranch,
   };
 }
 
@@ -239,6 +241,11 @@ export async function parseURDF(files) {
   const connectors = [];
   const connectorFrames = [];
   const visited = new Set();
+  const collectSubtree = (link, result = new Set()) => {
+    result.add(link);
+    for (const connection of childrenByParent.get(link) || []) collectSubtree(connection.childLink, result);
+    return result;
+  };
   const visit = (link, seen) => {
     if (seen.has(link)) throw new Error("The URDF joint graph contains a cycle.");
     seen.add(link);
@@ -255,7 +262,11 @@ export async function parseURDF(files) {
       frame.add(motion);
       motion.add(connection.childLink);
       link.add(frame);
-      connectors.push(jointControl(connection.joint, motion, connection.childLink));
+      const childBranch = collectSubtree(connection.childLink);
+      const parentBranch = Array.from(links.values()).filter((candidate) => !childBranch.has(candidate));
+      motion.userData.rbvParentBranch = parentBranch;
+      motion.userData.rbvChildBranch = Array.from(childBranch);
+      connectors.push(jointControl(connection.joint, motion, connection.childLink, parentBranch, Array.from(childBranch)));
       connectorFrames.push(frame);
       visit(connection.childLink, seen);
     }

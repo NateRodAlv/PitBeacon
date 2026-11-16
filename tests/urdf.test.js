@@ -45,6 +45,8 @@ describe("URDF parsing", () => {
     expect(model.connectors[0].min).toBeCloseTo(-57.2958, 3);
     expect(model.connectors[0].max).toBeCloseTo(28.6479, 3);
     expect(model.connectors[0].motion.parent).toBe(model.connectorFrames[0]);
+    expect(model.connectors[0].parentBranch.map((link) => link.name)).toEqual(["base"]);
+    expect(model.connectors[0].childBranch.map((link) => link.name)).toEqual(["arm"]);
     expect(model.rootLink.userData.rbvVisuals.children[0].geometry).toBeTruthy();
   });
 

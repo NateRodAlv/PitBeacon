@@ -18,11 +18,11 @@ together. For URDF exports, **Load URDF folder** can select the complete export
 folder and preserve mesh paths; Draco and Meshopt compression work offline for
 glTF). URDF joints
 are imported as mate connectors: revolute and continuous joints rotate,
-prismatic joints slide, and fixed joints are shown without a control. For
-revolute and continuous joints, use **Edit** and **Reverse direction** to
-invert a connector's rotation without changing which URDF link branch moves.
-For other models, add a connector to one individual part and choose its local
-rotation or linear travel axis.
+prismatic joints slide, and fixed joints are shown without a control. In Edit
+mode, a revolute or continuous connector can move its parent-side branch
+instead of the child-side branch. Reversing a connector keeps its child branch
+fixed and can move the URDF root. For other models, add a connector to one
+individual part and choose its local rotation or linear travel axis.
 
 Pit Notes link to individual named parts in the model, not to connectors.
 Tap a part in the viewer to open its notes, or use **locate** on a linked
