@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Rubik:wght@400;500;600;700&display=swap");
 
 /* Themes */
 
@@ -22,7 +21,7 @@
 
 * {
   box-sizing: border-box;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* Scrollbars */
@@ -163,7 +162,7 @@ html {
 }
 
 .title {
-  font-family: "Quicksand", sans-serif;
+  font-family: "Quicksand Variable", "Quicksand", sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
   color: #f5d800;
@@ -173,7 +172,7 @@ html {
 }
 
 .beacon {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: royalblue;
   margin-left: -1px;
 }
@@ -182,7 +181,7 @@ html {
   display: block;
   width: 100%;
   text-align: center;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1.1rem;
   color: var(--text-muted);
   font-weight: 500;
@@ -273,14 +272,14 @@ html {
 
 .frc7250 {
   font-size: 0.8rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: var(--text-dim);
   margin: 0;
 }
 
 .version {
   font-size: 0.6rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: var(--text-dim);
   margin: 0;
 }
@@ -314,7 +313,7 @@ html {
   padding: 6px 14px;
   border-radius: 6px;
   border: none;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -360,7 +359,7 @@ html {
 }
 
 .profile-btn {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   display: flex;
   justify-content: space-between;
   font-size: 0.65rem;
@@ -399,7 +398,7 @@ html {
   width: 340px;
   display: none;
   flex-direction: column;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: var(--text-muted);
   z-index: 200;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
@@ -418,7 +417,7 @@ html {
   color: var(--text-primary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 .settingsdiv {
@@ -439,7 +438,7 @@ html {
   color: var(--text-dim);
   margin: 0 0 8px 0;
   font-weight: 500;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 .settings-field {
@@ -453,7 +452,7 @@ html {
   font-size: 0.85rem;
   color: var(--text-muted);
   text-align: left;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .match13-key-field {
   flex-wrap: wrap;
@@ -529,7 +528,7 @@ select {
   border: 1px solid var(--border);
   background-color: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   transition: border-color 0.2s;
 }
@@ -596,7 +595,7 @@ input[type="checkbox"]:checked::before {
   margin: 20px;
   border-radius: 6px;
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.95rem;
   font-weight: 500;
   transition: background-color 0.2s;
@@ -631,7 +630,7 @@ input[type="checkbox"]:checked::before {
   gap: 10px;
   padding: 8px 14px;
   border-radius: 6px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.82rem;
   color: var(--text-primary);
 }
@@ -649,7 +648,7 @@ input[type="checkbox"]:checked::before {
   margin: 0;
   font-size: 0.75rem;
   transition: color 0.15s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .error-exit:hover {
   color: var(--text-primary);
@@ -677,7 +676,7 @@ input[type="checkbox"]:checked::before {
   text-align: center;
   font-size: 0.75rem;
   color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   position: relative;
 }
 
@@ -725,7 +724,7 @@ input[type="checkbox"]:checked::before {
 .dc-picker-item-label {
   font-weight: 500;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
 }
 
@@ -745,7 +744,7 @@ input[type="checkbox"]:checked::before {
   font-style: italic;
   text-align: center;
   padding: 12px 4px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* Docs modal */
@@ -784,7 +783,7 @@ input[type="checkbox"]:checked::before {
 }
 .docs-title {
   margin: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.95rem;
   color: var(--text-primary);
 }
@@ -815,7 +814,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   flex-shrink: 0;
 }
 .match-card {
@@ -827,7 +826,7 @@ input[type="checkbox"]:checked::before {
   margin: 0;
   font-size: 0.88rem;
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .match-title {
   font-size: 1rem;
@@ -835,7 +834,7 @@ input[type="checkbox"]:checked::before {
   margin: 0 0 4px 0;
   color: var(--text-primary);
   letter-spacing: -0.2px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .countdown-warning {
   color: rgb(255, 200, 0);
@@ -896,7 +895,7 @@ input[type="checkbox"]:checked::before {
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .blue {
   color: rgb(80, 80, 200) !important;
@@ -908,7 +907,7 @@ input[type="checkbox"]:checked::before {
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .red.highlight {
   background-color: rgba(200, 80, 80, 0.3) !important;
@@ -945,7 +944,7 @@ input[type="checkbox"]:checked::before {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .pit-title i {
   font-size: 0.85rem;
@@ -960,7 +959,7 @@ input[type="checkbox"]:checked::before {
   padding: 4px 10px;
   border-radius: 5px;
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.75rem;
   font-weight: 500;
   transition: background-color 0.15s;
@@ -988,7 +987,7 @@ input[type="checkbox"]:checked::before {
   padding: 12px 4px;
   margin: 0;
   text-align: center;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* Pit cards */
@@ -1029,7 +1028,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   padding: 4px 7px !important;
   width: 100%;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.83rem;
   resize: none;
   line-height: 1.4;
@@ -1065,7 +1064,7 @@ input[type="checkbox"]:checked::before {
   justify-content: center;
   min-width: 28px;
   height: 28px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .pit-del-btn:hover {
   background: rgba(200, 50, 50, 0.25);
@@ -1084,7 +1083,7 @@ input[type="checkbox"]:checked::before {
   border: 1px solid transparent;
   border-radius: 4px;
   padding: 4px 3px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.72rem;
   font-weight: 500;
   cursor: pointer;
@@ -1257,7 +1256,7 @@ input[type="checkbox"]:checked::before {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .qty-ok {
   color: rgb(70, 185, 105);
@@ -1289,7 +1288,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .part-low-badge {
   background: rgba(200, 50, 50, 0.2);
@@ -1315,7 +1314,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .part-micro-label .pit-input {
   width: 100%;
@@ -1355,7 +1354,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.7rem;
   color: var(--text-muted);
   white-space: nowrap;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 .checkin-row {
@@ -1393,7 +1392,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-dim);
   flex-shrink: 0;
   transition: all 0.12s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .checkin-check:hover {
   border-color: var(--accent);
@@ -1446,14 +1445,14 @@ input[type="checkbox"]:checked::before {
   position: sticky;
   top: -10px;
   background-color: var(--bg-surface);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 #card-leaderboard-card .leaderboard-table tbody td {
   text-align: center;
   padding: 7px 8px;
   border-bottom: 1px solid var(--border);
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 #card-leaderboard-card .leaderboard-table tbody tr:last-child td {
   border-bottom: none;
@@ -1488,7 +1487,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-body {
   flex: 1;
@@ -1501,7 +1500,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.85rem;
   text-align: center;
   padding: 14px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-error {
   color: rgb(220, 80, 80);
@@ -1520,7 +1519,7 @@ input[type="checkbox"]:checked::before {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.3px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-year {
   font-size: 0.68rem;
@@ -1530,7 +1529,7 @@ input[type="checkbox"]:checked::before {
   border: 1px solid var(--border);
   border-radius: 99px;
   padding: 2px 7px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 .stats-primary {
@@ -1555,7 +1554,7 @@ input[type="checkbox"]:checked::before {
   letter-spacing: 0.08em;
   color: var(--text-dim);
   margin: 12px 0 5px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-row {
   display: flex;
@@ -1570,12 +1569,12 @@ input[type="checkbox"]:checked::before {
 }
 .stats-label {
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-value {
   color: var(--text-primary);
   font-weight: 600;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-accent {
   color: var(--accent);
@@ -1591,7 +1590,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-dim);
   text-decoration: none;
   transition: color 0.15s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-link:hover {
   color: var(--text-primary);
@@ -1602,7 +1601,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-dim);
   font-style: italic;
   padding: 20px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* ─── Fallback Card ──────────────────────────────────────────────────────── */
@@ -1676,7 +1675,7 @@ input[type="checkbox"]:checked::before {
 .fallback-title {
   font-weight: 600;
   color: rgb(220, 80, 80);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .fallback-id {
   font-size: 0.8rem;
@@ -1686,7 +1685,7 @@ input[type="checkbox"]:checked::before {
 .fallback-hint {
   font-size: 0.8rem;
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .fallback-remove {
   background: rgba(200, 50, 50, 0.15);
@@ -1697,7 +1696,7 @@ input[type="checkbox"]:checked::before {
   cursor: pointer;
   font-size: 0.75rem;
   transition: all 0.15s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .fallback-remove:hover {
   background: rgba(200, 50, 50, 0.25);
@@ -1724,7 +1723,7 @@ input[type="checkbox"]:checked::before {
 .card-error-msg {
   font-weight: 500;
   color: rgb(220, 80, 80);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-error-detail {
   font-size: 0.7rem;
@@ -1820,7 +1819,7 @@ input[type="checkbox"]:checked::before {
 }
 
 .le-title {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -1862,7 +1861,7 @@ input[type="checkbox"]:checked::before {
   padding: 4px 8px;
   border-radius: 4px;
   transition: all 0.15s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   line-height: 1;
 }
 .le-close-btn:hover {
@@ -1876,7 +1875,7 @@ input[type="checkbox"]:checked::before {
   gap: 6px 12px;
   align-items: center;
   min-width: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: var(--text-muted);
   font-size: 0.8rem;
 }
@@ -1904,7 +1903,7 @@ input[type="checkbox"]:checked::before {
   padding: 5px 11px;
   border: none;
   border-radius: 5px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.76rem;
   font-weight: 500;
   cursor: pointer;
@@ -1956,7 +1955,7 @@ input[type="checkbox"]:checked::before {
   letter-spacing: 0.09em;
   color: var(--text-dim);
   padding: 9px 11px 7px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-weight: 500;
   flex-shrink: 0;
   border-bottom: 1px solid var(--border);
@@ -1978,7 +1977,7 @@ input[type="checkbox"]:checked::before {
   background: var(--bg-raised);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.78rem;
   cursor: grab;
   user-select: none;
@@ -1994,7 +1993,7 @@ input[type="checkbox"]:checked::before {
 .le-palette-empty {
   color: var(--text-dim);
   font-size: 0.73rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   padding: 8px 2px;
   margin: 0;
   font-style: italic;
@@ -2132,7 +2131,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-weight: 500;
   font-size: 0.8rem;
   color: var(--text-primary);
@@ -2177,7 +2176,7 @@ input[type="checkbox"]:checked::before {
 .layout-item-hint {
   font-size: 0.65rem;
   color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   flex: 1;
   display: flex;
   align-items: flex-end;
@@ -2275,7 +2274,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   transition: all 0.15s;
 }
 .color-editor-reset:hover {
@@ -2292,7 +2291,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   transition: all 0.12s;
   flex-shrink: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .le-remove-btn:hover {
   color: rgb(215, 75, 75);
@@ -2338,7 +2337,7 @@ input[type="checkbox"]:checked::before {
   flex-shrink: 0;
 }
 .card-manager-title {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -2382,7 +2381,7 @@ input[type="checkbox"]:checked::before {
 .card-manager-section-title {
   margin: 0 0 8px;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -2465,7 +2464,7 @@ input[type="checkbox"]:checked::before {
   gap: 4px;
   color: var(--text-muted);
   font-size: 0.7rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-export-select input {
   appearance: none;
@@ -2504,7 +2503,7 @@ input[type="checkbox"]:checked::before {
 .card-manager-item-label {
   font-weight: 500;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-item-badge {
   font-size: 0.6rem;
@@ -2513,7 +2512,7 @@ input[type="checkbox"]:checked::before {
   background: rgba(47, 48, 112, 0.3);
   color: var(--text-muted);
   text-transform: uppercase;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-item-badge.builtin {
   background: rgba(60, 180, 100, 0.2);
@@ -2532,7 +2531,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.7rem;
   color: var(--text-muted);
   transition: all 0.12s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-item-actions button:hover {
   background: var(--accent-hover);
@@ -2557,7 +2556,7 @@ input[type="checkbox"]:checked::before {
   background: var(--bg-raised);
   color: var(--text-muted);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.8rem;
   transition: all 0.15s;
 }
@@ -2675,7 +2674,7 @@ input[type="checkbox"]:checked::before {
 }
 .catalog-card-info strong {
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .catalog-card-info span {
   color: var(--text-muted);
@@ -2713,7 +2712,7 @@ input[type="checkbox"]:checked::before {
 }
 .card-settings-controls strong {
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.75rem;
 }
 .card-setting-field {
@@ -2733,7 +2732,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.72rem;
 }
 .card-setting-field input[type="checkbox"] {
@@ -2835,7 +2834,7 @@ input[type="checkbox"]:checked::before {
 .card-catalog-detail-info h2 {
   margin: 0;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1.3rem;
 }
 .card-catalog-detail-info p {
@@ -2874,7 +2873,7 @@ input[type="checkbox"]:checked::before {
   background: var(--accent);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -2906,7 +2905,7 @@ input[type="checkbox"]:checked::before {
   background: var(--bg-input);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.72rem;
 }
 .catalog-card-save:hover:not(:disabled) {
@@ -2952,7 +2951,7 @@ input[type="checkbox"]:checked::before {
 }
 .card-upload-label {
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -2966,7 +2965,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-upload-form select {
   min-width: 0;
@@ -2981,7 +2980,7 @@ input[type="checkbox"]:checked::before {
   background: var(--accent);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-upload-form button:hover {
   background: var(--accent-hover);
@@ -2993,7 +2992,7 @@ input[type="checkbox"]:checked::before {
   background: var(--accent);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.8rem;
   margin: 0 auto;
   font-weight: 600;
@@ -3084,7 +3083,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 5px;
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-update-actions {
   display: flex;
@@ -3096,7 +3095,7 @@ input[type="checkbox"]:checked::before {
   padding: 8px 12px;
   border-radius: 5px;
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.78rem;
 }
 .card-update-cancel {
@@ -3202,7 +3201,7 @@ input[type="checkbox"]:checked::before {
   flex-shrink: 0;
 }
 .dev-card-title {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -3267,7 +3266,7 @@ input[type="checkbox"]:checked::before {
     justify-content: space-between;
     gap: 8px;
     color: var(--text-primary);
-    font-family: "Rubik", sans-serif;
+    font-family: "Rubik Variable", "Rubik", sans-serif;
     font-size: 0.8rem;
     font-weight: 600;
   }
@@ -3279,7 +3278,7 @@ input[type="checkbox"]:checked::before {
     background: var(--bg-input);
     color: var(--text-muted);
     cursor: pointer;
-    font-family: "Rubik", sans-serif;
+    font-family: "Rubik Variable", "Rubik", sans-serif;
     font-size: 0.7rem;
   }
   .card-upload-settings-header button:hover,
@@ -3307,7 +3306,7 @@ input[type="checkbox"]:checked::before {
     border-radius: 4px;
     background: var(--bg-input);
     color: var(--text-primary);
-    font-family: "Rubik", sans-serif;
+    font-family: "Rubik Variable", "Rubik", sans-serif;
     font-size: 0.7rem;
   }
   .card-upload-setting-extra {
@@ -3342,7 +3341,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 6px;
   padding: 6px 10px;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   resize: vertical;
 }
@@ -3367,7 +3366,7 @@ input[type="checkbox"]:checked::before {
   padding: 6px 16px;
   border-radius: 6px;
   border: none;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -3397,7 +3396,7 @@ input[type="checkbox"]:checked::before {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .dev-card-sandbox {
   flex: 1;
@@ -3468,3 +3467,234 @@ input[type="checkbox"]:checked::before {
     min-height: 200px;
   }
 }
+
+
+/* ───────── Cards modal (manage · catalog · create) ───────── */
+.cards-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+}
+.cards-modal.active {
+  display: flex;
+}
+.cards-shell {
+  display: flex;
+  flex-direction: column;
+  width: min(1100px, calc(100% - 32px));
+  height: min(820px, calc(100vh - 32px));
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.cards-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  flex-shrink: 0;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+.cards-title {
+  margin: 0;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cards-tabs {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+.cards-tab {
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-muted);
+  font: 500 0.9rem "Rubik Variable", "Rubik", sans-serif;
+  cursor: pointer;
+}
+.cards-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.cards-tab[aria-selected="true"] {
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-color: var(--border-accent, var(--border));
+}
+.cards-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.cards-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.cards-panel[hidden] {
+  display: none;
+}
+.cards-panel-create {
+  padding: 0;
+  overflow: hidden;
+}
+.cards-catalog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.cards-catalog-bar .card-catalog-status {
+  margin: 0;
+}
+.cards-panel .card-manager-actions {
+  margin-top: 14px;
+}
+
+/* The card editor, embedded as the "Create" tab instead of its own overlay */
+.dev-card-embed {
+  position: relative;
+  display: flex;
+  height: 100%;
+}
+.dev-card-embed .dev-card-shell {
+  flex: 1;
+  height: 100%;
+  max-height: none;
+  width: 100%;
+  max-width: none;
+  border: none;
+  border-radius: 0;
+}
+
+/* Connection / stale-data chip in the header */
+.net-status {
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: #f0b429;
+}
+.net-status[hidden] {
+  display: none;
+}
+
+/* Offline readiness (Settings) */
+.offline-ready-list {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.offline-ready-list li::before {
+  content: "○ ";
+  color: var(--text-dim);
+}
+.offline-ready-list li[data-ok="true"]::before {
+  content: "● ";
+  color: #3fb950;
+}
+.offline-ready-list li[data-ok="false"]::before {
+  content: "● ";
+  color: #f0b429;
+}
+.update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  transform: translateX(-50%);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-accent, var(--border));
+  border-radius: 10px;
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ───────── Pit Notes (merged note card) ───────── */
+.pit-notes-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.pit-notes-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-muted);
+  font: 500 0.78rem "Rubik Variable", "Rubik", sans-serif;
+  cursor: pointer;
+}
+.pit-notes-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.pit-notes-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-color: var(--border-accent, var(--border));
+}
+.pit-notes-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.pit-notes-count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.68rem;
+  line-height: 18px;
+  text-align: center;
+}
+.pit-notes-flag {
+  display: inline-flex;
+  color: #f0b429;
+}
+.pit-notes-compact .pit-card,
+.pit-notes-compact .checkin-row {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.pit-notes-compact .pit-status-row {
+  margin-top: 4px;
+}
+.pit-notes .pit-sub {
+  margin-top: 4px;
+}
+.pit-notes .pn-locate {
+  color: var(--accent);
+}
+.pb-icon {
+  flex-shrink: 0;
+  vertical-align: -2px;
+}
+
+/* Robot Viewer card */
+.robot-viewer-frame { display: block; width: 100%; height: 100%; min-height: 240px; border: 0; border-radius: inherit; background: #101722; }

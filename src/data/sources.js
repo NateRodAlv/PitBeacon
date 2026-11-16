@@ -1,231 +1,208 @@
+import { hasRealTbaKey, seasonFor } from "./tba.js";
+
+const TBA_API = "https://www.thebluealliance.com/api/v3";
+const SOURCE_NAMES = [
+  "currentMatches",
+  "currentEventData",
+  "currentRankings",
+  "teamInfo",
+  "teamSummaryData",
+];
+
+function parseLocalDate(isoDate) {
+  const [year, month, day] = String(isoDate).split("-").map(Number);
+  return { year, month: month - 1, day };
+}
+
+/** Whether `now` falls inside an event's date range, including the whole last day. */
+export function isEventActive(event, now) {
+  if (!event?.start_date || !event?.end_date) return false;
+  const start = parseLocalDate(event.start_date);
+  const end = parseLocalDate(event.end_date);
+  const startsAt = new Date(start.year, start.month, start.day, 0, 0, 0, 0);
+  const endsAt = new Date(end.year, end.month, end.day, 23, 59, 59, 999);
+  return now >= startsAt && now <= endsAt;
+}
+
 export class DataSourceManager {
-    constructor(config, stateManager) {
-        this._config = config;
-        this._state = stateManager;
-        this._cache = new Map();
-        this._etagCache = {
-            events: null,
-            matches: {},
-        };
-        this._year = new Date().getFullYear();
+  constructor(config, stateManager) {
+    this._config = config;
+    this._state = stateManager;
+    // url -> { etag, data }: the last good response for every TBA URL, used both
+    // for conditional requests (304) and as the fallback when the network is down.
+    this._store = new Map();
+    this._etagUnsupported = false;
+    this._round = { failed: false };
+    this.lastSuccessAt = null;
+  }
+
+  updateConfig(config) {
+    this._config = config;
+    this.clearCache();
+  }
+
+  clearCache() {
+    this._store.clear();
+  }
+
+  getSourceNames() {
+    return [...SOURCE_NAMES];
+  }
+
+  async fetch(sourceName) {
+    switch (sourceName) {
+      case "currentMatches":
+        return this._state.getState().currentMatches || null;
+      case "currentEventData":
+        return this._state.getState().currentEventData || null;
+      case "currentRankings":
+        return this._state.getState().currentRankings || null;
+      case "teamInfo":
+        return this._fetchTeamInfo();
+      case "teamSummaryData":
+        return this._state.getState().currentTeamSummaryData || null;
+      default:
+        return null;
+    }
+  }
+
+  _hasRealApiKey() {
+    return hasRealTbaKey(this._config);
+  }
+
+  _season() {
+    return seasonFor(this._config, this._state.getState());
+  }
+
+  async _request(url, headers) {
+    try {
+      return await fetch(url, { headers });
+    } catch (error) {
+      // A browser that rejects the conditional header outright shows up as a
+      // network error. Retry once without it and stop sending it from now on.
+      if (headers["If-None-Match"]) {
+        this._etagUnsupported = true;
+        const plain = { ...headers };
+        delete plain["If-None-Match"];
+        return fetch(url, { headers: plain });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * GET a TBA path. Revalidates with the stored ETag, and on any failure falls
+   * back to the last good copy so cards keep showing data on a flaky connection.
+   * Returns null when there is nothing to show (no key, 404, or never fetched).
+   */
+  async _tba(path) {
+    if (!this._hasRealApiKey()) return null;
+    const url = `${TBA_API}${path}`;
+    const entry = this._store.get(url);
+    const headers = { "X-TBA-Auth-Key": this._config.tbaapikey };
+    if (entry?.etag && !this._etagUnsupported) headers["If-None-Match"] = entry.etag;
+
+    try {
+      const response = await this._request(url, headers);
+      if (response.status === 304 && entry) {
+        this.lastSuccessAt = Date.now();
+        return entry.data;
+      }
+      if (response.status === 404) {
+        this._store.delete(url);
+        this.lastSuccessAt = Date.now();
+        return null;
+      }
+      if (!response.ok) throw new Error(`API Error: ${response.status}`);
+      const data = await response.json();
+      this._store.set(url, { etag: response.headers.get("ETag"), data });
+      this.lastSuccessAt = Date.now();
+      return data;
+    } catch (error) {
+      console.warn(`TBA request failed (${path}):`, error);
+      this._round.failed = true;
+      return entry ? entry.data : null;
+    }
+  }
+
+  async _fetchTeamInfo() {
+    if (!this._hasRealApiKey()) return { events: [] };
+    const events = await this._tba(`/team/frc${this._config.teamNumber}/events/${this._season()}`);
+    return events ? { events } : null;
+  }
+
+  /** One polling round: the team's current event with its matches and rankings. */
+  async fetchAll() {
+    if (!this._hasRealApiKey()) return null;
+    this._round = { failed: false };
+
+    const teamInfo = await this._fetchTeamInfo();
+    if (!teamInfo?.events) return null;
+
+    const now = this._state.getState().fullDate || new Date();
+    const event = teamInfo.events.find((candidate) => isEventActive(candidate, now));
+
+    let matches = null;
+    let eventData = null;
+    let rankings = null;
+    if (event) {
+      const team = this._config.teamNumber;
+      matches = await this._tba(`/team/frc${team}/event/${event.key}/matches/simple`);
+      if (matches) eventData = event;
+      const rankingsResult = await this._tba(`/event/${event.key}/rankings`);
+      rankings = rankingsResult?.rankings ?? null;
     }
 
-    updateConfig(config) {
-        this._config = config;
-        // Clear ETag cache when config changes
-        this._etagCache.events = null;
-        this._etagCache.matches = {};
-        this._cache.clear();
+    return {
+      matches,
+      eventData,
+      rankings,
+      stale: this._round.failed,
+      fetchedAt: this.lastSuccessAt,
+    };
+  }
+
+  /** Rank, record and win rate for the team at the given event. */
+  async fetchTeamSummary(eventKey) {
+    const team = this._config.teamNumber;
+    const eventName = this._state.getState().currentEventData?.name || null;
+
+    if (!team || !this._hasRealApiKey()) {
+      return {
+        teamSummary: {
+          eventRank: "–",
+          eventRecord: { wins: 0, losses: 0, ties: 0 },
+          winRate: "–",
+          seasonEventCount: 0,
+          eventName,
+        },
+      };
     }
 
-    getSourceNames() {
-        return ['currentMatches', 'currentEventData', 'currentRankings', 'teamInfo', 'teamSummaryData'];
-    }
+    const [teamEvents, eventStatus, rankings] = await Promise.all([
+      this._tba(`/team/frc${team}/events/${this._season()}`),
+      eventKey ? this._tba(`/team/frc${team}/event/${eventKey}/status`) : null,
+      eventKey ? this._tba(`/event/${eventKey}/rankings`) : null,
+    ]);
 
-    async fetch(sourceName) {
-        switch (sourceName) {
-            case 'currentMatches':
-                return this._fetchMatches();
-            case 'currentEventData':
-                return this._fetchEventData();
-            case 'currentRankings':
-                return this._fetchRankings();
-            case 'teamInfo':
-                return this._fetchTeamInfo();
-            case 'teamSummaryData':
-                return this._fetchTeamSummaryData();
-            default:
-                return null;
-        }
-    }
+    const rankingEntry = Array.isArray(rankings?.rankings)
+      ? rankings.rankings.find((entry) => entry.team_key === `frc${team}`)
+      : null;
+    const record = rankingEntry?.record || eventStatus?.qual?.record || null;
+    const eventRank = rankingEntry?.rank ?? eventStatus?.qual?.rank ?? null;
+    const wins = record?.wins ?? 0;
+    const losses = record?.losses ?? 0;
+    const ties = record?.ties ?? 0;
+    const games = wins + losses + ties;
 
-    _hasRealApiKey() {
-        const key = (this._config.tbaapikey || "").toString().trim();
-        if (!key) return false;
-        const normalized = key.toLowerCase();
-        return !["your_auth_key", "your auth key", "tba key", "your-api-key", "your api key"].includes(normalized);
-    }
-
-    async fetchAll() {
-        if (!this._hasRealApiKey()) {
-            return null;
-        }
-
-        const teamInfo = await this._fetchTeamInfo();
-        if (!teamInfo || !teamInfo.events) {
-            return null;
-        }
-
-        const events = teamInfo.events;
-        const fullDate = this._state.getState().fullDate || new Date();
-
-        let matches = null;
-        let eventData = null;
-        let rankings = null;
-
-        for (const event of events) {
-            if (!event.start_date || !event.end_date) continue;
-            
-            const [startYear, startMonth, startDay] = event.start_date.split('-');
-            const [endYear, endMonth, endDay] = event.end_date.split('-');
-            const eventStart = new Date(startYear, startMonth - 1, startDay);
-            const eventEnd = new Date(endYear, endMonth - 1, endDay);
-
-            if (fullDate >= eventStart && fullDate <= eventEnd) {
-                // Fetch matches for this event
-                const matchesResult = await this._fetchMatchesForEvent(event.key);
-                if (matchesResult) {
-                    matches = matchesResult;
-                    eventData = event;
-                }
-
-                // Fetch rankings
-                const rankingsResult = await this._fetchRankingsForEvent(event.key);
-                if (rankingsResult) {
-                    rankings = rankingsResult;
-                }
-
-                break;
-            }
-        }
-
-        return { matches, eventData, rankings };
-    }
-
-    async _fetchTeamInfo() {
-        if (!this._hasRealApiKey()) {
-            return { events: [] };
-        }
-
-        const cacheKey = 'teamInfo';
-        if (this._cache.has(cacheKey)) {
-            return this._cache.get(cacheKey);
-        }
-
-        try {
-            const response = await fetch(
-                `https://www.thebluealliance.com/api/v3/team/frc${this._config.teamNumber}/events/${this._year}`,
-                { headers: { 'X-TBA-Auth-Key': this._config.tbaapikey } }
-            );
-
-            if (response.status === 304 && this._etagCache.events) {
-                // Use cached data
-                return this._cache.get('teamInfo_cached');
-            }
-
-            const etag = response.headers.get('ETag');
-            if (etag) this._etagCache.events = etag;
-
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
-            
-            const data = await response.json();
-            const result = { events: data };
-            this._cache.set(cacheKey, result);
-            this._cache.set('teamInfo_cached', result);
-            return result;
-        } catch (error) {
-            console.warn('Team info fetch failed:', error);
-            return null;
-        }
-    }
-
-    async _fetchMatchesForEvent(eventKey) {
-        if (!this._hasRealApiKey()) {
-            return null;
-        }
-
-        const cacheKey = `matches_${eventKey}`;
-        if (this._cache.has(cacheKey)) {
-            return this._cache.get(cacheKey);
-        }
-
-        try {
-            const headers = { 'X-TBA-Auth-Key': this._config.tbaapikey };
-            if (this._etagCache.matches[eventKey]) {
-                headers['If-None-Match'] = this._etagCache.matches[eventKey];
-            }
-
-            const response = await fetch(
-                `https://www.thebluealliance.com/api/v3/team/frc${this._config.teamNumber}/event/${eventKey}/matches/simple`,
-                { headers }
-            );
-
-            if (response.status === 304) {
-                return this._cache.get(`matches_cached_${eventKey}`) || null;
-            }
-
-            const etag = response.headers.get('ETag');
-            if (etag) this._etagCache.matches[eventKey] = etag;
-
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
-            
-            const data = await response.json();
-            this._cache.set(cacheKey, data);
-            this._cache.set(`matches_cached_${eventKey}`, data);
-            return data;
-        } catch (error) {
-            console.warn('Matches fetch failed:', error);
-            return null;
-        }
-    }
-
-    async _fetchRankingsForEvent(eventKey) {
-        if (!this._hasRealApiKey()) {
-            return null;
-        }
-
-        const cacheKey = `rankings_${eventKey}`;
-        if (this._cache.has(cacheKey)) {
-            return this._cache.get(cacheKey);
-        }
-
-        try {
-            const response = await fetch(
-                `https://www.thebluealliance.com/api/v3/event/${eventKey}/rankings`,
-                { headers: { 'X-TBA-Auth-Key': this._config.tbaapikey } }
-            );
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    this._cache.set(cacheKey, null);
-                    return null;
-                }
-                throw new Error(`API Error: ${response.status}`);
-            }
-
-            const data = await response.json();
-            const rankings = data?.rankings ?? null;
-            this._cache.set(cacheKey, rankings);
-            return rankings;
-        } catch (error) {
-            console.warn('Rankings fetch failed:', error);
-            return null;
-        }
-    }
-
-    async _fetchMatches() {
-        const state = this._state.getState();
-        return state.currentMatches || null;
-    }
-
-    async _fetchEventData() {
-        const state = this._state.getState();
-        return state.currentEventData || null;
-    }
-
-    async _fetchRankings() {
-        const state = this._state.getState();
-        return state.currentRankings || null;
-    }
-
-    async _fetchTeamSummaryData() {
-        const state = this._state.getState();
-        return state.currentTeamSummaryData || null;
-    }
-
-    clearCache() {
-        this._cache.clear();
-        this._etagCache.events = null;
-        this._etagCache.matches = {};
-    }
+    return {
+      teamSummary: {
+        eventRank,
+        eventRecord: { wins, losses, ties },
+        winRate: games > 0 ? `${((wins / games) * 100).toFixed(1)}%` : "–",
+        seasonEventCount: Array.isArray(teamEvents) ? teamEvents.length : 0,
+        eventName,
+      },
+    };
+  }
 }

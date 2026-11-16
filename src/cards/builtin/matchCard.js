@@ -6,9 +6,6 @@ export function createMatchCard() {
         icon: 'tournament',
         builtin: true,
         render: (element, state, sdk) => {
-            const matches = state.currentMatches || [];
-            const teamNumber = sdk.getConfig('teamNumber');
-            const currentTime = Math.floor(state.fullDate?.getTime() / 1000 || Date.now() / 1000);
 
             if (!element._matchCardInitialized) {
                 sdk.updateCard(

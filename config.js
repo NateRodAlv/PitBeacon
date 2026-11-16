@@ -1,8 +1,20 @@
+/** The layout a fresh install starts with (3x3 grid) and what "Reset layout" restores. */
+export const DEFAULT_LAYOUT = {
+  "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
+  "stats-card": { x: 0, y: 1, width: 1, height: 1 },
+  "pit-notes-card": { x: 0, y: 2, width: 1, height: 1 },
+  "robot-viewer-card": { x: 1, y: 0, width: 1, height: 2 },
+  "leaderboard-card": { x: 1, y: 2, width: 1, height: 1 },
+  "match-card": { x: 2, y: 0, width: 1, height: 3 },
+};
+
 export const config = {
   teamNumber: 7250,
   tbaapikey: "YOUR_AUTH_KEY",
   match13apikey: "",
-  match13ProxyUrl: "https://pitbeacon.rodriguezalvaradonathan.workers.dev", 
+  match13ProxyUrl: "https://pitbeacon.rodriguezalvaradonathan.workers.dev",
+  // Pin a past season (for example 2026) to replay it. Empty follows the date being shown.
+  seasonYearOverride: "",
   noteAlarmToggle: false,
   noteAlarmThreshold: 8,
   noteAlarmSound: "alarm1",
@@ -13,12 +25,7 @@ export const config = {
   gridCols: 3,
   gridRows: 3,
   hiddenSections: [],
-  layout: {
-    "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
-    "match-card": { x: 2, y: 0, width: 1, height: 3 },
-    "leaderboard-card": { x: 1, y: 0, width: 1, height: 3 },
-    "stats-card": { x: 0, y: 1, width: 1, height: 2 },
-  },
+  layout: structuredClone(DEFAULT_LAYOUT),
   activeProfileName: "Default",
   layoutProfiles: {},
   autoSwapEnabled: false,
@@ -51,31 +58,17 @@ export const config = {
       builtin: true,
     },
     {
-      id: "robot-health-card",
-      label: "Robot Health",
+      id: "pit-notes-card",
+      label: "Pit Notes",
       icon: "tool",
       selfRefresh: false,
       builtin: true,
     },
     {
-      id: "battery-card",
-      label: "Batteries",
-      icon: "battery",
-      selfRefresh: false,
-      builtin: true,
-    },
-    {
-      id: "parts-card",
-      label: "Parts Inventory",
-      icon: "package",
-      selfRefresh: false,
-      builtin: true,
-    },
-    {
-      id: "checkin-card",
-      label: "Pit Check-In",
-      icon: "checklist",
-      selfRefresh: false,
+      id: "robot-viewer-card",
+      label: "3D Robot Viewer",
+      icon: "cube",
+      selfRefresh: true,
       builtin: true,
     },
     {

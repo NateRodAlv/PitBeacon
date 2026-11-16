@@ -1,0 +1,7 @@
+dist
+node_modules
+package-lock.json
+src/styles/main.css
+index.html
+src/admin
+pitbeacon-developer-editor-guide.md

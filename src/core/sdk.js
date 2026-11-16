@@ -266,12 +266,32 @@ export class SDK {
     return this._storage;
   }
 
-  _buildStorage() {
-    const namespace = `pitbeaconCardStorage:${this._cardId || "global"}:`;
+  /** Storage scoped to one card id: keys from different cards can never collide or be read across. */
+  storageFor(cardId) {
+    if (!cardId) return this._storage;
+    this._scopedStorage ??= new Map();
+    if (!this._scopedStorage.has(cardId)) {
+      this._scopedStorage.set(cardId, this._buildStorage(cardId));
+    }
+    return this._scopedStorage.get(cardId);
+  }
+
+  _buildStorage(scopeId = this._cardId) {
+    const namespace = `pitbeaconCardStorage:${scopeId || "global"}:`;
+    const legacyNamespace = "pitbeaconCardStorage:global:";
     return {
       get: (key) => {
         try {
-          const raw = window.localStorage.getItem(namespace + key);
+          let raw = window.localStorage.getItem(namespace + key);
+          if (raw === null && scopeId) {
+            // Older versions kept every card's data in one shared namespace.
+            // Adopt a legacy value once, then it lives under this card.
+            const legacy = window.localStorage.getItem(legacyNamespace + key);
+            if (legacy !== null) {
+              window.localStorage.setItem(namespace + key, legacy);
+              raw = legacy;
+            }
+          }
           return raw === null ? null : JSON.parse(raw);
         } catch (err) {
           console.warn("sdk.storage.get failed:", err);
@@ -310,6 +330,7 @@ export class SDK {
       "match13ProxyUrl",
       "matchAlarmSound",
       "noteAlarmSound",
+      "noteAlarmToggle",
       "eventName",
     ];
 
