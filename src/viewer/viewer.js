@@ -635,13 +635,11 @@ const LIGHT_SCALE = Math.PI;
     }
     const span = after.time - before.time;
     const amount = before === after || span <= 0 ? 0 : easeProgress(clamp((timelineTime - before.time) / span, 0, 1), before.easing);
-    const values = new Map();
     mechanisms.forEach((mech) => {
       const start = Number(before.values[mech.id] ?? mech.value) || 0;
       const end = Number(after.values[mech.id] ?? start) || 0;
-      values.set(mech.id, start + (end - start) * amount);
+      setMechanismValue(mech, start + (end - start) * amount, true);
     });
-    setMechanismValues(values, true);
     if (timelineCameraEnabled && before.camera && after.camera) {
       const position = before.camera.position.map((value, i) => value + (after.camera.position[i] - value) * amount);
       const lookAt = before.camera.target.map((value, i) => value + (after.camera.target[i] - value) * amount);
@@ -853,7 +851,6 @@ const LIGHT_SCALE = Math.PI;
   let timelineCameraEnabled = true;
   let timelineDrag = null;
   const bases = new Map();      // mech.id → rest transform of its node (kept out of saved JSON)
-  const urdfLinkBases = new Map();
   const mechUI = new Map();     // mech.id → { slider, out }
   let modelName = "", modelSize = 1;
 
@@ -1315,7 +1312,6 @@ const LIGHT_SCALE = Math.PI;
             ...connector,
             name: previous?.name || connector.name,
             value: Number(previous?.value) || connector.value,
-            reverseSide: previous?.reverseSide === true,
             motion: connector.motion,
             _motion: connector.motion,
           };
@@ -1335,7 +1331,6 @@ const LIGHT_SCALE = Math.PI;
       mechanisms.filter((connector) => connector.source === "manual").forEach(attachManualConnector);
       modelBox = info.box;
       applyModelBottom(modelBottom);
-      captureMechanismBases();
       modelName = (files.find((f) => /\.(urdf|glb|gltf)$/i.test(f.name)) || files[0]).name.split(/[\\/]/).pop();
       applyStyle(info.meshes);
       setupModelAnimations(modelAnimations);
@@ -1349,7 +1344,7 @@ const LIGHT_SCALE = Math.PI;
       mechanisms.forEach((m) => {
         if (m.motion) m._motion = m.motion;
       });
-      recomputeMechanisms();
+      mechanisms.forEach((m) => { if (m.value) setMechanismValue(m, m.value, true); });
       autoFit = true;
       fitModel();
       revealed = String(viewerSettings.controlsMode) !== "hidden"; applyUiState();
@@ -1386,70 +1381,24 @@ const LIGHT_SCALE = Math.PI;
   const decimals = (mech) => (mech.type === "rotate" ? 0 : mech.range < 1 ? 3 : mech.range < 10 ? 2 : 1);
   const formatValue = (mech) => (Number(mech.value) || 0).toFixed(decimals(mech)) + (mech.type === "rotate" ? "°" : "");
 
-  function captureMechanismBase(mech) {
+  function setMechanismValue(mech, value, silent) {
+    markersDirty = true;
+    mech.value = clamp(Number(value) || 0, Number.isFinite(mech.min) ? mech.min : -Infinity, Number.isFinite(mech.max) ? mech.max : Infinity);
+    const ui = mechUI.get(mech.id);
+    if (ui) { ui.slider.value = mech.value; ui.out.textContent = formatValue(mech); }
+    if (mech.jointType === "fixed") return;
     const objs = mech._motion ? [mech._motion] : (mech.nodes || []).map((l) => nodeMap.get(l)).filter(Boolean);
-    if (!objs.length) return null;
-    const st = { items: [], pivot: null };
-    objs.forEach((o) => {
-      o.updateMatrix();
-      st.items.push({
-        obj: o,
-        local: o.matrix.clone(),
-        p: o.position.toArray(),
-        q: o.quaternion.clone(),
-        s: o.scale.toArray(),
-        r: [o.rotation.x, o.rotation.y, o.rotation.z],
-      });
-    });
-    if (mech.type === "rotate" && mech.space !== "local" && mech.pivotMode === "center") {
-      const b = new THREE.Box3(); objs.forEach((o) => b.expandByObject(o));
-      if (!b.isEmpty()) st.pivot = b.getCenter(new THREE.Vector3());
+    if (!objs.length) return;
+    let st = bases.get(mech.id);
+    if (!st) {
+      st = { items: [], pivot: null };
+      objs.forEach((o) => { o.updateMatrix(); st.items.push({ obj: o, local: o.matrix.clone(), p: o.position.toArray(), q: o.quaternion.clone(), r: [o.rotation.x, o.rotation.y, o.rotation.z] }); });
+      if (mech.type === "rotate" && mech.space !== "local" && mech.pivotMode === "center") {
+        const b = new THREE.Box3(); objs.forEach((o) => b.expandByObject(o));
+        if (!b.isEmpty()) st.pivot = b.getCenter(new THREE.Vector3());
+      }
+      bases.set(mech.id, st);
     }
-    bases.set(mech.id, st);
-    return st;
-  }
-
-  function captureMechanismBases() {
-    bases.clear();
-    urdfLinkBases.clear();
-    if (robotRoot?.userData.rbvURDF) {
-      nodeList.forEach(({ label }) => {
-        const link = nodeMap.get(label);
-        if (link?.userData.rbvPart) urdfLinkBases.set(link, {
-          p: link.position.toArray(),
-          q: link.quaternion.clone(),
-          s: link.scale.toArray(),
-        });
-      });
-    }
-    mechanisms.forEach(captureMechanismBase);
-  }
-
-  function restoreMechanismBases() {
-    urdfLinkBases.forEach((base, link) => {
-      link.position.fromArray(base.p);
-      link.quaternion.copy(base.q);
-      link.scale.fromArray(base.s);
-      link.updateMatrix();
-    });
-    if (robotRoot) robotRoot.updateMatrixWorld(true);
-    mechanisms.forEach((mech) => {
-      const st = bases.get(mech.id) || captureMechanismBase(mech);
-      st?.items.forEach((item) => {
-        item.obj.position.fromArray(item.p);
-        item.obj.quaternion.copy(item.q);
-        item.obj.scale.fromArray(item.s);
-        item.obj.updateMatrix();
-      });
-    });
-    if (robotRoot) robotRoot.updateMatrixWorld(true);
-  }
-
-  function applyMechanismValue(mech) {
-    if (mech.jointType === "fixed" || mech.reverseSide) return;
-    const st = bases.get(mech.id);
-    if (!st) return;
-    const objs = st.items.map((item) => item.obj);
     const idx = AXIS[mech.axis] || 0;
     const rad = THREE.MathUtils.degToRad(mech.value);
     st.items.forEach((it) => {
@@ -1460,17 +1409,16 @@ const LIGHT_SCALE = Math.PI;
           o.position.fromArray(it.p);
           o.quaternion.copy(it.q).multiply(new THREE.Quaternion().setFromAxisAngle(axis, rad));
         } else {
-          o.position.fromArray(it.p).addScaledVector(axis, mech.value);
+          o.position.fromArray(it.p).addScaledVector(axis.clone().applyQuaternion(it.q), mech.value);
           o.quaternion.copy(it.q);
         }
         return;
       }
-      if (mech.space === "local") { // controls made by the first version of this card: move in the part's own parent space
+      if (mech.space === "local") {
         if (mech.type === "rotate") { const r = it.r.slice(); r[idx] += rad; o.rotation.set(r[0], r[1], r[2]); }
         else { const p = it.p.slice(); p[idx] += mech.value; o.position.set(p[0], p[1], p[2]); }
         return;
       }
-      // World-axis motion applied on top of each part's rest pose, so a group of parts moves as one rigid piece.
       const pw = o.parent ? o.parent.matrixWorld : MI;
       M1.multiplyMatrices(pw, it.local);
       V1.set(0, 0, 0); V1.setComponent(idx, 1);
@@ -1487,73 +1435,6 @@ const LIGHT_SCALE = Math.PI;
       M2.decompose(o.position, o.quaternion, o.scale);
     });
     objs.forEach((o) => o.updateMatrixWorld(true));
-  }
-
-  function applyReverseSideMotions() {
-    const entries = mechanisms.filter((mech) => mech.reverseSide && mech.type === "rotate" && mech.value && mech.motion?.parent && mech.parentBranch?.length);
-    for (const mech of entries) {
-      const frame = mech.motion.parent;
-      frame.updateWorldMatrix(true, false);
-      const pivot = frame.getWorldPosition(new THREE.Vector3());
-      const axis = new THREE.Vector3(...(mech.axisVector || [1, 0, 0]))
-        .applyQuaternion(frame.getWorldQuaternion(new THREE.Quaternion()))
-        .normalize();
-      const rotation = new THREE.Quaternion().setFromAxisAngle(axis, -THREE.MathUtils.degToRad(mech.value));
-      const transform = new THREE.Matrix4()
-        .makeTranslation(pivot.x, pivot.y, pivot.z)
-        .multiply(new THREE.Matrix4().makeRotationFromQuaternion(rotation))
-        .multiply(new THREE.Matrix4().makeTranslation(-pivot.x, -pivot.y, -pivot.z));
-      const targets = mech.parentBranch.map((link) => {
-        link.updateWorldMatrix(true, false);
-        return { link, world: new THREE.Matrix4().multiplyMatrices(transform, link.matrixWorld) };
-      });
-      const fixedTargets = (mech.childBranch || []).map((link) => {
-        link.updateWorldMatrix(true, false);
-        return { link, world: link.matrixWorld.clone() };
-      });
-      const depth = (object) => {
-        let result = 0;
-        for (let parent = object.parent; parent; parent = parent.parent) result++;
-        return result;
-      };
-      const applyWorldTargets = (items) => {
-        items.sort((a, b) => depth(a.link) - depth(b.link));
-        items.forEach(({ link, world }) => {
-          link.parent.updateWorldMatrix(true, false);
-          const local = new THREE.Matrix4().copy(link.parent.matrixWorld).invert().multiply(world);
-          local.decompose(link.position, link.quaternion, link.scale);
-          link.updateMatrixWorld(true);
-        });
-      };
-      applyWorldTargets(targets);
-      applyWorldTargets(fixedTargets);
-    }
-  }
-
-  function recomputeMechanisms() {
-    markersDirty = true;
-    restoreMechanismBases();
-    mechanisms.forEach(applyMechanismValue);
-    applyReverseSideMotions();
-    if (robotRoot) robotRoot.updateMatrixWorld(true);
-  }
-
-  function setMechanismValues(values, silent) {
-    mechanisms.forEach((mech) => {
-      const value = values instanceof Map ? values.get(mech.id) : values[mech.id];
-      if (value !== undefined) mech.value = clamp(Number(value) || 0, Number.isFinite(mech.min) ? mech.min : -Infinity, Number.isFinite(mech.max) ? mech.max : Infinity);
-      const ui = mechUI.get(mech.id);
-      if (ui) { ui.slider.value = mech.value; ui.out.textContent = formatValue(mech); }
-    });
-    recomputeMechanisms();
-    if (!silent) requestRender();
-  }
-
-  function setMechanismValue(mech, value, silent) {
-    mech.value = clamp(Number(value) || 0, Number.isFinite(mech.min) ? mech.min : -Infinity, Number.isFinite(mech.max) ? mech.max : Infinity);
-    const ui = mechUI.get(mech.id);
-    if (ui) { ui.slider.value = mech.value; ui.out.textContent = formatValue(mech); }
-    recomputeMechanisms();
     if (!silent) requestRender();
   }
 
@@ -1654,24 +1535,6 @@ const LIGHT_SCALE = Math.PI;
       if (mech.jointType === "fixed") slider.disabled = true;
       if (!present) slider.disabled = true;
       const out = el("output", { text: formatValue(mech) });
-      const reverseSideButton = mech.source === "urdf" && mech.type === "rotate"
-        ? el("button", {
-            type: "button",
-            class: "rbv-btn rbv-btn-ghost rbv-edit-only",
-            text: mech.reverseSide ? "Parent moves" : "Move parent",
-            title: "Moves the parent-side links and the URDF root while keeping the child-side links fixed.",
-            "aria-label": "Move the parent-side branch for " + mech.name,
-            "aria-pressed": String(mech.reverseSide === true),
-            onclick: (event) => {
-              mech.reverseSide = !mech.reverseSide;
-              event.currentTarget.textContent = mech.reverseSide ? "Parent moves" : "Move parent";
-              event.currentTarget.setAttribute("aria-pressed", String(mech.reverseSide));
-              recomputeMechanisms();
-              requestRender();
-              saveSetup();
-            },
-          })
-        : null;
       slider.addEventListener("input", () => { setMechanismValue(mech, slider.value); saveSetup(); });
       const row = el("div", { class: "rbv-mech-row" + (present ? "" : " missing") },
         el("div", { class: "rbv-mech-head" },
@@ -1680,7 +1543,6 @@ const LIGHT_SCALE = Math.PI;
             el("div", { class: "rbv-mech-node", text: connectorDetails })),
           el("div", { class: "rbv-mech-actions" },
             el("button", { type: "button", class: "rbv-btn", text: "Zero", onclick: () => { setMechanismValue(mech, 0); saveSetup(); } }),
-            reverseSideButton,
             mech.source !== "urdf" && mech.jointType !== "fixed" ? el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "Edit", onclick: () => { editingMechanismId = editingMechanismId === mech.id ? null : mech.id; renderMechanisms(); } }) : null,
             el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "×", "aria-label": "Remove", onclick: () => {
               if (bases.has(mech.id)) setMechanismValue(mech, 0);
@@ -1703,9 +1565,7 @@ const LIGHT_SCALE = Math.PI;
       const row = el("div", { class: "rbv-preset-row" }, nameBox,
         el("div", null,
           el("button", { type: "button", class: "rbv-btn", text: "Apply", onclick: () => {
-          const values = new Map();
-          mechanisms.forEach((m) => { const v = preset.values && preset.values[m.id]; if (v !== undefined) values.set(m.id, v); });
-          setMechanismValues(values, true);
+          mechanisms.forEach((m) => { const v = preset.values && preset.values[m.id]; if (v !== undefined) setMechanismValue(m, v, true); });
           requestRender(); saveSetup(); setStatus("Pose: " + preset.name);
           } }),
           el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "Rename", onclick: () => {
@@ -1756,7 +1616,6 @@ const LIGHT_SCALE = Math.PI;
         type: connector.type,
         axis: connector.axis,
         axisVector: connector.axisVector,
-        reverseSide: connector.reverseSide === true,
         range: connector.range,
         min: connector.min,
         max: connector.max,
@@ -1773,7 +1632,6 @@ const LIGHT_SCALE = Math.PI;
     if (!Array.isArray(m.nodes)) { m.nodes = m.node ? [m.node] : []; m.space = "local"; } // first-version controls keep their original behaviour
     delete m.node;
     m.source = ["urdf", "manual"].includes(m.source) ? m.source : "legacy";
-    m.reverseSide = m.reverseSide === true;
     if (m.source === "manual") m.partId = String(m.partId || m.nodes[0] || "");
     m.space = m.space || "world"; m.pivotMode = ["center", "origin", "cursor"].includes(m.pivotMode) ? m.pivotMode : "center";
     m.pivot = Array.isArray(m.pivot) && m.pivot.length >= 3 ? m.pivot.slice(0, 3).map((v) => Number.isFinite(Number(v)) ? Number(v) : 0) : [0, 0, 0];
@@ -2142,8 +2000,6 @@ const LIGHT_SCALE = Math.PI;
       return;
     }
     mechanisms.push(connector);
-    captureMechanismBase(connector);
-    recomputeMechanisms();
     backfillTimelineValues();
     closeAddForm(); renderMechanisms(); saveSetup();
   });
@@ -2164,16 +2020,17 @@ const LIGHT_SCALE = Math.PI;
     try {
       const data = JSON.parse(await file.text());
       if (![1, 2].includes(data.version)) throw new Error("Unsupported setup version.");
-      restoreMechanismBases();
+      mechanisms.forEach((connector) => {
+        if (bases.has(connector.id)) setMechanismValue(connector, 0, true);
+      });
       mechanisms.filter((connector) => connector.source === "manual").forEach(detachManualConnector);
       const savedConnectors = data.version === 2 ? data.connectors : data.mechanisms;
       mechanisms = Array.isArray(savedConnectors) ? savedConnectors.map(normMech) : [];
+      bases.clear();
       mechanisms.forEach((connector) => {
         if (connector.source === "urdf") {
           connector.motion = nodeMap.get(connector.id);
           connector._motion = connector.motion;
-          connector.parentBranch = connector.motion?.userData.rbvParentBranch || [];
-          connector.childBranch = connector.motion?.userData.rbvChildBranch || [];
         } else if (connector.source === "manual" && robotRoot) {
           attachManualConnector(connector);
         }
@@ -2186,8 +2043,10 @@ const LIGHT_SCALE = Math.PI;
       timeline = savedTimelines.find((item) => item.id === activeTimelineId);
       backfillTimelineValues();
       timelineTime = 0;
-      captureMechanismBases(); renderMechanisms(); renderPresets();
-      recomputeMechanisms();
+      mechanisms.forEach((connector) => {
+        if (connector.value) setMechanismValue(connector, connector.value, true);
+      });
+      renderMechanisms(); renderPresets();
       await saveSetupNow(); setStatus("Setup imported");
     } catch (err) { fail("Could not import setup: " + err.message); }
     e.target.value = "";

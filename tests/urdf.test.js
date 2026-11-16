@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as THREE from "three";
 import { parseURDF } from "../src/viewer/urdf.js";
 
 function urdfFile(xml) {
@@ -26,7 +27,7 @@ describe("URDF parsing", () => {
         <link name="arm"><visual><geometry><cylinder radius="0.2" length="1"/></geometry></visual></link>
         <joint name="shoulder" type="revolute">
           <parent link="base"/><child link="arm"/>
-          <origin xyz="0 0 1" rpy="0 0 0"/><axis xyz="0 1 0"/>
+          <origin xyz="0 0 1" rpy="0.3 -0.4 0.7"/><axis xyz="0 1 0"/>
           <limit lower="-1" upper="0.5"/>
         </joint>
       </robot>
@@ -44,9 +45,16 @@ describe("URDF parsing", () => {
     });
     expect(model.connectors[0].min).toBeCloseTo(-57.2958, 3);
     expect(model.connectors[0].max).toBeCloseTo(28.6479, 3);
-    expect(model.connectors[0].motion.parent).toBe(model.connectorFrames[0]);
-    expect(model.connectors[0].parentBranch.map((link) => link.name)).toEqual(["base"]);
-    expect(model.connectors[0].childBranch.map((link) => link.name)).toEqual(["arm"]);
+    const jointFrame = model.connectors[0].motion;
+    const expectedOriginRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.3, -0.4, 0.7, "ZYX"));
+    expect(jointFrame).toBe(model.connectorFrames[0]);
+    expect(jointFrame.parent).toBe(model.rootLink);
+    expect(jointFrame.children[0].name).toBe("arm");
+    expect(jointFrame.position.toArray()).toEqual([0, 0, 1]);
+    expect(jointFrame.quaternion.x).toBeCloseTo(expectedOriginRotation.x);
+    expect(jointFrame.quaternion.y).toBeCloseTo(expectedOriginRotation.y);
+    expect(jointFrame.quaternion.z).toBeCloseTo(expectedOriginRotation.z);
+    expect(jointFrame.quaternion.w).toBeCloseTo(expectedOriginRotation.w);
     expect(model.rootLink.userData.rbvVisuals.children[0].geometry).toBeTruthy();
   });
 
