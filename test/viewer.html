@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Robot Viewer</title>
+    <script type="module" crossorigin src="./assets/viewer-BvZ-T8y6.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-XKyaHtl9.js">
+    <link rel="modulepreload" crossorigin href="./assets/robotParts-Jpkix48K.js">
+    <link rel="stylesheet" crossorigin href="./assets/viewer-BIcpTotD.css">
+  <link rel="manifest" href="./manifest.webmanifest"></head>
+  <body>
+<div class="rbv" id="rbvRoot">
+  <div class="rbv-stage" id="rbvStage">
+    <div class="rbv-empty" id="rbvEmpty">
+      <div class="rbv-cube">◇</div>
+      <strong>Load your robot model</strong>
+      <span>Choose or drop an exported .glb file (or a .gltf together with its .bin and texture files). Drag to orbit, scroll or pinch to zoom, right-drag or two fingers to pan.</span>
+    </div>
+
+    <div id="rbvMarquee" class="rbv-marquee" hidden aria-hidden="true"></div>
+
+    <div class="rbv-status" id="rbvStatus" role="status" aria-live="polite"></div>
+
+    <div class="rbv-chrome rbv-bar" id="rbvBar">
+      <label class="rbv-file">
+        <input id="rbvFile" type="file" multiple accept=".glb,.gltf,.bin,.png,.jpg,.jpeg,.webp">
+        <span class="rbv-btn">＋ Load model</span>
+      </label>
+      <button id="rbvHome" type="button" class="rbv-btn">Reset view</button>
+      <button id="rbvToolbarPlay" type="button" class="rbv-btn" aria-label="Play model animation" title="Play model animation" disabled>Play</button>
+      <button id="rbvSetupToggle" type="button" class="rbv-btn" aria-expanded="false" aria-controls="rbvSetup">Mechanisms</button>
+      <button id="rbvSettingsToggle" type="button" class="rbv-btn" aria-expanded="false" aria-controls="rbvSettingsPanel">Settings</button>
+    </div>
+
+    <div class="rbv-chrome rbv-info" id="rbvModelInfo">No model loaded</div>
+
+    <aside id="rbvSetup" class="rbv-chrome rbv-drawer" hidden>
+      <div class="rbv-drawer-head">
+        <strong>Mechanisms &amp; poses</strong>
+        <span>
+          <button id="rbvEditToggle" type="button" class="rbv-btn rbv-btn-ghost" aria-pressed="false">Edit</button>
+          <button id="rbvCloseDrawer" type="button" class="rbv-btn rbv-btn-ghost" aria-label="Close">×</button>
+        </span>
+      </div>
+
+      <section class="rbv-panel">
+        <div class="rbv-panel-title">
+          <h3>Controls</h3>
+          <button id="rbvAddMechanism" type="button" class="rbv-btn rbv-btn-ghost rbv-edit-only">＋ Add</button>
+        </div>
+        <div class="rbv-mech-add rbv-edit-only" id="rbvMechAdd" hidden>
+          <div class="rbv-wide rbv-tip">Double-click the 3D view to toggle marquee mode. When enabled, drag to select; Shift-drag adds to the selection. Double-click again to orbit normally. Groups are included only when at least 80% of their named leaf parts are inside the box.</div>
+          <div class="rbv-wide">
+            <div class="rbv-sel-head">
+              <span id="rbvSelCount">Nothing selected</span>
+              <span>
+                <button id="rbvSelGrow" type="button" class="rbv-btn rbv-btn-ghost" title="Replace each selected part with its parent group">Parent ▲</button>
+                <button id="rbvSelClear" type="button" class="rbv-btn rbv-btn-ghost">Clear</button>
+              </span>
+            </div>
+            <div id="rbvSelChips" class="rbv-chips"></div>
+          </div>
+          <label class="rbv-wide">Find part / group
+            <input id="rbvNodeFilter" type="text" placeholder="Type to filter…" autocomplete="off">
+          </label>
+          <label class="rbv-wide">Part list (double-click to add)
+            <select id="rbvNodeSelect" size="6"><option value="">Load a model first</option></select>
+          </label>
+          <div class="rbv-actions rbv-wide">
+            <button id="rbvSelAdd" type="button" class="rbv-btn rbv-btn-ghost">＋ Add highlighted</button>
+            <button id="rbvSelAddAll" type="button" class="rbv-btn rbv-btn-ghost">＋ Add all matches</button>
+          </div>
+          <label>Control type
+            <select id="rbvMotionType">
+              <option value="translate">Linear travel</option>
+              <option value="rotate">Rotation</option>
+            </select>
+          </label>
+          <label>Axis (world)
+            <select id="rbvAxis"><option value="x">X</option><option value="y">Y</option><option value="z">Z</option></select>
+          </label>
+          <label>Range (model units / degrees)
+            <input id="rbvRange" type="number" value="1" step="any" min="0">
+          </label>
+          <div id="rbvPivotEditor" class="rbv-wide"></div>
+          <label class="rbv-wide">Control name
+            <input id="rbvMechanismName" type="text" value="New control" maxlength="40">
+          </label>
+          <div class="rbv-actions rbv-wide">
+            <button id="rbvCreateMechanism" type="button" class="rbv-btn">Create control</button>
+            <button id="rbvCancelMechanism" type="button" class="rbv-btn rbv-btn-ghost">Cancel</button>
+          </div>
+        </div>
+        <div id="rbvMechanismList" class="rbv-list">
+          <div class="rbv-hint">Load a model, then use Edit → Add to bind a part to a slider.</div>
+        </div>
+      </section>
+
+      <section id="rbvAnimationPanel" class="rbv-panel rbv-animation-panel">
+        <div class="rbv-panel-title"><h3>GLB animation</h3></div>
+        <div class="rbv-animation-row">
+          <label class="rbv-wide">Clip<select id="rbvAnimationSelect" disabled><option value="">No animation found</option></select></label>
+        </div>
+        <div class="rbv-animation-row">
+          <label class="rbv-check"><input id="rbvAnimationLoop" type="checkbox"> Loop</label>
+          <button id="rbvAnimationPlay" type="button" class="rbv-btn" disabled>Play</button>
+        </div>
+      </section>
+
+      <section class="rbv-panel">
+        <div class="rbv-panel-title"><h3>Saved poses</h3></div>
+        <div class="rbv-preset-create rbv-edit-only">
+          <input id="rbvPresetName" type="text" maxlength="32" placeholder="e.g. Intake extended">
+          <button id="rbvSavePreset" type="button" class="rbv-btn">Save pose</button>
+        </div>
+        <div id="rbvPresetList" class="rbv-list"><div class="rbv-hint">Your saved poses will appear here.</div></div>
+        <div class="rbv-preset-footer rbv-edit-only">
+          <button id="rbvExportConfig" type="button" class="rbv-btn rbv-btn-ghost">Export setup</button>
+          <label class="rbv-file"><input id="rbvImportConfig" type="file" accept=".json,application/json"><span class="rbv-btn rbv-btn-ghost">Import setup</span></label>
+        </div>
+        <p class="rbv-footnote rbv-edit-only">Export saves mechanism definitions and poses as JSON, not the model file. Display, quality and control-visibility options are available from the Settings button on the card.</p>
+      </section>
+    </aside>
+    <aside id="rbvSettingsPanel" class="rbv-chrome rbv-drawer rbv-settings-panel" hidden>
+      <div class="rbv-drawer-head"><strong>Robot viewer settings</strong><button id="rbvSettingsClose" type="button" class="rbv-btn rbv-btn-ghost" aria-label="Close settings">×</button></div>
+      <p class="rbv-setting-note">These controls are saved for this card on this browser.</p>
+      <label>Display style<select id="rbvSettingDisplayStyle"><option value="solid">Solid</option><option value="edges">Solid + edges</option><option value="wireframe">Wireframe</option><option value="xray">X-ray</option><option value="toon">Toon shading</option><option value="blueprint">Blueprint</option><option value="clay">Clay render</option></select></label>
+      <label>Lighting preset<select id="rbvSettingLightingPreset"><option value="studio">Studio</option><option value="warm">Warm</option><option value="cool">Cool</option><option value="dramatic">Dramatic</option><option value="sunset">Sunset</option><option value="custom">Custom</option></select></label>
+      <p class="rbv-setting-note">Presets adjust light colors and intensity; edit any color for a custom setup.</p>
+      <label>Sky light color<input id="rbvSettingLightSky" type="color"></label>
+      <label>Ground light color<input id="rbvSettingLightGround" type="color"></label>
+      <label>Key light color<input id="rbvSettingLightKey" type="color"></label>
+      <label>Fill light color<input id="rbvSettingLightFill" type="color"></label>
+      <label>Model detail<select id="rbvSettingModelDetail"><option value="full">Full detail</option><option value="balanced">Balanced</option><option value="light">Light (faster)</option></select></label>
+      <p class="rbv-setting-note">Model detail applies the next time you load the model.</p>
+      <label>Render resolution scale<input id="rbvSettingRenderScale" type="number" min="0.5" max="1.5" step="0.25"></label>
+      <label class="rbv-setting-check"><input id="rbvSettingAntialias" type="checkbox"> Smooth edges (antialiasing)</label>
+      <p class="rbv-setting-note">Antialiasing changes after you reload the card.</p>
+      <label class="rbv-setting-check"><input id="rbvSettingShowGrid" type="checkbox"> Show floor grid</label>
+      <label class="rbv-setting-check"><input id="rbvSettingAutoRotate" type="checkbox"> Auto-rotate model</label>
+      <label class="rbv-setting-check"><input id="rbvSettingShowAxes" type="checkbox"> Show axes</label>
+      <label>Background color<input id="rbvSettingBackground" type="color"></label>
+      <label>Model bottom<select id="rbvModelBottom"><option value="bottom">Bottom</option><option value="top">Top</option><option value="front">Front</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option></select></label>
+      <label>On-card controls<select id="rbvSettingControlsMode"><option value="auto-hide">Auto-hide</option><option value="always show">Always show</option><option value="hidden">Hidden (double-click to reveal)</option></select></label>
+      <label>Auto-hide delay (seconds)<input id="rbvSettingAutoHideSeconds" type="number" min="1" max="30" step="1"></label>
+      <button id="rbvSettingsReset" type="button" class="rbv-btn rbv-btn-ghost">Restore defaults</button>
+    </aside>
+  </div>
+</div>
+  </body>
+</html>
