@@ -1,5 +1,5 @@
-// The list of named robot components (mechanisms and model parts). The 3D viewer
-// publishes it; Pit Notes reads it so a task can point at a specific part.
+// The list of selectable model parts. The 3D viewer publishes it so Pit Notes
+// can link a task to one individual part.
 
 import { readJson, writeJson } from "../core/storage.js";
 

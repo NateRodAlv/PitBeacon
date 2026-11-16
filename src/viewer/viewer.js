@@ -4,7 +4,8 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { sdk } from "./sdkShim.js";
 import { setRobotParts } from "../data/robotParts.js";
-import { NOTES_EVENT, NOTES_KEY, TASK_STATUSES, addItem, loadNotes, summarizeParts, updateItem } from "../data/pitNotes.js";
+import { NOTES_EVENT, NOTES_KEY, TASK_STATUSES, addItem, loadNotes, saveNotes, summarizeParts, updateItem } from "../data/pitNotes.js";
+import { parseURDF } from "./urdf.js";
 import "./viewer.css";
 
 // Since r155 lights are physically based; legacy intensities need x PI to look the same.
@@ -69,14 +70,23 @@ const LIGHT_SCALE = Math.PI;
     modelBottom = normalizeModelBottom(value);
     if (!robotRoot || !THREE) return;
     const down = new THREE.Vector3(0, -1, 0);
-    const side = {
-      bottom: new THREE.Vector3(0, -1, 0),
-      top: new THREE.Vector3(0, 1, 0),
-      front: new THREE.Vector3(0, 0, 1),
-      back: new THREE.Vector3(0, 0, -1),
-      left: new THREE.Vector3(-1, 0, 0),
-      right: new THREE.Vector3(1, 0, 0),
-    }[modelBottom];
+    const side = robotRoot.userData.rbvURDF
+      ? {
+          bottom: new THREE.Vector3(0, 0, -1),
+          top: new THREE.Vector3(0, 0, 1),
+          front: new THREE.Vector3(1, 0, 0),
+          back: new THREE.Vector3(-1, 0, 0),
+          left: new THREE.Vector3(0, 1, 0),
+          right: new THREE.Vector3(0, -1, 0),
+        }[modelBottom]
+      : {
+          bottom: new THREE.Vector3(0, -1, 0),
+          top: new THREE.Vector3(0, 1, 0),
+          front: new THREE.Vector3(0, 0, 1),
+          back: new THREE.Vector3(0, 0, -1),
+          left: new THREE.Vector3(-1, 0, 0),
+          right: new THREE.Vector3(1, 0, 0),
+        }[modelBottom];
     robotRoot.quaternion.setFromUnitVectors(side, down);
     robotRoot.position.set(0, 0, 0);
     robotRoot.updateMatrixWorld(true);
@@ -104,7 +114,7 @@ const LIGHT_SCALE = Math.PI;
     autoHideSeconds: readLegacySetting("viewerAutoHideSeconds", DEFAULT_VIEWER_SETTINGS.autoHideSeconds),
   });
   const root = $("rbvRoot"), stage = $("rbvStage"), emptyEl = $("rbvEmpty"), statusEl = $("rbvStatus");
-  const drawer = $("rbvSetup"), infoEl = $("rbvModelInfo"), marqueeEl = $("rbvMarquee");
+  const drawer = $("rbvSetup"), infoEl = $("rbvModelInfo");
   const settingsPanel = $("rbvSettingsPanel");
   root.style.background = viewerSettings.background;
   const SETTINGS_STORAGE_KEY = "robot-viewer-settings-v1";
@@ -301,7 +311,7 @@ const LIGHT_SCALE = Math.PI;
   const styledMaterialCache = new Map();
   let modelAnimations = [], animationMixer = null, animationAction = null;
   let activeAnimationIndex = 0, modelAnimationPlaying = false, modelAnimationLoop = false, lastAnimationFrame = 0;
-  let gridOn = !!viewerSettings.showGrid, gridFor = null, marqueeEnabled = false, lastAutoRotateFrame = 0;
+  let gridOn = !!viewerSettings.showGrid, gridFor = null, lastAutoRotateFrame = 0;
 
   function applyLightingSettings() {
     const preset = LIGHTING_PRESETS[viewerSettings.lightingPreset] || LIGHTING_PRESETS.studio;
@@ -333,9 +343,6 @@ const LIGHT_SCALE = Math.PI;
     const canvas = renderer.domElement;
     canvas.tabIndex = 0;
     stage.insertBefore(canvas, stage.firstChild);
-    cursorRaycaster = new THREE.Raycaster();
-    cursorPlane = new THREE.Plane();
-    cursorIntersection = new THREE.Vector3();
 
     // Lights ride with the camera so shading stays consistent while orbiting. No shadows (cheap).
     hemisphereLight = new THREE.HemisphereLight(0xdceaff, 0x3a4658, LIGHT_SCALE);
@@ -589,7 +596,7 @@ const LIGHT_SCALE = Math.PI;
     if (!list) return;
     list.replaceChildren();
     if (!timeline.keyframes.length) {
-      list.append(el("div", { class: "rbv-hint", text: "Move mechanisms and camera, then add a keyframe." }));
+      list.append(el("div", { class: "rbv-hint", text: "Move connectors and camera, then add a keyframe." }));
       return;
     }
     timeline.keyframes.forEach((frame) => {
@@ -697,122 +704,6 @@ const LIGHT_SCALE = Math.PI;
     setStatus("Keyframe added at " + frame.time.toFixed(1) + " seconds.");
   }
 
-  function createCursorHelper(id, color) {
-    const group = new THREE.Group();
-    const scale = modelBox ? Math.max(...modelBox.getSize(new THREE.Vector3()).toArray(), 1e-3) * 0.018 : 0.04;
-    const handle = new THREE.Mesh(
-      new THREE.SphereGeometry(scale * 0.8, 12, 8),
-      new THREE.MeshBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.9 })
-    );
-    handle.userData.rbvCursorId = id;
-    handle.renderOrder = 1000;
-    group.add(handle);
-    const points = [
-      [[-2, 0, 0], [2, 0, 0]],
-      [[0, -2, 0], [0, 2, 0]],
-      [[0, 0, -2], [0, 0, 2]],
-    ];
-    const lineMaterial = new THREE.LineBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.9 });
-    points.forEach((pair) => {
-      const geometry = new THREE.BufferGeometry().setFromPoints(pair.map((point) => new THREE.Vector3(...point).multiplyScalar(scale)));
-      const line = new THREE.Line(geometry, lineMaterial);
-      line.renderOrder = 999;
-      group.add(line);
-    });
-    group.userData.rbvCursorHandle = handle;
-    group.userData.rbvCursorMaterial = handle.material;
-    group.userData.rbvCursorLineMaterial = lineMaterial;
-    group.userData.rbvCursorScale = scale;
-    scene.add(group);
-    return group;
-  }
-  function disposeCursorHelper(group) {
-    scene.remove(group);
-    group.traverse((obj) => {
-      if (obj.geometry) obj.geometry.dispose();
-    });
-    group.userData.rbvCursorMaterial.dispose();
-    group.userData.rbvCursorLineMaterial.dispose();
-  }
-  function syncWorldCursors() {
-    if (!scene) return;
-    const providers = new Map();
-    mechanisms.forEach((mech) => {
-      const editor = pivotEditors.get(mech.id);
-      if ((editor ? editor.mode.value : mech.pivotMode) !== "cursor") return;
-      providers.set("mechanism:" + mech.id, {
-        color: 0xffbd4a,
-        point: () => editor ? editor.read() : mech.pivot || [0, 0, 0],
-        move: (point) => {
-          mech.pivot = point;
-          if (editor) { mech.pivotMode = "cursor"; editor.set("cursor", point); }
-          setMechanismValue(mech, mech.value, true);
-        },
-        finish: saveSetup,
-      });
-    });
-    if (typeof addPivotEditor !== "undefined" && !addPivotEditor.mode.closest(".rbv-mech-add")?.hidden && addPivotEditor.mode.value === "cursor") {
-      providers.set("new-mechanism", {
-        color: 0x62e6a7,
-        point: () => addPivotEditor.read(),
-        move: (point) => addPivotEditor.set("cursor", point),
-        finish: () => {},
-      });
-    }
-    cursorProviders = providers;
-    providers.forEach((provider, id) => {
-      let helper = cursorHelpers.get(id);
-      if (!helper) {
-        helper = createCursorHelper(id, provider.color);
-        cursorHelpers.set(id, helper);
-      }
-      helper.visible = drawerOpen;
-      helper.position.fromArray(provider.point());
-    });
-    cursorHelpers.forEach((helper, id) => {
-      if (providers.has(id)) return;
-      disposeCursorHelper(helper);
-      cursorHelpers.delete(id);
-    });
-  }
-  function startCursorDrag(event, canvas) {
-    if (!drawerOpen || !cursorRaycaster || !cursorHelpers.size) return false;
-    const rect = canvas.getBoundingClientRect();
-    cursorRaycaster.setFromCamera(new THREE.Vector2(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1
-    ), camera);
-    const handles = Array.from(cursorHelpers.values(), (helper) => helper.userData.rbvCursorHandle);
-    const hits = cursorRaycaster.intersectObjects(handles, false);
-    const hit = event.shiftKey ? hits.find((item) => item.object.userData.rbvCursorId === "camera") || hits[0] : hits[0];
-    if (!hit) return false;
-    const id = hit.object.userData.rbvCursorId;
-    const provider = cursorProviders.get(id);
-    if (!provider) return false;
-    timelinePlaying = false; timelineLastFrame = 0;
-    updateTimelineControls();
-    cursorPlane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()), hit.point);
-    cursorDrag = { pointerId: event.pointerId, provider, plane: cursorPlane.clone() };
-    if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId);
-    event.preventDefault();
-    return true;
-  }
-  function moveCursorDrag(event, canvas) {
-    if (!cursorDrag || cursorDrag.pointerId !== event.pointerId) return false;
-    const rect = canvas.getBoundingClientRect();
-    cursorRaycaster.setFromCamera(new THREE.Vector2(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1
-    ), camera);
-    const point = cursorRaycaster.ray.intersectPlane(cursorDrag.plane, cursorIntersection);
-    if (point) {
-      cursorDrag.provider.move(point.toArray());
-      requestRender();
-    }
-    event.preventDefault();
-    return true;
-  }
-
   function renderNow() {
     if (!renderer) return;
     if (viewerSettings.autoRotate && robotRoot) {
@@ -831,7 +722,6 @@ const LIGHT_SCALE = Math.PI;
       if (!timelinePlaying) updateTimelineControls(); // reached the end
     }
     updateCamera();
-    syncWorldCursors();
     if (markersDirty) refreshMarkerBoxes();
     renderer.render(scene, camera);
     if ((viewerSettings.autoRotate && robotRoot) || modelAnimationPlaying || timelinePlaying) requestRender();
@@ -906,35 +796,22 @@ const LIGHT_SCALE = Math.PI;
   // ───────── Orbit / pan / zoom (mouse, touch, pen) ─────────
   function attachControls(canvas) {
     const pts = new Map();
-    let tap = null, marquee = null; // a short press-and-release without dragging = click-to-select
+    let tap = null;
     const panBy = (dx, dy) => {
       const b = viewBasis();
       const s = (dist * 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) / Math.max(1, stage.clientHeight);
       target.addScaledVector(b.right, -dx * s).addScaledVector(b.up, dy * s);
     };
     const zoomBy = (f) => { dist = clamp(dist * f, minDist, maxDist); };
-    canvas.addEventListener("dblclick", (e) => {
-      if ($("rbvMechAdd").hidden) return;
-      e.preventDefault();
-      marqueeEnabled = !marqueeEnabled;
-      root.classList.toggle("rbv-marquee-enabled", marqueeEnabled);
-      setStatus(marqueeEnabled ? "Marquee enabled: drag to select; double-click again to orbit." : "Marquee disabled: drag to orbit.", { sticky: marqueeEnabled });
-    });
     canvas.addEventListener("pointerdown", (e) => {
-      if (startCursorDrag(e, canvas)) return;
       canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
-      if (pts.size === 0) tap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), ok: e.button === 0, select: e.button === 0 && marqueeEnabled && !$("rbvMechAdd").hidden, additive: e.shiftKey };
+      if (pts.size === 0) tap = { id: e.pointerId, x: e.clientX, y: e.clientY, t: Date.now(), ok: e.button === 0 };
       else if (tap) tap.ok = false;
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
     });
     canvas.addEventListener("pointermove", (e) => {
-      if (moveCursorDrag(e, canvas)) return;
       const p = pts.get(e.pointerId); if (!p) return;
       const nx = e.clientX, ny = e.clientY;
-      if (pts.size === 1 && tap && tap.id === e.pointerId && tap.select) {
-        if (!marquee && Math.hypot(nx - tap.x, ny - tap.y) > 6) { tap.ok = false; marquee = { x: tap.x, y: tap.y, additive: tap.additive }; }
-        if (marquee) { marquee.x2 = nx; marquee.y2 = ny; showMarquee(tap.x, tap.y, nx, ny); p.x = nx; p.y = ny; return; }
-      }
       if (pts.size === 1 && tap && tap.ok) { if (Math.hypot(nx - tap.x, ny - tap.y) <= 6) return; tap.ok = false; }
       autoFit = false;
       if (pts.size === 1) {
@@ -950,17 +827,6 @@ const LIGHT_SCALE = Math.PI;
       requestRender();
     });
     const end = (e) => {
-      if (cursorDrag && cursorDrag.pointerId === e.pointerId) {
-        const drag = cursorDrag;
-        cursorDrag = null;
-        drag.provider.finish();
-        requestRender();
-        return;
-      }
-      if (marquee && tap && tap.id === e.pointerId) {
-        const active = marquee; marquee = null; marqueeEl.hidden = true;
-        if (e.type === "pointerup") selectMarquee(active, e.clientX, e.clientY);
-      }
       if (e.type === "pointerup" && tap && tap.ok && tap.id === e.pointerId && pts.size === 1 && Date.now() - tap.t < 600) onTap(e.clientX, e.clientY);
       if (tap && tap.id === e.pointerId) tap = null;
       pts.delete(e.pointerId);
@@ -980,30 +846,59 @@ const LIGHT_SCALE = Math.PI;
 
   // ───────── Model state ─────────
   let nodeMap = new Map(), nodeList = [];
-  let mechanisms = [], presets = [], editingMechanismId = null, editingPartsMechanismId = null;
-  const pivotEditors = new Map();
+  let mechanisms = [], presets = [], editingMechanismId = null;
   let timeline = { id: "timeline-default", name: "Timeline 1", duration: 10, loop: false, keyframes: [] }, savedTimelines = [], activeTimelineId = timeline.id, timelineTime = 0, timelinePlaying = false, timelineLastFrame = 0;
   let timelineCameraEnabled = true;
   let timelineDrag = null;
-  const cursorHelpers = new Map();
-  let cursorProviders = new Map(), cursorRaycaster = null, cursorPlane = null, cursorIntersection = null, cursorDrag = null;
   const bases = new Map();      // mech.id → rest transform of its node (kept out of saved JSON)
   const mechUI = new Map();     // mech.id → { slider, out }
   let modelName = "", modelSize = 1;
 
   function collectNodes(rootObj) {
     nodeMap = new Map(); nodeList = [];
-    const used = new Map();
+    const used = new Map(), named = [];
     (function walk(o, depth) {
-      const name = (o.name || "").trim();
+      const name = o.userData.rbvInternal ? "" : (o.name || "").trim();
       if (name) {
         const n = (used.get(name) || 0) + 1; used.set(name, n);
         const label = n === 1 ? name : name + " (" + n + ")";
         nodeMap.set(label, o); o.userData.rbvLabel = label;
-        if (o !== rootObj) nodeList.push({ label, depth, group: o.children.length > 0 });
+        if (o !== rootObj) named.push({ label, depth, object: o });
       }
       for (let i = 0; i < o.children.length; i++) walk(o.children[i], depth + (name ? 1 : 0));
     })(rootObj, 0);
+    const hasUrdfParts = named.some(({ object }) => object.userData.rbvPart);
+    const hasMesh = (object) => {
+      let found = false;
+      object.traverse((child) => { if (child.isMesh && child.geometry && !child.userData.rbvInternal) found = true; });
+      return found;
+    };
+    const hasNamedDescendant = (object) => named.some(({ object: child }) => child !== object && isAncestorOf(object, child));
+    nodeList = named.filter(({ object }) => hasUrdfParts
+      ? object.userData.rbvPart
+      : hasMesh(object) && !hasNamedDescendant(object))
+      .map(({ label, depth, object }) => {
+        object.userData.rbvPart = true;
+        return { label, depth, group: false };
+      });
+    if (!hasUrdfParts) {
+      let generated = 0;
+      rootObj.traverse((object) => {
+        if (!object.isMesh || !object.geometry || object.userData.rbvInternal) return;
+        for (let parent = object; parent && parent !== rootObj; parent = parent.parent) {
+          if (parent.userData.rbvPart) return;
+        }
+        let label = object.userData.rbvLabel;
+        if (!label) {
+          do { label = "Part " + (++generated); } while (nodeMap.has(label));
+          object.name = label;
+          object.userData.rbvLabel = label;
+          nodeMap.set(label, object);
+        }
+        object.userData.rbvPart = true;
+        nodeList.push({ label, depth: 0, group: false });
+      });
+    }
   }
 
   function refreshNodeSelect() {
@@ -1012,7 +907,6 @@ const LIGHT_SCALE = Math.PI;
     sel.innerHTML = "";
     if (!nodeList.length) { sel.append(el("option", { value: "", text: robotRoot ? "No named components found" : "Load a model first" })); return; }
     const hits = q ? nodeList.filter((n) => n.label.toLowerCase().includes(q)) : nodeList;
-    lastHits = hits;
     hits.slice(0, 400).forEach((n) => {
       const pad = q ? "" : "  ".repeat(Math.min(n.depth, 6));
       sel.append(el("option", { value: n.label, text: pad + (n.group ? "▸ " : "") + n.label }));
@@ -1112,6 +1006,14 @@ const LIGHT_SCALE = Math.PI;
     }
     const keptBox = new THREE.Box3();
     kept.forEach((en) => keptBox.union(en.box));
+    const visibleMeshes = new Set(kept.map((entry) => entry.mesh));
+    nodeList = nodeList.filter(({ label }) => {
+      const part = nodeMap.get(label);
+      const geometryRoot = part?.userData.rbvVisuals || part;
+      let visible = false;
+      geometryRoot?.traverse((object) => { if (visibleMeshes.has(object)) visible = true; });
+      return visible;
+    });
 
     // Materials: no environment map means full metals render near-black, so tame them; shrink/drop textures; optional Lambert.
     const swap = new Map(), doneTex = new Set();
@@ -1235,8 +1137,11 @@ const LIGHT_SCALE = Math.PI;
   }
 
   async function parseModel(files) {
+    if (files.some((file) => /\.urdf$/i.test(file.name))) {
+      return { ...(await parseURDF(files)), animations: [], format: "urdf" };
+    }
     const main = files.find((f) => /\.glb$/i.test(f.name)) || files.find((f) => /\.gltf$/i.test(f.name));
-    if (!main) throw new Error("Choose a .glb or .gltf file.");
+    if (!main) throw new Error("Choose a .urdf, .glb, or .gltf file.");
     const isGLB = /\.glb$/i.test(main.name);
     const loader = new GLTFLoader();
     let ext, text = null;
@@ -1257,7 +1162,12 @@ const LIGHT_SCALE = Math.PI;
     const urls = new Map();
     try {
       if (!isGLB) {
-        files.forEach((f) => { if (f !== main) urls.set(f.name.toLowerCase(), URL.createObjectURL(new Blob([f.buffer]))); });
+        files.forEach((f) => {
+          if (f === main) return;
+          const url = URL.createObjectURL(new Blob([f.buffer]));
+          urls.set(f.name.toLowerCase(), url);
+          urls.set(f.name.split(/[\\/]/).pop().toLowerCase(), url);
+        });
         const j = JSON.parse(text), missing = [];
         (j.buffers || []).concat(j.images || []).forEach((r) => {
           if (r.uri && !/^data:/i.test(r.uri) && !urls.has(decodeURIComponent(r.uri).split(/[\\/]/).pop().toLowerCase())) missing.push(r.uri);
@@ -1381,17 +1291,47 @@ const LIGHT_SCALE = Math.PI;
       const sceneRoot = gltf.scene || (gltf.scenes && gltf.scenes[0]);
       if (!sceneRoot) throw new Error("No scene was found in this model.");
       const info = optimizeModel(sceneRoot);
+      const legacyPartIds = new Map(mechanisms
+        .filter((connector) => connector.source === "legacy" && connector.nodes.length === 1)
+        .map((connector) => [connector.id, connector.nodes[0]]));
 
       stopModelAnimation();
       disposeRobot();
+      mechanisms.forEach((connector) => {
+        connector.motion = null;
+        connector._motion = null;
+        connector._frame = null;
+        connector._part = null;
+      });
+      if (gltf.format === "urdf") {
+        const manual = mechanisms.filter((connector) => connector.source === "manual");
+        const saved = new Map(mechanisms.filter((connector) => connector.source === "urdf").map((connector) => [connector.id, connector]));
+        mechanisms = gltf.connectors.map((connector) => {
+          const previous = saved.get(connector.id);
+          return {
+            ...connector,
+            name: previous?.name || connector.name,
+            value: Number(previous?.value) || connector.value,
+            motion: connector.motion,
+            _motion: connector.motion,
+          };
+        }).concat(manual);
+      }
       modelAnimations = Array.isArray(gltf.animations) ? gltf.animations : [];
       bases.clear();
       robotRoot = sceneRoot;
       scene.add(robotRoot);
+      (gltf.connectors || []).forEach((connector) => nodeMap.set(connector.id, connector.motion));
+      modelSize = Math.max(info.box.getSize(new THREE.Vector3()).length() / 1.7, 1e-3);
+      (gltf.connectorFrames || []).forEach((frame) => {
+        const axes = new THREE.AxesHelper(modelSize * 0.045);
+        axes.userData.rbvInternal = true;
+        frame.add(axes);
+      });
+      mechanisms.filter((connector) => connector.source === "manual").forEach(attachManualConnector);
       modelBox = info.box;
       applyModelBottom(modelBottom);
-      modelSize = Math.max(info.box.getSize(new THREE.Vector3()).length() / 1.7, 1e-3);
-      modelName = (files.find((f) => /\.(glb|gltf)$/i.test(f.name)) || files[0]).name;
+      modelName = (files.find((f) => /\.(urdf|glb|gltf)$/i.test(f.name)) || files[0]).name.split(/[\\/]/).pop();
       applyStyle(info.meshes);
       setupModelAnimations(modelAnimations);
       emptyEl.style.display = "none";
@@ -1400,7 +1340,11 @@ const LIGHT_SCALE = Math.PI;
       resetMechRange();
       renderSelection();
       renderMechanisms();
-      mechanisms.forEach((m) => { if (m.value) setMechanismValue(m, m.value, true); });
+      migrateLegacyNotes(legacyPartIds);
+      mechanisms.forEach((m) => {
+        if (m.motion) m._motion = m.motion;
+        if (m.value) setMechanismValue(m, m.value, true);
+      });
       autoFit = true;
       fitModel();
       revealed = String(viewerSettings.controlsMode) !== "hidden"; applyUiState();
@@ -1417,8 +1361,8 @@ const LIGHT_SCALE = Math.PI;
 
   async function readFiles(fileList) {
     const arr = Array.from(fileList || []);
-    if (!arr.some((f) => /\.(glb|gltf)$/i.test(f.name))) { fail("Choose a .glb or .gltf file."); return; }
-    const files = await Promise.all(arr.map(async (f) => ({ name: f.name, buffer: await f.arrayBuffer() })));
+    if (!arr.some((f) => /\.(urdf|glb|gltf)$/i.test(f.name))) { fail("Choose a .urdf, .glb, or .gltf file."); return; }
+    const files = await Promise.all(arr.map(async (f) => ({ name: f.webkitRelativePath || f.name, buffer: await f.arrayBuffer() })));
     await loadModel(files, true);
   }
 
@@ -1437,49 +1381,19 @@ const LIGHT_SCALE = Math.PI;
   const decimals = (mech) => (mech.type === "rotate" ? 0 : mech.range < 1 ? 3 : mech.range < 10 ? 2 : 1);
   const formatValue = (mech) => (Number(mech.value) || 0).toFixed(decimals(mech)) + (mech.type === "rotate" ? "°" : "");
 
-  function makePivotEditor(initialMode, initialPoint) {
-    const mode = el("select", null,
-      el("option", { value: "center", text: "Selection center" }),
-      el("option", { value: "origin", text: "Each part's origin" }),
-      el("option", { value: "cursor", text: "3D cursor" }));
-    mode.value = ["center", "origin", "cursor"].includes(initialMode) ? initialMode : "center";
-    const source = Array.isArray(initialPoint) ? initialPoint : [0, 0, 0];
-    const inputs = ["X", "Y", "Z"].map((axis, i) => {
-      const n = Number(source[i]);
-      const input = el("input", { type: "number", step: "any", value: String(Number.isFinite(n) ? n : 0), "aria-label": "3D cursor " + axis + " coordinate" });
-      input.addEventListener("input", requestRender);
-      return el("label", { text: axis }, input);
-    });
-    const fields = el("fieldset", { class: "rbv-cursor-fields" }, el("legend", { text: "3D cursor position (world units)" }), ...inputs);
-    const sync = () => { fields.hidden = mode.value !== "cursor"; };
-    mode.addEventListener("change", () => { sync(); requestRender(); }); sync();
-    return {
-      element: el("div", { class: "rbv-pivot-editor" }, el("label", { text: "Rotate about" }, mode), fields, el("div", { class: "rbv-cursor-hint", text: "When 3D cursor is selected, drag its colored marker in the model view." })),
-      mode, inputs: inputs.map((label) => label.querySelector("input")),
-      read: () => inputs.map((label) => Number(label.querySelector("input").value)),
-      valid: () => mode.value !== "cursor" || inputs.every((label) => { const input = label.querySelector("input"); return input.value.trim() !== "" && Number.isFinite(Number(input.value)); }),
-      set: (nextMode, nextPoint) => {
-        mode.value = ["center", "origin", "cursor"].includes(nextMode) ? nextMode : "center";
-        const point = Array.isArray(nextPoint) ? nextPoint : [0, 0, 0];
-        inputs.forEach((label, i) => { const n = Number(point[i]); label.querySelector("input").value = String(Number.isFinite(n) ? n : 0); });
-        sync();
-        requestRender();
-      }
-    };
-  }
-
   function setMechanismValue(mech, value, silent) {
     markersDirty = true;
-    mech.value = Number(value) || 0;
+    mech.value = clamp(Number(value) || 0, Number.isFinite(mech.min) ? mech.min : -Infinity, Number.isFinite(mech.max) ? mech.max : Infinity);
     const ui = mechUI.get(mech.id);
     if (ui) { ui.slider.value = mech.value; ui.out.textContent = formatValue(mech); }
-    const objs = (mech.nodes || []).map((l) => nodeMap.get(l)).filter(Boolean);
+    if (mech.jointType === "fixed") return;
+    const objs = mech._motion ? [mech._motion] : (mech.nodes || []).map((l) => nodeMap.get(l)).filter(Boolean);
     if (!objs.length) return;
     let st = bases.get(mech.id);
     if (!st) {
       // Rest pose is captured the first time a control moves, before anything has displaced these parts.
       st = { items: [], pivot: null };
-      objs.forEach((o) => { o.updateMatrix(); st.items.push({ obj: o, local: o.matrix.clone(), p: o.position.toArray(), r: [o.rotation.x, o.rotation.y, o.rotation.z] }); });
+      objs.forEach((o) => { o.updateMatrix(); st.items.push({ obj: o, local: o.matrix.clone(), p: o.position.toArray(), q: o.quaternion.clone(), r: [o.rotation.x, o.rotation.y, o.rotation.z] }); });
       if (mech.type === "rotate" && mech.space !== "local" && mech.pivotMode === "center") {
         const b = new THREE.Box3(); objs.forEach((o) => b.expandByObject(o));
         if (!b.isEmpty()) st.pivot = b.getCenter(new THREE.Vector3());
@@ -1490,6 +1404,17 @@ const LIGHT_SCALE = Math.PI;
     const rad = THREE.MathUtils.degToRad(mech.value);
     st.items.forEach((it) => {
       const o = it.obj;
+      if (mech.space === "mate") {
+        const axis = new THREE.Vector3(...(mech.axisVector || [1, 0, 0])).normalize();
+        if (mech.type === "rotate") {
+          o.position.fromArray(it.p);
+          o.quaternion.copy(it.q).multiply(new THREE.Quaternion().setFromAxisAngle(axis, rad));
+        } else {
+          o.position.fromArray(it.p).addScaledVector(axis, mech.value);
+          o.quaternion.copy(it.q);
+        }
+        return;
+      }
       if (mech.space === "local") { // controls made by the first version of this card: move in the part's own parent space
         if (mech.type === "rotate") { const r = it.r.slice(); r[idx] += rad; o.rotation.set(r[0], r[1], r[2]); }
         else { const p = it.p.slice(); p[idx] += mech.value; o.position.set(p[0], p[1], p[2]); }
@@ -1515,14 +1440,53 @@ const LIGHT_SCALE = Math.PI;
     if (!silent) requestRender();
   }
 
-  function setMechanismParts(mech, nodes) {
-    const value = Number(mech.value) || 0;
-    setMechanismValue(mech, 0, true);
-    mech.nodes = nodes.slice();
-    bases.delete(mech.id);
-    if (robotRoot) robotRoot.updateMatrixWorld(true);
-    setMechanismValue(mech, value, true);
-    requestRender();
+  function attachManualConnector(connector) {
+    const partId = connector.partId || connector.nodes?.[0];
+    const part = nodeMap.get(partId);
+    if (!part || !part.parent) return false;
+    const parent = part.parent;
+    const frame = new THREE.Object3D();
+    frame.name = "__manual_mate_frame__" + connector.id;
+    frame.userData.rbvInternal = true;
+    frame.position.copy(part.position);
+    frame.quaternion.copy(part.quaternion);
+    frame.scale.copy(part.scale);
+    const motion = new THREE.Object3D();
+    motion.name = "__manual_mate_motion__" + connector.id;
+    motion.userData.rbvInternal = true;
+    const axes = new THREE.AxesHelper(modelSize * 0.045);
+    axes.userData.rbvInternal = true;
+    frame.add(axes, motion);
+    parent.remove(part);
+    parent.add(frame);
+    motion.add(part);
+    part.position.set(0, 0, 0);
+    part.quaternion.identity();
+    part.scale.set(1, 1, 1);
+    connector.partId = partId;
+    connector.nodes = [partId];
+    connector.space = "mate";
+    connector._frame = frame;
+    connector._part = part;
+    connector._motion = motion;
+    bases.delete(connector.id);
+    robotRoot.updateMatrixWorld(true);
+    return true;
+  }
+
+  function detachManualConnector(connector) {
+    const frame = connector._frame;
+    const part = connector._part;
+    if (!frame?.parent || !part) return;
+    const parent = frame.parent;
+    parent.remove(frame);
+    parent.add(part);
+    part.position.copy(frame.position);
+    part.quaternion.copy(frame.quaternion);
+    part.scale.copy(frame.scale);
+    connector._frame = null;
+    connector._part = null;
+    connector._motion = null;
   }
 
   function makeMechanismEditor(mech) {
@@ -1530,23 +1494,24 @@ const LIGHT_SCALE = Math.PI;
     const axis = el("select", null, ...["x", "y", "z"].map((v) => el("option", { value: v, text: v.toUpperCase() })));
     type.value = mech.type; axis.value = mech.axis;
     const range = el("input", { type: "number", min: "0.000001", step: "any", value: String(Math.abs(Number(mech.range)) || 1) });
-    const pivot = makePivotEditor(mech.pivotMode, mech.pivot);
-    pivotEditors.set(mech.id, pivot);
     return el("div", { class: "rbv-mech-editor rbv-edit-only" },
-      el("label", { text: "Control type" }, type),
-      el("label", { text: "World axis" }, axis),
-      el("label", { text: "Range (units / degrees)" }, range), pivot.element,
+      el("label", { text: "Connector motion" }, type),
+      el("label", { text: "Local axis" }, axis),
+      el("label", { text: "Travel (units / degrees)" }, range),
       el("div", { class: "rbv-actions" },
-        el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: "Edit parts", onclick: () => openMechanismPartsEditor(mech) }),
         el("button", { type: "button", class: "rbv-btn", text: "Save", onclick: () => {
           const nextRange = Number(range.value);
           if (!Number.isFinite(nextRange) || nextRange <= 0) { fail("Enter a range greater than zero."); return; }
-          if (!pivot.valid()) { fail("Enter valid X, Y, and Z cursor coordinates."); return; }
           setMechanismValue(mech, 0, true);
-          mech.type = type.value; mech.axis = axis.value; mech.range = nextRange;
-          mech.pivotMode = pivot.mode.value; mech.pivot = pivot.read(); mech.value = 0;
+          mech.type = type.value;
+          mech.axis = axis.value;
+          mech.axisVector = { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] }[axis.value];
+          mech.range = nextRange;
+          mech.min = -nextRange;
+          mech.max = nextRange;
+          mech.value = 0;
           bases.delete(mech.id); editingMechanismId = null; renderMechanisms(); saveSetup();
-          setStatus("Control updated; its slider was reset to zero.");
+          setStatus("Connector updated; its slider was reset to zero.");
         } }),
         el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: "Cancel", onclick: () => { editingMechanismId = null; renderMechanisms(); } })));
   }
@@ -1557,13 +1522,19 @@ const LIGHT_SCALE = Math.PI;
   }
   function renderMechanismsBase() {
     const list = $("rbvMechanismList");
-    list.innerHTML = ""; mechUI.clear(); pivotEditors.clear();
-    if (!mechanisms.length) { list.append(el("div", { class: "rbv-hint", text: "No controls yet. Tap Edit, then Add to bind one or more parts to a slider." })); return; }
+    list.innerHTML = ""; mechUI.clear();
+    if (!mechanisms.length) { list.append(el("div", { class: "rbv-hint", text: "No connectors yet. Import a URDF or add a connector to one part." })); return; }
     mechanisms.forEach((mech) => {
-      const present = !robotRoot || mech.nodes.some((l) => nodeMap.has(l));
-      const what = mech.nodes.length === 1 ? mech.nodes[0] : mech.nodes.length + " parts (" + mech.nodes.slice(0, 2).join(", ") + (mech.nodes.length > 2 ? ", …" : "") + ")";
+      const motionNode = mech._motion || mech.motion || mech.partId && nodeMap.get(mech.partId);
+      const present = !robotRoot || Boolean(motionNode) || mech.nodes.some((l) => nodeMap.has(l));
+      const what = mech.partId || (mech.nodes.length === 1 ? mech.nodes[0] : mech.nodes.length + " parts (" + mech.nodes.slice(0, 2).join(", ") + (mech.nodes.length > 2 ? ", …" : "") + ")");
       const range = Math.abs(mech.range) || 1;
-      const slider = el("input", { type: "range", min: -range, max: range, step: range / 200, value: mech.value || 0, "aria-label": mech.name });
+      const axisLabel = mech.axisVector
+        ? mech.axisVector.map((value) => Number(value).toFixed(2)).join(", ")
+        : String(mech.axis || "x").toUpperCase();
+      const connectorDetails = [what, mech.jointType || (mech.type === "rotate" ? "rotation" : "travel"), mech.jointType === "fixed" ? "" : "axis " + axisLabel, present ? "" : "not in this model"].filter(Boolean).join(" · ");
+      const slider = el("input", { type: "range", min: String(Number.isFinite(mech.min) ? mech.min : -range), max: String(Number.isFinite(mech.max) ? mech.max : range), step: range / 200, value: mech.value || 0, "aria-label": mech.name });
+      if (mech.jointType === "fixed") slider.disabled = true;
       if (!present) slider.disabled = true;
       const out = el("output", { text: formatValue(mech) });
       slider.addEventListener("input", () => { setMechanismValue(mech, slider.value); saveSetup(); });
@@ -1571,12 +1542,13 @@ const LIGHT_SCALE = Math.PI;
         el("div", { class: "rbv-mech-head" },
           el("div", null,
             el("div", { class: "rbv-mech-name", text: mech.name }),
-            el("div", { class: "rbv-mech-node", text: what + " · " + (mech.type === "rotate" ? "rotation " : "travel ") + mech.axis.toUpperCase() + (present ? "" : " · not in this model") })),
+            el("div", { class: "rbv-mech-node", text: connectorDetails })),
           el("div", { class: "rbv-mech-actions" },
             el("button", { type: "button", class: "rbv-btn", text: "Zero", onclick: () => { setMechanismValue(mech, 0); saveSetup(); } }),
-            el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "Edit", onclick: () => { editingMechanismId = editingMechanismId === mech.id ? null : mech.id; renderMechanisms(); } }),
+            mech.source !== "urdf" && mech.jointType !== "fixed" ? el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "Edit", onclick: () => { editingMechanismId = editingMechanismId === mech.id ? null : mech.id; renderMechanisms(); } }) : null,
             el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "×", "aria-label": "Remove", onclick: () => {
               if (bases.has(mech.id)) setMechanismValue(mech, 0);
+              if (mech.source === "manual") detachManualConnector(mech);
               mechanisms = mechanisms.filter((m) => m.id !== mech.id); bases.delete(mech.id); editingMechanismId = null; renderMechanisms(); saveSetup();
             } }))),
         el("div", { class: "rbv-range-line" }, slider, out));
@@ -1624,21 +1596,57 @@ const LIGHT_SCALE = Math.PI;
     else savedTimelines[index] = timeline;
   }
 
-  // ───────── Saving the setup (settings are in PitBeacon; this is just mechanisms + poses) ─────────
+  // ───────── Saving the setup (viewer settings live separately) ─────────
   let saveTimer = 0;
   const saveSetup = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveSetupNow, 400); };
   const setupSnapshot = () => {
     syncActiveTimeline();
-    return { version: 1, modelName, modelBottom, mechanisms: mechanisms.map((m) => ({ id: m.id, name: m.name, nodes: m.nodes, space: m.space, pivotMode: m.pivotMode, pivot: m.pivot, type: m.type, axis: m.axis, range: m.range, value: m.value })), presets, timeline, timelines: savedTimelines, activeTimelineId };
+    return {
+      version: 2,
+      modelName,
+      modelBottom,
+      connectors: mechanisms.map((connector) => ({
+        id: connector.id,
+        name: connector.name,
+        nodes: connector.nodes,
+        partId: connector.partId,
+        source: connector.source,
+        jointType: connector.jointType,
+        space: connector.space,
+        pivotMode: connector.pivotMode,
+        pivot: connector.pivot,
+        type: connector.type,
+        axis: connector.axis,
+        axisVector: connector.axisVector,
+        range: connector.range,
+        min: connector.min,
+        max: connector.max,
+        value: connector.value,
+      })),
+      presets,
+      timeline,
+      timelines: savedTimelines,
+      activeTimelineId,
+    };
   };
   function normMech(m) {
     m = Object.assign({}, m);
     if (!Array.isArray(m.nodes)) { m.nodes = m.node ? [m.node] : []; m.space = "local"; } // first-version controls keep their original behaviour
     delete m.node;
+    m.source = ["urdf", "manual"].includes(m.source) ? m.source : "legacy";
+    if (m.source === "manual") m.partId = String(m.partId || m.nodes[0] || "");
     m.space = m.space || "world"; m.pivotMode = ["center", "origin", "cursor"].includes(m.pivotMode) ? m.pivotMode : "center";
     m.pivot = Array.isArray(m.pivot) && m.pivot.length >= 3 ? m.pivot.slice(0, 3).map((v) => Number.isFinite(Number(v)) ? Number(v) : 0) : [0, 0, 0];
     m.type = m.type === "rotate" ? "rotate" : "translate"; m.axis = AXIS[m.axis] === undefined ? "x" : m.axis;
     m.range = Math.abs(Number(m.range)) || 1;
+    if (Array.isArray(m.axisVector) && m.axisVector.length === 3 && m.axisVector.every((value) => Number.isFinite(Number(value)))) {
+      const axis = m.axisVector.map(Number);
+      const length = Math.hypot(...axis);
+      m.axisVector = length ? axis.map((value) => value / length) : [1, 0, 0];
+    }
+    if (Number.isFinite(Number(m.min))) m.min = Number(m.min);
+    if (Number.isFinite(Number(m.max))) m.max = Number(m.max);
+    if (m.source === "manual") m.space = "mate";
     return m;
   }
   async function saveSetupNow() {
@@ -1650,8 +1658,9 @@ const LIGHT_SCALE = Math.PI;
     let setup = null;
     try { if (sdk.storage && sdk.storage.get) setup = await sdk.storage.get("robotViewerSetup"); } catch (_) {}
     if (!setup) { try { setup = JSON.parse(localStorage.getItem("pitbeaconRobotViewerSetup") || "null"); } catch (_) {} }
-    if (setup && setup.version === 1) {
-      mechanisms = Array.isArray(setup.mechanisms) ? setup.mechanisms.map(normMech) : [];
+    if (setup && [1, 2].includes(setup.version)) {
+      const savedConnectors = setup.version === 2 ? setup.connectors : setup.mechanisms;
+      mechanisms = Array.isArray(savedConnectors) ? savedConnectors.map(normMech) : [];
       presets = Array.isArray(setup.presets) ? setup.presets : [];
       savedTimelines = Array.isArray(setup.timelines) && setup.timelines.length
         ? setup.timelines.map(normalizeTimeline)
@@ -1670,18 +1679,13 @@ const LIGHT_SCALE = Math.PI;
   }
 
   // ───────── Part selection: click in the view, pick from the list, or filter → add all matches ─────────
-  let selection = [], hlObjects = [], hlMat = null, nameTouched = false, lastHits = [];
+  let selection = [], hlObjects = [], hlMat = null, nameTouched = false;
   const isAncestorOf = (a, b) => { for (let p = b.parent; p; p = p.parent) if (p === a) return true; return false; };
 
-  function addToSelection(label, quiet) {
+  function addToSelection(label) {
     const o = nodeMap.get(label);
-    if (!o || selection.includes(label)) return false;
-    for (const l of selection) {
-      const s2 = nodeMap.get(l);
-      if (s2 && isAncestorOf(s2, o)) { if (!quiet) setStatus(label + " is already part of " + l); return false; }
-    }
-    selection = selection.filter((l) => { const s2 = nodeMap.get(l); return !(s2 && isAncestorOf(o, s2)); }); // a parent replaces its children
-    selection.push(label);
+    if (!o || !nodeList.some((part) => part.label === label) || selection.includes(label)) return false;
+    selection = [label];
     return true;
   }
 
@@ -1692,7 +1696,7 @@ const LIGHT_SCALE = Math.PI;
       hlMat = hlMat || new THREE.MeshBasicMaterial({ color: 0x4da3ff, transparent: true, opacity: 0.55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
       outer: for (const l of selection) {
         const o = nodeMap.get(l); if (!o) continue;
-        const stack = [o];
+        const stack = [o.userData.rbvVisuals || o];
         while (stack.length) {
           const n = stack.pop();
           if (n.isMesh && !n.userData.rbvOverlay) {
@@ -1710,70 +1714,8 @@ const LIGHT_SCALE = Math.PI;
     selection.slice(0, 8).forEach((l) => chips.append(el("span", { class: "rbv-chip" }, el("span", { text: l }),
       el("button", { type: "button", "aria-label": "Remove " + l, text: "×", onclick: () => { selection = selection.filter((x) => x !== l); renderSelection(); } }))));
     if (selection.length > 8) chips.append(el("span", { class: "rbv-chip more", text: "+" + (selection.length - 8) + " more" }));
-    if (!nameTouched) $("rbvMechanismName").value = selection.length ? selection[0] + (selection.length > 1 ? " group" : "") : "New control";
+    if (!nameTouched) $("rbvMechanismName").value = selection.length ? selection[0] : "New connector";
     requestRender();
-  }
-
-  // Called for a short click/tap on the 3D view (only does anything while the Add-control form is open).
-  function showMarquee(x1, y1, x2, y2) {
-    const bounds = stage.getBoundingClientRect();
-    marqueeEl.style.left = Math.min(x1, x2) - bounds.left + "px";
-    marqueeEl.style.top = Math.min(y1, y2) - bounds.top + "px";
-    marqueeEl.style.width = Math.abs(x2 - x1) + "px";
-    marqueeEl.style.height = Math.abs(y2 - y1) + "px";
-    marqueeEl.hidden = false;
-  }
-
-  function selectMarquee(marquee, endX, endY) {
-    if (!robotRoot || $("rbvMechAdd").hidden) return;
-    const left = Math.min(marquee.x, endX), right = Math.max(marquee.x, endX);
-    const top = Math.min(marquee.y, endY), bottom = Math.max(marquee.y, endY);
-    const canvasRect = renderer.domElement.getBoundingClientRect();
-    updateCamera(); camera.updateMatrixWorld(true); robotRoot.updateMatrixWorld(true);
-    const box = new THREE.Box3(), point = new THREE.Vector3();
-    const screenBounds = (object) => {
-      box.setFromObject(object); if (box.isEmpty()) return null;
-      const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, visible: false };
-      for (let x = 0; x < 2; x++) for (let y = 0; y < 2; y++) for (let z = 0; z < 2; z++) {
-        point.set(x ? box.max.x : box.min.x, y ? box.max.y : box.min.y, z ? box.max.z : box.min.z).project(camera);
-        if (point.z < -1 || point.z > 1) continue;
-        bounds.visible = true;
-        const px = canvasRect.left + (point.x + 1) * canvasRect.width / 2;
-        const py = canvasRect.top + (1 - point.y) * canvasRect.height / 2;
-        bounds.minX = Math.min(bounds.minX, px); bounds.maxX = Math.max(bounds.maxX, px);
-        bounds.minY = Math.min(bounds.minY, py); bounds.maxY = Math.max(bounds.maxY, py);
-      }
-      return bounds.visible ? bounds : null;
-    };
-    const isInside = (bounds) => bounds && bounds.minX >= left && bounds.maxX <= right && bounds.minY >= top && bounds.maxY <= bottom;
-    const matches = [];
-    const orderedNodes = nodeList.slice().sort((a, b) => a.depth - b.depth);
-    const namedAncestors = new Set();
-    orderedNodes.forEach((node) => {
-      for (let parent = nodeMap.get(node.label).parent; parent; parent = parent.parent) {
-        if (parent.userData.rbvLabel) namedAncestors.add(parent.userData.rbvLabel);
-      }
-    });
-    const leafNodes = orderedNodes.filter((node) => !namedAncestors.has(node.label));
-    const projected = new Map(orderedNodes.map((node) => [node.label, screenBounds(nodeMap.get(node.label))]));
-    for (const node of orderedNodes) {
-      const object = nodeMap.get(node.label), bounds = projected.get(node.label);
-      if (!object || !bounds || bounds.maxX < left || bounds.minX > right || bounds.maxY < top || bounds.minY > bottom) continue;
-      if (node.group) {
-        const leaves = leafNodes.filter((part) => {
-          const child = nodeMap.get(part.label); return child && child !== object && isAncestorOf(object, child);
-        });
-        if (leaves.length) {
-          const contained = leaves.reduce((count, part) => count + (isInside(projected.get(part.label)) ? 1 : 0), 0);
-          if (contained / leaves.length < 0.8) continue;
-        }
-      }
-      matches.push(node.label);
-    }
-    if (!marquee.additive) selection = [];
-    matches.forEach((label) => addToSelection(label, true));
-    renderSelection();
-    setStatus(matches.length ? "Selected " + matches.length + " part" + (matches.length === 1 ? "" : "s") : "No parts in that area");
   }
 
   function onTap(cx, cy) {
@@ -1785,77 +1727,36 @@ const LIGHT_SCALE = Math.PI;
     const rc = new THREE.Raycaster(); rc.setFromCamera(ndc, camera);
     const hit = rc.intersectObject(robotRoot, true).find((h) => h.object.isMesh && !h.object.userData.rbvOverlay);
     if (!hit) return;
-    let n = hit.object;
-    while (n && n !== robotRoot && !n.userData.rbvLabel) n = n.parent;
-    if (!n || n === robotRoot) { setStatus("That part has no name in the model, so it can't be selected."); return; }
-    const label = n.userData.rbvLabel;
-    if (selection.includes(label)) selection = selection.filter((l) => l !== label); else addToSelection(label);
-    renderSelection();
+    for (let n = hit.object; n && n !== robotRoot.parent; n = n.parent) {
+      const label = n.userData.rbvLabel;
+      if (!label || !nodeList.some((part) => part.label === label)) continue;
+      if (selection.includes(label)) selection = [];
+      else addToSelection(label);
+      renderSelection();
+      return;
+    }
+    setStatus("That part has no name in the model, so it can't be selected.");
   }
 
-  function growSelection() {
-    if (!selection.length) return;
-    const next = selection.map((l) => {
-      const o = nodeMap.get(l); let p = o && o.parent;
-      while (p && p !== robotRoot && !p.userData.rbvLabel) p = p.parent;
-      return p && p !== robotRoot ? p.userData.rbvLabel : l;
-    });
-    selection = []; next.forEach((l) => addToSelection(l, true));
-    renderSelection();
-  }
   function addHighlighted() {
     const v = $("rbvNodeSelect").value;
     if (!v || !nodeMap.has(v)) { setStatus("Pick a part from the list first."); return; }
     addToSelection(v); renderSelection();
   }
-  function addAllMatches() {
-    if (!$("rbvNodeFilter").value.trim()) { setStatus("Type in the filter first, then add all matches."); return; }
-    let n = 0;
-    lastHits.slice().sort((a, b) => a.depth - b.depth).slice(0, 2000).forEach((h) => { if (addToSelection(h.label, true)) n++; });
-    renderSelection();
-    setStatus(n ? "Added " + n + " part" + (n === 1 ? "" : "s") : "No new parts to add");
-  }
-  function setPartsEditorMode(editing) {
-    ["rbvMotionType", "rbvAxis", "rbvRange", "rbvMechanismName"].forEach((id) => { $(id).parentElement.hidden = editing; });
-    $("rbvPivotEditor").hidden = editing;
-  }
   function openAddForm() {
     if (!robotRoot) { setStatus("Load a model first"); return; }
-    setPartsEditorMode(false);
-    editingPartsMechanismId = null;
-    $("rbvCreateMechanism").textContent = "Create control";
-    nameTouched = false; selection = []; marqueeEnabled = false; root.classList.remove("rbv-marquee-enabled"); addPivotEditor.set("center", [0, 0, 0]);
+    $("rbvCreateMechanism").textContent = "Create connector";
+    nameTouched = false; selection = [];
     $("rbvMechAdd").hidden = false;
     renderSelection(); refreshNodeSelect(); resetMechRange();
   }
-  function openMechanismPartsEditor(mech) {
-    if (!robotRoot) { setStatus("Load a model first"); return; }
-    setPartsEditorMode(true);
-    editingPartsMechanismId = mech.id;
-    selection = mech.nodes.filter((label) => nodeMap.has(label));
-    nameTouched = true;
-    $("rbvMechAdd").hidden = false;
-    $("rbvCreateMechanism").textContent = "Save parts";
-    $("rbvMechanismName").value = mech.name;
-    $("rbvMotionType").value = mech.type;
-    $("rbvAxis").value = mech.axis;
-    $("rbvRange").value = String(Math.abs(Number(mech.range)) || 1);
-    addPivotEditor.set(mech.pivotMode, mech.pivot);
-    marqueeEnabled = false; root.classList.remove("rbv-marquee-enabled"); marqueeEl.hidden = true;
-    renderSelection(); refreshNodeSelect();
-  }
   function closeAddForm() {
-    setPartsEditorMode(false);
-    editingPartsMechanismId = null;
-    $("rbvCreateMechanism").textContent = "Create control";
-    marqueeEnabled = false; root.classList.remove("rbv-marquee-enabled"); marqueeEl.hidden = true;
+    $("rbvCreateMechanism").textContent = "Create connector";
     $("rbvMechAdd").hidden = true;
     selection = []; renderSelection();
   }
 
   // ───────── Wiring ─────────
-  const addPivotEditor = makePivotEditor("center", [0, 0, 0]);
-  $("rbvPivotEditor").append(addPivotEditor.element);
   $("rbvFile").addEventListener("change", async (e) => {
     const files = e.target.files; if (!files || !files.length) return;
     try { await readFiles(files); } finally { e.target.value = ""; }
@@ -1871,7 +1772,6 @@ const LIGHT_SCALE = Math.PI;
       $("rbvSettingsToggle").setAttribute("aria-expanded", "false");
     }
     drawerOpen = open; drawer.hidden = !open;
-    cursorHelpers.forEach((helper) => { helper.visible = open; });
     $("rbvSetupToggle").setAttribute("aria-expanded", String(open));
     if (!open) { root.classList.remove("rbv-editing"); $("rbvEditToggle").setAttribute("aria-pressed", "false"); closeAddForm(); }
     revealed = true; applyUiState();
@@ -2071,25 +1971,37 @@ const LIGHT_SCALE = Math.PI;
   $("rbvMechanismName").addEventListener("input", () => { nameTouched = true; });
   $("rbvNodeSelect").addEventListener("dblclick", addHighlighted);
   $("rbvSelAdd").addEventListener("click", addHighlighted);
-  $("rbvSelAddAll").addEventListener("click", addAllMatches);
-  $("rbvSelGrow").addEventListener("click", growSelection);
   $("rbvSelClear").addEventListener("click", () => { selection = []; renderSelection(); });
   $("rbvCreateMechanism").addEventListener("click", () => {
-    if (!selection.length) { setStatus("Select at least one part ? click it in the view, or add it from the list.", { error: true }); return; }
-    const nodes = selection.slice();
-    if (editingPartsMechanismId) {
-      const mech = mechanisms.find((item) => item.id === editingPartsMechanismId);
-      if (!mech) { fail("That control no longer exists. Reopen its editor and try again."); closeAddForm(); return; }
-      setMechanismParts(mech, nodes);
-      closeAddForm(); renderMechanisms(); saveSetup();
-      setStatus("Parts updated for " + mech.name);
+    if (selection.length !== 1) { setStatus("Select one individual part from the model.", { error: true }); return; }
+    const partId = selection[0];
+    const type = $("rbvMotionType").value, axis = $("rbvAxis").value;
+    if (mechanisms.some((connector) => connector.source === "manual" && connector.partId === partId)) {
+      fail("That part already has a manual connector.");
       return;
     }
-    const type = $("rbvMotionType").value, axis = $("rbvAxis").value;
-    if (!addPivotEditor.valid()) { fail("Enter valid X, Y, and Z cursor coordinates."); return; }
     const range = Math.abs(Number($("rbvRange").value)) || (type === "rotate" ? 90 : nice(modelSize * 0.3));
-    const name = $("rbvMechanismName").value.trim() || nodes[0];
-    mechanisms.push({ id: "mech-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6), name, nodes, type, axis, range, value: 0, space: "world", pivotMode: addPivotEditor.mode.value, pivot: addPivotEditor.read() });
+    const name = $("rbvMechanismName").value.trim() || partId;
+    const connector = {
+      id: "mate-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6),
+      name,
+      nodes: [partId],
+      partId,
+      type,
+      axis,
+      axisVector: { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, 1] }[axis],
+      range,
+      min: -range,
+      max: range,
+      value: 0,
+      space: "mate",
+      source: "manual",
+    };
+    if (!attachManualConnector(connector)) {
+      fail(`Could not attach a connector to "${partId}".`);
+      return;
+    }
+    mechanisms.push(connector);
     backfillTimelineValues();
     closeAddForm(); renderMechanisms(); saveSetup();
   });
@@ -2109,8 +2021,18 @@ const LIGHT_SCALE = Math.PI;
     const file = e.target.files && e.target.files[0]; if (!file) return;
     try {
       const data = JSON.parse(await file.text());
-      if (data.version !== 1) throw new Error("Unsupported setup version.");
-      mechanisms = Array.isArray(data.mechanisms) ? data.mechanisms.map(normMech) : [];
+      if (![1, 2].includes(data.version)) throw new Error("Unsupported setup version.");
+      mechanisms.filter((connector) => connector.source === "manual").forEach(detachManualConnector);
+      const savedConnectors = data.version === 2 ? data.connectors : data.mechanisms;
+      mechanisms = Array.isArray(savedConnectors) ? savedConnectors.map(normMech) : [];
+      mechanisms.forEach((connector) => {
+        if (connector.source === "urdf") {
+          connector.motion = nodeMap.get(connector.id);
+          connector._motion = connector.motion;
+        } else if (connector.source === "manual" && robotRoot) {
+          attachManualConnector(connector);
+        }
+      });
       presets = Array.isArray(data.presets) ? data.presets : [];
       timeline = normalizeTimeline(data.timeline);
       savedTimelines = Array.isArray(data.timelines) && data.timelines.length ? data.timelines.map(normalizeTimeline) : [timeline];
@@ -2129,10 +2051,13 @@ const LIGHT_SCALE = Math.PI;
 
   // ───────── Pit Notes link: flag robot parts and jump to them from other cards ─────────
   const PART_COLORS = { flagged: 0xff4d4d, "in-progress": 0xffc933, pending: 0x6fa8ff, focus: 0x35e0c0 };
-  const partMarkers = new Map(); // mech.id → { helper, box, objs }
+  const partMarkers = new Map(); // part id → { helper, box, objs }
   let markersDirty = false, focusedPartId = null, focusTimer = 0, partSummary = {};
 
-  const partObjects = (mech) => (mech.nodes || []).map((label) => nodeMap.get(label)).filter(Boolean);
+  const partObjects = (partId) => {
+    const part = nodeMap.get(partId);
+    return part ? [part.userData.rbvVisuals || part] : [];
+  };
 
   function clearMarkers() {
     partMarkers.forEach((m) => { if (m.helper.parent) m.helper.parent.remove(m.helper); m.helper.geometry.dispose(); m.helper.material.dispose(); });
@@ -2142,10 +2067,10 @@ const LIGHT_SCALE = Math.PI;
     clearMarkers();
     if (!scene || !robotRoot) return;
     partSummary = summarizeParts(loadNotes());
-    for (const mech of mechanisms) {
-      const state = mech.id === focusedPartId ? "focus" : partSummary[mech.id]?.state;
+    for (const part of nodeList) {
+      const state = part.label === focusedPartId ? "focus" : partSummary[part.label]?.state;
       if (!state || state === "ok") continue;
-      const objs = partObjects(mech);
+      const objs = partObjects(part.label);
       if (!objs.length) continue;
       const box = new THREE.Box3();
       const helper = new THREE.Box3Helper(box, PART_COLORS[state]);
@@ -2154,7 +2079,7 @@ const LIGHT_SCALE = Math.PI;
       helper.renderOrder = 999;
       helper.userData.rbvOverlay = true;
       scene.add(helper);
-      partMarkers.set(mech.id, { helper, box, objs });
+      partMarkers.set(part.label, { helper, box, objs });
     }
     markersDirty = true;
     requestRender();
@@ -2169,21 +2094,40 @@ const LIGHT_SCALE = Math.PI;
   }
 
   function publishParts() {
-    setRobotParts(mechanisms.map((m) => ({ id: m.id, name: m.name })));
+    setRobotParts(nodeList.map((part) => ({ id: part.label, name: part.label })));
+  }
+
+  function migrateLegacyNotes(legacyPartIds) {
+    if (!legacyPartIds.size) return;
+    const availableParts = new Set(nodeList.map((part) => part.label));
+    const notes = loadNotes();
+    let changed = false;
+    for (const section of ["tasks", "parts"]) {
+      for (const note of notes[section]) {
+        const partId = legacyPartIds.get(note.partId);
+        if (!partId || !availableParts.has(partId)) continue;
+        note.partId = partId;
+        if (section === "tasks") note.component = partId;
+        changed = true;
+      }
+    }
+    if (changed) saveNotes(notes);
   }
 
   const STATUS_LABEL = { pending: "To do", "in-progress": "In progress", completed: "Done" };
   function renderPartNotes() {
-    const rows = $("rbvMechanismList").querySelectorAll(".rbv-mech-row");
+    const list = $("rbvRobotParts");
+    if (!list) return;
+    list.replaceChildren();
     const tasksByPart = {};
     loadNotes().tasks.forEach((t) => { if (t.partId) (tasksByPart[t.partId] ||= []).push(t); });
-    mechanisms.forEach((mech, i) => {
-      const row = rows[i];
-      if (!row) return;
-      row.dataset.partId = mech.id;
-      row.querySelectorAll(".rbv-part-notes").forEach((old) => old.remove());
-      row.classList.toggle("rbv-part-active", mech.id === focusedPartId);
-      const open = (tasksByPart[mech.id] || []).filter((t) => t.status !== "completed");
+    if (!nodeList.length) {
+      list.append(el("div", { class: "rbv-hint", text: "Load a model to see its individual parts." }));
+      return;
+    }
+    nodeList.forEach((part) => {
+      const row = el("div", { class: "rbv-part-row" + (part.label === focusedPartId ? " rbv-part-active" : ""), "data-part-id": part.label });
+      const open = (tasksByPart[part.label] || []).filter((t) => t.status !== "completed");
       const box = el("div", { class: "rbv-part-notes" });
       open.forEach((task) => {
         const chip = el("button", {
@@ -2198,16 +2142,22 @@ const LIGHT_SCALE = Math.PI;
         });
         box.append(chip);
       });
-      const input = el("input", { type: "text", class: "rbv-part-input", placeholder: "Note an issue on " + mech.name + "…", "aria-label": "New task for " + mech.name, maxlength: "120" });
+      const input = el("input", { type: "text", class: "rbv-part-input", placeholder: "Note an issue on " + part.label + "…", "aria-label": "New task for " + part.label, maxlength: "120" });
       const add = () => {
         const text = input.value.trim();
         if (!text) return;
-        addItem("tasks", { task: text, component: mech.name, partId: mech.id, status: "pending", flagged: false });
+        addItem("tasks", { task: text, component: part.label, partId: part.label, status: "pending", flagged: false });
         input.value = "";
       };
       input.addEventListener("keydown", (e) => { if (e.key === "Enter") add(); });
+      row.append(
+        el("div", { class: "rbv-mech-head" },
+          el("div", { class: "rbv-mech-name", text: part.label }),
+          el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: "Show", onclick: () => focusPart(part.label, { openPanel: false }) })),
+      );
       box.append(el("div", { class: "rbv-part-add" }, input, el("button", { type: "button", class: "rbv-btn", text: "Add task", onclick: add })));
       row.append(box);
+      list.append(row);
     });
   }
 
@@ -2217,7 +2167,7 @@ const LIGHT_SCALE = Math.PI;
     rebuildMarkers();
   }
   function onNotesChanged() {
-    if (!mechanisms.length) return;
+    if (!nodeList.length) return;
     // Rebuild rows without clobbering a half-typed task.
     const typing = document.activeElement && document.activeElement.classList.contains("rbv-part-input") ? document.activeElement : null;
     if (typing && typing.value) { rebuildMarkers(); return; }
@@ -2228,10 +2178,10 @@ const LIGHT_SCALE = Math.PI;
   window.addEventListener("storage", (e) => { if (e.key === NOTES_KEY || e.key === null) onNotesChanged(); });
 
   function focusPart(partId, opts = {}) {
-    const mech = mechanisms.find((m) => m.id === partId);
-    if (!mech || !robotRoot) return false;
-    const objs = partObjects(mech);
-    focusedPartId = mech.id;
+    const part = nodeMap.get(partId);
+    if (!part || !robotRoot || !nodeList.some((item) => item.label === partId)) return false;
+    const objs = partObjects(partId);
+    focusedPartId = partId;
     clearTimeout(focusTimer);
     focusTimer = setTimeout(() => { focusedPartId = null; renderPartNotes(); rebuildMarkers(); }, 6000);
     if (objs.length) {
@@ -2249,11 +2199,11 @@ const LIGHT_SCALE = Math.PI;
     if (opts.openPanel !== false) {
       setDrawer(true);
       renderPartNotes();
-      const row = $("rbvMechanismList").querySelector('[data-part-id="' + CSS.escape(mech.id) + '"]');
+      const row = $("rbvRobotParts").querySelector('[data-part-id="' + CSS.escape(partId) + '"]');
       if (row) row.scrollIntoView({ block: "nearest" });
     }
     rebuildMarkers();
-    setStatus(mech.name + (partSummary[mech.id] ? " · " + partSummary[mech.id].open + " open" : ""));
+    setStatus(partId + (partSummary[partId] ? " · " + partSummary[partId].open + " open" : ""));
     return true;
   }
 
@@ -2266,10 +2216,10 @@ const LIGHT_SCALE = Math.PI;
     const hit = rc.intersectObject(robotRoot, true).find((h) => h.object.isMesh && !h.object.userData.rbvOverlay);
     if (!hit) return;
     for (let n = hit.object; n && n !== robotRoot.parent; n = n.parent) {
-      const label = n.userData && n.userData.rbvLabel;
-      if (!label) continue;
-      const mech = mechanisms.find((m) => m.nodes.includes(label));
-      if (mech) { focusPart(mech.id); return; }
+      if (n.userData?.rbvPart && n.userData.rbvLabel) {
+        focusPart(n.userData.rbvLabel);
+        return;
+      }
     }
   }
 

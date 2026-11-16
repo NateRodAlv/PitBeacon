@@ -12,11 +12,18 @@ is saved (app, last event data, robot model). The last data from The Blue
 Alliance is kept for 14 days and shown with an "Offline" chip when the
 connection drops.
 
-Load your robot model in the **Robot Viewer** card (`.glb`, or `.gltf` with
-its files; Draco and Meshopt compression work offline). Add controls for
-mechanisms, then tap a part, or use **locate** on a Pit Notes task, to jump
-to it. Parts with open tasks get a coloured box in the viewer (red flagged,
-yellow in progress, blue to do).
+Load your robot model in the **Robot Viewer** card (`.glb`, `.gltf` with its
+files, or a `.urdf` with all referenced STL, OBJ, or DAE mesh files selected
+together; Draco and Meshopt compression work offline for glTF). URDF joints
+are imported as mate connectors: revolute and continuous joints rotate,
+prismatic joints slide, and fixed joints are shown without a control. For
+other models, add a connector to one individual part and choose its local
+rotation or linear travel axis.
+
+Pit Notes link to individual named parts in the model, not to connectors.
+Tap a part in the viewer to open its notes, or use **locate** on a linked
+Pit Notes task to focus it. Parts with open tasks get a coloured box in the
+viewer (red flagged, yellow in progress, blue to do).
 
 All card management (your cards, the community catalog, and the card editor)
 lives behind the single **Cards** button.
