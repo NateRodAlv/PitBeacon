@@ -111,15 +111,16 @@ async function loadVisualGeometry(geometryElement, files, material) {
 }
 
 function jointControl(joint, motion, childLink) {
-  const id = "urdf:" + joint.name;
-  const jointType = joint.type;
+  const name = joint.getAttribute("name")?.trim();
+  const jointType = joint.getAttribute("type")?.trim();
+  const id = "urdf:" + name;
   const movable = jointType === "revolute" || jointType === "continuous" || jointType === "prismatic";
   if (!["fixed", "revolute", "continuous", "prismatic"].includes(jointType)) {
-    throw new Error(`URDF joint "${joint.name}" has unsupported type "${jointType}".`);
+    throw new Error(`URDF joint "${name}" has unsupported type "${jointType}".`);
   }
   const axis = vector(child(joint, "axis")?.getAttribute("xyz"), [1, 0, 0]);
   const length = Math.hypot(...axis);
-  if (movable && !(length > 0)) throw new Error(`URDF joint "${joint.name}" has a zero-length axis.`);
+  if (movable && !(length > 0)) throw new Error(`URDF joint "${name}" has a zero-length axis.`);
   if (length > 0) axis.forEach((value, index) => { axis[index] = value / length; });
   const limit = child(joint, "limit");
   const rotary = jointType === "revolute" || jointType === "continuous";
@@ -133,10 +134,10 @@ function jointControl(joint, motion, childLink) {
     if (Number.isFinite(lower)) min = rotary ? THREE.MathUtils.radToDeg(lower) : lower;
     if (Number.isFinite(upper)) max = rotary ? THREE.MathUtils.radToDeg(upper) : upper;
   }
-  if (min > max) throw new Error(`URDF joint "${joint.name}" has a lower limit greater than its upper limit.`);
+  if (min > max) throw new Error(`URDF joint "${name}" has a lower limit greater than its upper limit.`);
   return {
     id,
-    name: joint.name,
+    name,
     nodes: [id],
     type: rotary ? "rotate" : "translate",
     jointType,
