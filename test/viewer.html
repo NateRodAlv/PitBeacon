@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Robot Viewer</title>
-    <script type="module" crossorigin src="./assets/viewer-EuJ5lNw-.js"></script>
+    <script type="module" crossorigin src="./assets/viewer-D4ObLqbN.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-XKyaHtl9.js">
     <link rel="modulepreload" crossorigin href="./assets/robotParts-DmQgVcwy.js">
-    <link rel="stylesheet" crossorigin href="./assets/viewer-DUSKa8nN.css">
+    <link rel="stylesheet" crossorigin href="./assets/viewer-DJBwAqfA.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
 <div class="rbv" id="rbvRoot">
@@ -48,7 +48,7 @@
 
       <section class="rbv-panel">
         <div class="rbv-panel-title">
-          <h3>Connectors</h3>
+          <h3>Parts &amp; connectors</h3>
           <button id="rbvAddMechanism" type="button" class="rbv-btn rbv-btn-ghost rbv-edit-only">＋ Add connector</button>
         </div>
         <div class="rbv-mech-add rbv-edit-only" id="rbvMechAdd" hidden>
@@ -62,14 +62,8 @@
             </div>
             <div id="rbvSelChips" class="rbv-chips"></div>
           </div>
-          <label class="rbv-wide">Find individual part
-            <input id="rbvNodeFilter" type="text" placeholder="Type to filter…" autocomplete="off">
-          </label>
-          <label class="rbv-wide">Part list (double-click to select)
-            <select id="rbvNodeSelect" size="6"><option value="">Load a model first</option></select>
-          </label>
           <div class="rbv-actions rbv-wide">
-            <button id="rbvSelAdd" type="button" class="rbv-btn rbv-btn-ghost">＋ Add highlighted</button>
+            <button id="rbvSelAdd" type="button" class="rbv-btn rbv-btn-ghost">Use part selected in list</button>
           </div>
           <label>Connector motion
             <select id="rbvMotionType">
@@ -91,14 +85,13 @@
             <button id="rbvCancelMechanism" type="button" class="rbv-btn rbv-btn-ghost">Cancel</button>
           </div>
         </div>
-        <div id="rbvMechanismList" class="rbv-list">
-          <div class="rbv-hint">Load a URDF to import its joint connectors, or add a connector to an individual model part.</div>
+        <div class="rbv-seg" role="tablist" aria-label="Browse">
+          <button id="rbvTabParts" type="button" role="tab" aria-selected="true" class="rbv-seg-btn active">Parts</button>
+          <button id="rbvTabConnectors" type="button" role="tab" aria-selected="false" class="rbv-seg-btn">Connectors</button>
         </div>
-      </section>
-
-      <section class="rbv-panel">
-        <div class="rbv-panel-title"><h3>Robot parts &amp; notes</h3></div>
-        <div id="rbvRobotParts" class="rbv-list"><div class="rbv-hint">Load a model to see its individual parts.</div></div>
+        <input id="rbvBrowserSearch" class="rbv-browser-search" type="search" placeholder="Search parts…" autocomplete="off" aria-label="Search">
+        <div id="rbvBrowserList" class="rbv-browser-list" role="listbox" aria-label="Parts"></div>
+        <div id="rbvBrowserDetail" class="rbv-browser-detail"></div>
       </section>
 
       <section id="rbvAnimationPanel" class="rbv-panel rbv-animation-panel">

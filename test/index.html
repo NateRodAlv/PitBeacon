@@ -43,9 +43,9 @@
     <!-- Stylesheets and Resources -->
     <link rel="icon" href="favicon.png" type="image/png" />
     <meta name="theme-color" content="#1a1a1a" />
-    <script type="module" crossorigin src="./assets/main-C8fVuaXx.js"></script>
+    <script type="module" crossorigin src="./assets/main-C6sHCTHA.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/robotParts-DmQgVcwy.js">
-    <link rel="stylesheet" crossorigin href="./assets/main-CERWFzxn.css">
+    <link rel="stylesheet" crossorigin href="./assets/main-B6cPcB0M.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
     <div class="header" id="header">
@@ -368,6 +368,15 @@
           />
         </div>
         <div class="settings-field">
+          <label for="showNextMatchBanner">Show next-match banner</label>
+          <input
+            type="checkbox"
+            id="showNextMatchBanner"
+            name="showNextMatchBanner"
+            checked
+          />
+        </div>
+        <div class="settings-field">
           <label for="matchAlarmSound">Match Sound</label>
           <select id="matchAlarmSound" name="matchAlarmSound">
             <option value="alarm1">Alarm 1</option>
@@ -441,6 +450,17 @@
         </p>
         <ul class="offline-ready-list" id="offlineReady" aria-live="polite"></ul>
         <small class="settings-description" id="offlineStorage"></small>
+      </div>
+      <div class="settingsdiv">
+        <div class="settings-section-title">Setup &amp; what's new</div>
+        <p class="settings-description">
+          Walk through team number, TBA key, robot model and colors again, or
+          bring back the 2027 highlights.
+        </p>
+        <div class="settings-field" style="gap: 6px">
+          <button class="savebutton" id="runWizardBtn" type="button" style="flex: 1; margin: 0; padding: 6px 8px; font-size: 0.8rem">Run setup wizard</button>
+          <button class="savebutton" id="showWelcomeBtn" type="button" style="flex: 1; margin: 0; padding: 6px 8px; font-size: 0.8rem">Show what's new</button>
+        </div>
       </div>
       <div class="settingsdiv">
         <div class="settings-section-title">Testing</div>
