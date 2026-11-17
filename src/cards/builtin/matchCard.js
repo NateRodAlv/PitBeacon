@@ -1,10 +1,13 @@
 // src/cards/builtin/matchCard.js
+import { emptyInfoFor, renderEmptyState } from '../../ui/emptyState.js';
+
 export function createMatchCard() {
     return {
         id: 'match-card',
         label: 'Matches',
         icon: 'tournament',
         builtin: true,
+        statusSource: 'tba',
         render: (element, state, sdk) => {
 
             if (!element._matchCardInitialized) {
@@ -22,6 +25,7 @@ export function createMatchCard() {
                     // and only reruns render for reasons that matter to this card.
                     (latestState, sdkInstance) => ({
                         matches: latestState.currentMatches,
+                        empty: emptyInfoFor('matches', latestState).reason,
                         teamNumber: sdkInstance.getConfig('teamNumber'),
                         // Rounding to the second (already the tick rate) keeps the
                         // countdown live without pulling in the rest of the state.
@@ -44,7 +48,7 @@ function renderMatchCardContent(element, state, sdk) {
     element.innerHTML = '';
     
     if (!matches.length) {
-        element.innerHTML = `<p class="inactive">No matches found.</p>`;
+        renderEmptyState(element, 'matches', state);
         return;
     }
 
@@ -56,7 +60,7 @@ function renderMatchCardContent(element, state, sdk) {
             );
 
             if (!teamMatches.length) {
-                element.innerHTML = `<p class="inactive">No upcoming matches for team ${teamNumber}.</p>`;
+                renderEmptyState(element, 'teamMatches', state);
                 return;
             }
 
@@ -108,7 +112,7 @@ function renderMatchCardContent(element, state, sdk) {
             if (!foundActive) {
                 const futureMatches = teamMatches.filter(m => m.predicted_time > currentTime);
                 if (futureMatches.length === 0) {
-                    container.innerHTML = `<p class="inactive">No upcoming matches for team ${teamNumber}.</p>`;
+                    renderEmptyState(container, 'noUpcoming', state);
                 } else {
                     futureMatches.forEach(match => {
                         container.appendChild(createUpcomingCard(match, currentTime, teamNumber));

@@ -20,6 +20,7 @@ export const config = {
   noteAlarmSound: "alarm1",
   matchAlarmToggle: true,
   matchAlertThreshold: 300,
+  showNextMatchBanner: true,
   matchAlarmSound: "alarm1",
   gridSize: 3,
   gridCols: 3,
@@ -75,6 +76,15 @@ export const config = {
       id: "stats-card",
       label: "Team Stats",
       icon: "chart-bar",
+      selfRefresh: false,
+      builtin: true,
+    },
+    // Not in DEFAULT_LAYOUT on purpose: existing layouts stay as they are, and this
+    // card is added from the Layout Editor palette.
+    {
+      id: "robot-summary-card",
+      label: "Robot Summary",
+      icon: "checklist",
       selfRefresh: false,
       builtin: true,
     },

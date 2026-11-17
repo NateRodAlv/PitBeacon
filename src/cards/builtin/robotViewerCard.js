@@ -5,6 +5,7 @@
 
 import { displayMessage } from "../../core/notifications.js";
 import { FOCUS_PART_EVENT } from "./pitNotesCard.js";
+import { MODEL_SAVED_EVENT } from "../../data/robotModel.js";
 
 const THEME_VARS = ["--text-primary", "--text-muted", "--border", "--accent", "--bg-input"];
 
@@ -24,6 +25,7 @@ export function createRobotViewerCard() {
     label: "Robot Viewer",
     icon: "cube",
     builtin: true,
+    statusSource: "local",
     selfRefresh: true,
     settings: {},
     render(element) {
@@ -57,12 +59,16 @@ export function createRobotViewerCard() {
       const observer = new MutationObserver(sendTheme);
       observer.observe(document.documentElement, { attributes: true, attributeFilter: ["style", "class", "data-theme"] });
 
+      // A model saved by the setup wizard: reload the viewer so it picks it up.
+      const onModelSaved = () => frame.contentWindow?.location.reload();
       const cleanup = () => {
+        window.removeEventListener(MODEL_SAVED_EVENT, onModelSaved);
         window.removeEventListener(FOCUS_PART_EVENT, onFocus);
         window.removeEventListener("message", onMessage);
         observer.disconnect();
         element._robotViewer = null;
       };
+      window.addEventListener(MODEL_SAVED_EVENT, onModelSaved);
       window.addEventListener(FOCUS_PART_EVENT, onFocus);
       window.addEventListener("message", onMessage);
       frame.addEventListener("load", sendTheme);

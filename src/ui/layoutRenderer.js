@@ -7,6 +7,8 @@ export class LayoutRenderer {
         this._dataSources = dataSources;
         this._sdk = sdk;
         this._renderedCards = new Map();
+        // Status dots live beside each card (not inside it) so cards can rebuild their own content freely.
+        this._dots = new Map();
         
         window._pitbeaconRender = () => this.render(
             window._pitbeaconConfig || {},
@@ -38,7 +40,7 @@ render(config, container) {
     container.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
     container.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
     container.style.gap = '12px';
-    container.style.height = 'calc(100vh - var(--header-height, 4.5rem))';
+    container.style.height = 'calc(100vh - var(--header-height, 4.5rem) - var(--banner-height, 0px))';
     container.style.padding = '12px';
     container.style.overflow = 'auto';
     container.style.background = 'transparent';
@@ -72,6 +74,7 @@ render(config, container) {
         element.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
         element.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
         element.style.display = '';
+        this._syncDot(cardId, def, pos, container);
 
         if (def.render) {
             try {
@@ -96,10 +99,43 @@ render(config, container) {
             this._renderedCards.delete(cardId);
         }
     }
+    for (const [cardId, dot] of this._dots) {
+        if (!renderedIds.has(cardId)) {
+            dot.remove();
+            this._dots.delete(cardId);
+        }
+    }
 
     // Store config for global render trigger
     window._pitbeaconConfig = config;
+    window.dispatchEvent(new CustomEvent('pitbeacon:layout-rendered'));
 }
+
+    _syncDot(cardId, def, pos, container) {
+        let dot = this._dots.get(cardId);
+        if (!def.builtin || def.statusDot === false) {
+            if (dot) { dot.remove(); this._dots.delete(cardId); }
+            return;
+        }
+        if (!dot) {
+            dot = document.createElement('span');
+            dot.className = 'card-status-dot';
+            dot.dataset.cardId = cardId;
+            dot.dataset.color = 'grey';
+            dot.setAttribute('role', 'img');
+            dot.tabIndex = 0;
+            container.appendChild(dot);
+            this._dots.set(cardId, dot);
+        }
+        // Same grid cell as the card, pinned to its top-right corner by CSS.
+        dot.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
+        dot.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
+    }
+
+    /** [cardId, dotElement] pairs for every built-in card currently on screen. */
+    getDots() {
+        return [...this._dots.entries()];
+    }
 
     updateCards(state) {
         // Update all rendered cards with new state

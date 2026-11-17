@@ -4,6 +4,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 import { sdk } from "./sdkShim.js";
 import { setRobotParts } from "../data/robotParts.js";
+import { DETAIL_CONNECTOR_CAP, PART_ROW_LIMIT, connectorsForPart, countConnectorsByPart, filterAndSortParts, filterConnectors } from "./partBrowser.js";
 import { NOTES_EVENT, NOTES_KEY, TASK_STATUSES, addItem, loadNotes, saveNotes, summarizeParts, updateItem } from "../data/pitNotes.js";
 import { parseURDF } from "./urdf.js";
 import "./viewer.css";
@@ -901,20 +902,6 @@ const LIGHT_SCALE = Math.PI;
     }
   }
 
-  function refreshNodeSelect() {
-    const sel = $("rbvNodeSelect");
-    const q = $("rbvNodeFilter").value.trim().toLowerCase();
-    sel.innerHTML = "";
-    if (!nodeList.length) { sel.append(el("option", { value: "", text: robotRoot ? "No named components found" : "Load a model first" })); return; }
-    const hits = q ? nodeList.filter((n) => n.label.toLowerCase().includes(q)) : nodeList;
-    hits.slice(0, 400).forEach((n) => {
-      const pad = q ? "" : "  ".repeat(Math.min(n.depth, 6));
-      sel.append(el("option", { value: n.label, text: pad + (n.group ? "▸ " : "") + n.label }));
-    });
-    if (hits.length > 400) sel.append(el("option", { value: "", disabled: "", text: "… " + (hits.length - 400) + " more — keep typing to narrow" }));
-    if (!hits.length) sel.append(el("option", { value: "", text: "No matches" }));
-  }
-
   function disposeRobot() {
     selection = []; hlObjects = [];
     edgeToken++;
@@ -1336,7 +1323,6 @@ const LIGHT_SCALE = Math.PI;
       setupModelAnimations(modelAnimations);
       emptyEl.style.display = "none";
       infoEl.textContent = modelName + " · " + info.parts + " parts · " + (info.tris / 1000).toFixed(info.tris > 99999 ? 0 : 1) + "k triangles" + (info.hidden ? " · " + info.hidden + " tiny parts hidden" : "");
-      refreshNodeSelect();
       resetMechRange();
       renderSelection();
       renderMechanisms();
@@ -1515,45 +1501,39 @@ const LIGHT_SCALE = Math.PI;
   }
 
   function renderMechanisms() {
-    renderMechanismsBase();
     onMechanismsRendered();
   }
-  function renderMechanismsBase() {
-    const list = $("rbvMechanismList");
-    list.innerHTML = ""; mechUI.clear();
-    if (!mechanisms.length) { list.append(el("div", { class: "rbv-hint", text: "No connectors yet. Import a URDF or add a connector to one part." })); return; }
-    mechanisms.forEach((mech) => {
-      const motionNode = mech._motion || mech.motion || mech.partId && nodeMap.get(mech.partId);
-      const present = !robotRoot || Boolean(motionNode) || mech.nodes.some((l) => nodeMap.has(l));
-      const what = mech.partId || (mech.nodes.length === 1 ? mech.nodes[0] : mech.nodes.length + " parts (" + mech.nodes.slice(0, 2).join(", ") + (mech.nodes.length > 2 ? ", …" : "") + ")");
-      const range = Math.abs(mech.range) || 1;
-      const axisLabel = mech.axisVector
-        ? mech.axisVector.map((value) => Number(value).toFixed(2)).join(", ")
-        : String(mech.axis || "x").toUpperCase();
-      const connectorDetails = [what, mech.jointType || (mech.type === "rotate" ? "rotation" : "travel"), mech.jointType === "fixed" ? "" : "axis " + axisLabel, present ? "" : "not in this model"].filter(Boolean).join(" · ");
-      const slider = el("input", { type: "range", min: String(Number.isFinite(mech.min) ? mech.min : -range), max: String(Number.isFinite(mech.max) ? mech.max : range), step: range / 200, value: mech.value || 0, "aria-label": mech.name });
-      if (mech.jointType === "fixed") slider.disabled = true;
-      if (!present) slider.disabled = true;
-      const out = el("output", { text: formatValue(mech) });
-      slider.addEventListener("input", () => { setMechanismValue(mech, slider.value); saveSetup(); });
-      const row = el("div", { class: "rbv-mech-row" + (present ? "" : " missing") },
-        el("div", { class: "rbv-mech-head" },
-          el("div", null,
-            el("div", { class: "rbv-mech-name", text: mech.name }),
-            el("div", { class: "rbv-mech-node", text: connectorDetails })),
-          el("div", { class: "rbv-mech-actions" },
-            el("button", { type: "button", class: "rbv-btn", text: "Zero", onclick: () => { setMechanismValue(mech, 0); saveSetup(); } }),
-            mech.source !== "urdf" && mech.jointType !== "fixed" ? el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "Edit", onclick: () => { editingMechanismId = editingMechanismId === mech.id ? null : mech.id; renderMechanisms(); } }) : null,
-            el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "×", "aria-label": "Remove", onclick: () => {
-              if (bases.has(mech.id)) setMechanismValue(mech, 0);
-              if (mech.source === "manual") detachManualConnector(mech);
-              mechanisms = mechanisms.filter((m) => m.id !== mech.id); bases.delete(mech.id); editingMechanismId = null; renderMechanisms(); saveSetup();
-            } }))),
-        el("div", { class: "rbv-range-line" }, slider, out));
-      if (editingMechanismId === mech.id) row.append(makeMechanismEditor(mech));
-      mechUI.set(mech.id, { slider, out });
-      list.append(row);
-    });
+  function connectorRow(mech) {
+    const motionNode = mech._motion || mech.motion || mech.partId && nodeMap.get(mech.partId);
+    const present = !robotRoot || Boolean(motionNode) || mech.nodes.some((l) => nodeMap.has(l));
+    const what = mech.partId || (mech.nodes.length === 1 ? mech.nodes[0] : mech.nodes.length + " parts (" + mech.nodes.slice(0, 2).join(", ") + (mech.nodes.length > 2 ? ", …" : "") + ")");
+    const range = Math.abs(mech.range) || 1;
+    const axisLabel = mech.axisVector
+      ? mech.axisVector.map((value) => Number(value).toFixed(2)).join(", ")
+      : String(mech.axis || "x").toUpperCase();
+    const connectorDetails = [what, mech.jointType || (mech.type === "rotate" ? "rotation" : "travel"), mech.jointType === "fixed" ? "" : "axis " + axisLabel, present ? "" : "not in this model"].filter(Boolean).join(" · ");
+    const slider = el("input", { type: "range", min: String(Number.isFinite(mech.min) ? mech.min : -range), max: String(Number.isFinite(mech.max) ? mech.max : range), step: range / 200, value: mech.value || 0, "aria-label": mech.name });
+    if (mech.jointType === "fixed") slider.disabled = true;
+    if (!present) slider.disabled = true;
+    const out = el("output", { text: formatValue(mech) });
+    slider.addEventListener("input", () => { setMechanismValue(mech, slider.value); saveSetup(); });
+    const row = el("div", { class: "rbv-mech-row" + (present ? "" : " missing") },
+      el("div", { class: "rbv-mech-head" },
+        el("div", null,
+          el("div", { class: "rbv-mech-name", text: mech.name }),
+          el("div", { class: "rbv-mech-node", text: connectorDetails })),
+        el("div", { class: "rbv-mech-actions" },
+          el("button", { type: "button", class: "rbv-btn", text: "Zero", onclick: () => { setMechanismValue(mech, 0); saveSetup(); } }),
+          mech.source !== "urdf" && mech.jointType !== "fixed" ? el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "Edit", onclick: () => { editingMechanismId = editingMechanismId === mech.id ? null : mech.id; renderMechanisms(); } }) : null,
+          el("button", { type: "button", class: "rbv-btn rbv-edit-only", text: "×", "aria-label": "Remove", onclick: () => {
+            if (bases.has(mech.id)) setMechanismValue(mech, 0);
+            if (mech.source === "manual") detachManualConnector(mech);
+            mechanisms = mechanisms.filter((m) => m.id !== mech.id); bases.delete(mech.id); editingMechanismId = null; renderMechanisms(); saveSetup();
+          } }))),
+      el("div", { class: "rbv-range-line" }, slider, out));
+    if (editingMechanismId === mech.id) row.append(makeMechanismEditor(mech));
+    mechUI.set(mech.id, { slider, out });
+    return row;
   }
 
   function renderPresets() {
@@ -1737,7 +1717,7 @@ const LIGHT_SCALE = Math.PI;
   }
 
   function addHighlighted() {
-    const v = $("rbvNodeSelect").value;
+    const v = selectedPartId;
     if (!v || !nodeMap.has(v)) { setStatus("Pick a part from the list first."); return; }
     addToSelection(v); renderSelection();
   }
@@ -1746,7 +1726,7 @@ const LIGHT_SCALE = Math.PI;
     $("rbvCreateMechanism").textContent = "Create connector";
     nameTouched = false; selection = [];
     $("rbvMechAdd").hidden = false;
-    renderSelection(); refreshNodeSelect(); resetMechRange();
+    renderSelection(); resetMechRange();
   }
   function closeAddForm() {
     $("rbvCreateMechanism").textContent = "Create connector";
@@ -1964,10 +1944,8 @@ const LIGHT_SCALE = Math.PI;
   });
   $("rbvAddMechanism").addEventListener("click", () => { if ($("rbvMechAdd").hidden) openAddForm(); else closeAddForm(); });
   $("rbvCancelMechanism").addEventListener("click", closeAddForm);
-  $("rbvNodeFilter").addEventListener("input", refreshNodeSelect);
   $("rbvMotionType").addEventListener("change", resetMechRange);
   $("rbvMechanismName").addEventListener("input", () => { nameTouched = true; });
-  $("rbvNodeSelect").addEventListener("dblclick", addHighlighted);
   $("rbvSelAdd").addEventListener("click", addHighlighted);
   $("rbvSelClear").addEventListener("click", () => { selection = []; renderSelection(); });
   $("rbvCreateMechanism").addEventListener("click", () => {
@@ -2119,51 +2097,201 @@ const LIGHT_SCALE = Math.PI;
   }
 
   const STATUS_LABEL = { pending: "To do", "in-progress": "In progress", completed: "Done" };
-  function renderPartNotes() {
-    const list = $("rbvRobotParts");
+
+  // ───────── Parts / Connectors browser (master list + detail for the selected item) ─────────
+  let browserTab = "parts", browserQuery = "", selectedPartId = null, selectedConnectorId = null;
+  let detailKey = "", taskChipsBox = null;
+
+  const partLabels = () => nodeList.map((part) => part.label);
+  const rowSelector = (attr, id) => "[" + attr + '="' + CSS.escape(id) + '"]';
+
+  function partRowEl(row) {
+    const sel = row.label === selectedPartId;
+    const meta = el("span", { class: "rbv-row-meta" });
+    if (row.connectors) meta.append(el("span", { class: "rbv-conn-mark", title: row.connectors + (row.connectors === 1 ? " connector affects" : " connectors affect") + " this part", text: "⚙" + row.connectors }));
+    if (row.open) meta.append(el("span", { class: "rbv-badge rbv-badge-" + row.state, title: row.open + " open · " + row.state, text: String(row.open) }));
+    return el("button", { type: "button", role: "option", class: "rbv-row" + (sel ? " selected" : ""), "aria-selected": String(sel), "data-part-id": row.label },
+      el("span", { class: "rbv-row-name", text: row.label }), meta);
+  }
+  function connectorRowEl(mech) {
+    const sel = mech.id === selectedConnectorId;
+    return el("button", { type: "button", role: "option", class: "rbv-row" + (sel ? " selected" : ""), "aria-selected": String(sel), "data-mech-id": mech.id },
+      el("span", { class: "rbv-row-name", text: mech.name }),
+      el("span", { class: "rbv-row-meta" }, el("span", { class: "rbv-conn-mark", text: (mech.jointType || (mech.type === "rotate" ? "rotation" : "travel")) + " " + formatValue(mech) })));
+  }
+
+  function renderBrowserList() {
+    const list = $("rbvBrowserList");
     if (!list) return;
+    const activeId = document.activeElement && list.contains(document.activeElement) ? document.activeElement.getAttribute("data-part-id") || document.activeElement.getAttribute("data-mech-id") : null;
     list.replaceChildren();
-    const tasksByPart = {};
-    loadNotes().tasks.forEach((t) => { if (t.partId) (tasksByPart[t.partId] ||= []).push(t); });
-    if (!nodeList.length) {
-      list.append(el("div", { class: "rbv-hint", text: "Load a model to see its individual parts." }));
-      return;
+    list.setAttribute("aria-label", browserTab === "parts" ? "Parts" : "Connectors");
+    let hidden = 0, empty = "";
+    if (browserTab === "parts") {
+      if (!nodeList.length) empty = "Load a model to see its individual parts.";
+      else {
+        const counts = countConnectorsByPart(mechanisms, partLabels());
+        const args = { parts: nodeList, query: browserQuery, summary: partSummary, connectorCounts: counts, limit: PART_ROW_LIMIT };
+        const res = filterAndSortParts(args);
+        const rows = res.rows.slice();
+        hidden = res.hiddenCount;
+        if (selectedPartId && hidden && !rows.some((r) => r.label === selectedPartId)) {
+          const extra = filterAndSortParts({ ...args, parts: nodeList.filter((p) => p.label === selectedPartId), limit: 1 }).rows[0];
+          if (extra) { rows.push(extra); hidden -= 1; }
+        }
+        rows.forEach((row) => list.append(partRowEl(row)));
+        if (!rows.length) empty = "No parts match.";
+      }
+    } else {
+      const res = filterConnectors(mechanisms, browserQuery, PART_ROW_LIMIT);
+      hidden = res.hiddenCount;
+      res.rows.forEach((mech) => list.append(connectorRowEl(mech)));
+      if (!res.rows.length) empty = mechanisms.length ? "No connectors match." : "No connectors yet. Import a URDF or add a connector to one part.";
     }
-    nodeList.forEach((part) => {
-      const row = el("div", { class: "rbv-part-row" + (part.label === focusedPartId ? " rbv-part-active" : ""), "data-part-id": part.label });
-      const open = (tasksByPart[part.label] || []).filter((t) => t.status !== "completed");
-      const box = el("div", { class: "rbv-part-notes" });
-      open.forEach((task) => {
-        const chip = el("button", {
-          type: "button",
-          class: "rbv-task-chip rbv-task-" + (task.flagged ? "flagged" : task.status),
-          title: "Tap to change status",
-          text: (task.flagged ? "⚑ " : "") + (task.task || "Untitled task") + " · " + STATUS_LABEL[task.status],
-        });
-        chip.addEventListener("click", () => {
-          const next = TASK_STATUSES[(TASK_STATUSES.indexOf(task.status) + 1) % TASK_STATUSES.length];
-          updateItem("tasks", task.id, { status: next });
-        });
-        box.append(chip);
-      });
-      const input = el("input", { type: "text", class: "rbv-part-input", placeholder: "Note an issue on " + part.label + "…", "aria-label": "New task for " + part.label, maxlength: "120" });
-      const add = () => {
-        const text = input.value.trim();
-        if (!text) return;
-        addItem("tasks", { task: text, component: part.label, partId: part.label, status: "pending", flagged: false });
-        input.value = "";
-      };
-      input.addEventListener("keydown", (e) => { if (e.key === "Enter") add(); });
-      row.append(
-        el("div", { class: "rbv-mech-head" },
-          el("div", { class: "rbv-mech-name", text: part.label }),
-          el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: "Show", onclick: () => focusPart(part.label, { openPanel: false }) })),
-      );
-      box.append(el("div", { class: "rbv-part-add" }, input, el("button", { type: "button", class: "rbv-btn", text: "Add task", onclick: add })));
-      row.append(box);
-      list.append(row);
+    if (empty) list.append(el("div", { class: "rbv-hint", text: empty }));
+    if (hidden > 0) list.append(el("div", { class: "rbv-hint rbv-more", text: hidden + " more — keep typing to narrow" }));
+    if (activeId) {
+      const again = list.querySelector(rowSelector(browserTab === "parts" ? "data-part-id" : "data-mech-id", activeId));
+      if (again) again.focus({ preventScroll: true });
+    }
+  }
+  function markBrowserSelection() {
+    const attr = browserTab === "parts" ? "data-part-id" : "data-mech-id";
+    const id = browserTab === "parts" ? selectedPartId : selectedConnectorId;
+    $("rbvBrowserList").querySelectorAll("[" + attr + "]").forEach((btn) => {
+      const on = btn.getAttribute(attr) === id;
+      btn.classList.toggle("selected", on);
+      btn.setAttribute("aria-selected", String(on));
     });
   }
+
+  function renderDetailTasks() {
+    if (!taskChipsBox || !selectedPartId) return;
+    const open = loadNotes().tasks.filter((t) => t.partId === selectedPartId && t.status !== "completed");
+    taskChipsBox.replaceChildren();
+    if (!open.length) { taskChipsBox.append(el("div", { class: "rbv-hint", text: "No open tasks." })); return; }
+    open.forEach((task) => {
+      const chip = el("button", {
+        type: "button",
+        class: "rbv-task-chip rbv-task-" + (task.flagged ? "flagged" : task.status),
+        title: "Tap to change status",
+        text: (task.flagged ? "⚑ " : "") + (task.task || "Untitled task") + " · " + (STATUS_LABEL[task.status] || task.status),
+      });
+      chip.addEventListener("click", () => {
+        const next = TASK_STATUSES[(TASK_STATUSES.indexOf(task.status) + 1) % TASK_STATUSES.length];
+        updateItem("tasks", task.id, { status: next });
+      });
+      taskChipsBox.append(chip);
+    });
+  }
+
+  function renderBrowserDetail() {
+    const box = $("rbvBrowserDetail");
+    if (!box) return;
+    const prevInput = box.querySelector(".rbv-part-input");
+    const keep = prevInput && prevInput.value && detailKey ? { key: detailKey, value: prevInput.value, focus: document.activeElement === prevInput } : null;
+    box.replaceChildren();
+    mechUI.clear(); taskChipsBox = null;
+    const hint = (text) => box.append(el("div", { class: "rbv-hint", text }));
+    if (browserTab === "connectors") {
+      const mech = mechanisms.find((m) => m.id === selectedConnectorId);
+      detailKey = mech ? "c:" + mech.id : "";
+      if (!mech) { hint(mechanisms.length ? "Pick a connector from the list." : ""); return; }
+      box.append(connectorRow(mech));
+      if (mech.partId) box.append(el("div", { class: "rbv-actions" }, el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: "Go to part", onclick: () => { if (!focusPart(mech.partId, { openPanel: false })) setStatus(mech.partId + " is not in this model."); } })));
+      return;
+    }
+    const id = selectedPartId;
+    detailKey = id ? "p:" + id : "";
+    if (!id) { hint(nodeList.length ? "Pick a part from the list or tap it in the model." : ""); return; }
+    box.append(el("div", { class: "rbv-detail-head" },
+      el("div", { class: "rbv-mech-name", text: id }),
+      el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: "Show", onclick: () => focusPart(id, { openPanel: false }) })));
+    const conns = connectorsForPart(mechanisms, id, DETAIL_CONNECTOR_CAP);
+    if (conns.total) {
+      const wrap = el("div", { class: "rbv-detail-section" }, el("div", { class: "rbv-detail-label", text: "Connectors" }));
+      conns.items.forEach((mech) => wrap.append(connectorRow(mech)));
+      if (conns.hiddenCount) wrap.append(el("div", { class: "rbv-hint", text: "+" + conns.hiddenCount + " more — see Connectors tab" }));
+      box.append(wrap);
+    }
+    taskChipsBox = el("div", { class: "rbv-part-notes" });
+    const input = el("input", { type: "text", class: "rbv-part-input", placeholder: "Note an issue on " + id + "…", "aria-label": "New task for " + id, maxlength: "120" });
+    const add = () => {
+      const text = input.value.trim();
+      if (!text) return;
+      addItem("tasks", { task: text, component: id, partId: id, status: "pending", flagged: false });
+      input.value = "";
+    };
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") add(); });
+    box.append(el("div", { class: "rbv-detail-section" },
+      el("div", { class: "rbv-detail-label", text: "Tasks" }),
+      taskChipsBox,
+      el("div", { class: "rbv-part-add" }, input, el("button", { type: "button", class: "rbv-btn", text: "Add task", onclick: add }))));
+    renderDetailTasks();
+    if (keep && keep.key === detailKey) { input.value = keep.value; if (keep.focus) input.focus({ preventScroll: true }); }
+  }
+
+  function renderPartNotes() {
+    if (!$("rbvBrowserList")) return;
+    partSummary = summarizeParts(loadNotes());
+    if (selectedPartId && !nodeList.some((p) => p.label === selectedPartId)) selectedPartId = null;
+    if (selectedConnectorId && !mechanisms.some((m) => m.id === selectedConnectorId)) selectedConnectorId = null;
+    renderBrowserList();
+    renderBrowserDetail();
+  }
+
+  function setBrowserTab(tab) {
+    if (tab === browserTab) return;
+    browserTab = tab;
+    browserQuery = "";
+    const search = $("rbvBrowserSearch");
+    search.value = "";
+    search.placeholder = tab === "parts" ? "Search parts…" : "Search connectors…";
+    $("rbvTabParts").classList.toggle("active", tab === "parts");
+    $("rbvTabConnectors").classList.toggle("active", tab === "connectors");
+    $("rbvTabParts").setAttribute("aria-selected", String(tab === "parts"));
+    $("rbvTabConnectors").setAttribute("aria-selected", String(tab === "connectors"));
+    renderBrowserList();
+    renderBrowserDetail();
+  }
+
+  /** Select a part in the list (from a tap in the view, the host, or a row click). */
+  function revealPart(partId) {
+    const wasParts = browserTab === "parts";
+    if (!wasParts) setBrowserTab("parts");
+    const changed = selectedPartId !== partId;
+    selectedPartId = partId;
+    if (browserQuery && !partId.toLowerCase().includes(browserQuery.trim().toLowerCase())) {
+      browserQuery = ""; $("rbvBrowserSearch").value = "";
+      renderBrowserList();
+    } else if (!wasParts || !$("rbvBrowserList").querySelector(rowSelector("data-part-id", partId))) renderBrowserList();
+    else markBrowserSelection();
+    if (changed || !detailKey) renderBrowserDetail();
+    const row = $("rbvBrowserList").querySelector(rowSelector("data-part-id", partId));
+    if (row) row.scrollIntoView({ block: "nearest" });
+  }
+
+  $("rbvBrowserSearch").addEventListener("input", (e) => { browserQuery = e.target.value; renderBrowserList(); });
+  $("rbvTabParts").addEventListener("click", () => setBrowserTab("parts"));
+  $("rbvTabConnectors").addEventListener("click", () => setBrowserTab("connectors"));
+  $("rbvBrowserList").addEventListener("click", (e) => {
+    const btn = e.target.closest("button.rbv-row");
+    if (!btn) return;
+    const partId = btn.getAttribute("data-part-id");
+    if (partId != null) {
+      if (!focusPart(partId, { openPanel: false })) { revealPart(partId); }
+      return;
+    }
+    selectedConnectorId = btn.getAttribute("data-mech-id");
+    markBrowserSelection();
+    renderBrowserDetail();
+  });
+  $("rbvBrowserList").addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const btn = e.target.closest("button.rbv-row");
+    const next = btn && (e.key === "ArrowDown" ? btn.nextElementSibling : btn.previousElementSibling);
+    if (next && next.matches("button.rbv-row")) { e.preventDefault(); next.focus(); }
+  });
 
   function onMechanismsRendered() {
     publishParts();
@@ -2172,10 +2300,10 @@ const LIGHT_SCALE = Math.PI;
   }
   function onNotesChanged() {
     if (!nodeList.length) return;
-    // Rebuild rows without clobbering a half-typed task.
-    const typing = document.activeElement && document.activeElement.classList.contains("rbv-part-input") ? document.activeElement : null;
-    if (typing && typing.value) { rebuildMarkers(); return; }
-    renderPartNotes();
+    // Refresh badges and task chips only, so a half-typed quick-add and the search box keep their state.
+    partSummary = summarizeParts(loadNotes());
+    renderBrowserList();
+    renderDetailTasks();
     rebuildMarkers();
   }
   window.addEventListener(NOTES_EVENT, onNotesChanged);
@@ -2187,7 +2315,7 @@ const LIGHT_SCALE = Math.PI;
     const objs = partObjects(partId);
     focusedPartId = partId;
     clearTimeout(focusTimer);
-    focusTimer = setTimeout(() => { focusedPartId = null; renderPartNotes(); rebuildMarkers(); }, 6000);
+    focusTimer = setTimeout(() => { focusedPartId = null; rebuildMarkers(); }, 6000);
     if (objs.length) {
       const box = new THREE.Box3();
       objs.forEach((o) => box.expandByObject(o));
@@ -2200,12 +2328,8 @@ const LIGHT_SCALE = Math.PI;
         updateCamera();
       }
     }
-    if (opts.openPanel !== false) {
-      setDrawer(true);
-      renderPartNotes();
-      const row = $("rbvRobotParts").querySelector('[data-part-id="' + CSS.escape(partId) + '"]');
-      if (row) row.scrollIntoView({ block: "nearest" });
-    }
+    if (opts.openPanel !== false) setDrawer(true);
+    revealPart(partId);
     rebuildMarkers();
     setStatus(partId + (partSummary[partId] ? " · " + partSummary[partId].open + " open" : ""));
     return true;

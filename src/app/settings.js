@@ -18,6 +18,8 @@ import {
 } from "./profiles.js";
 import { loadCustomColors, setupCustomColorsEditor, updateCustomColorPicker } from "./customColors.js";
 import { updateTimeDisplay } from "./clock.js";
+import { OPEN_SETTINGS_EVENT } from "../ui/emptyState.js";
+import { updateNextMatchBanner } from "./nextMatchBanner.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -68,6 +70,9 @@ export function loadSettings() {
   $("matchAlarmToggle").checked = config.matchAlarmToggle;
   $("matchAlertThreshold").value = config.matchAlertThreshold;
   $("matchAlarmSound").value = config.matchAlarmSound;
+
+  config.showNextMatchBanner = readString("showNextMatchBanner") !== "false";
+  $("showNextMatchBanner").checked = config.showNextMatchBanner;
 
   config.gridCols = Number.parseInt(readString("gridCols", config.gridCols), 10) || config.gridCols;
   config.gridRows = Number.parseInt(readString("gridRows", config.gridRows), 10) || config.gridRows;
@@ -121,6 +126,7 @@ function saveSettings() {
   config.matchAlarmSound = $("matchAlarmSound").value;
   config.autoSwapEnabled = $("autoSwapEnabled").checked;
   config.autoSwapInterval = Number.parseInt($("autoSwapInterval").value, 10) || 30;
+  config.showNextMatchBanner = $("showNextMatchBanner").checked;
 
   const season = parseSeasonOverride($("seasonYearOverride").value);
   config.seasonYearOverride = season ? String(season) : "";
@@ -145,6 +151,7 @@ function saveSettings() {
   writeString("matchAlarmToggle", config.matchAlarmToggle);
   writeString("matchAlertThreshold", config.matchAlertThreshold);
   writeString("matchAlarmSound", config.matchAlarmSound);
+  writeString("showNextMatchBanner", config.showNextMatchBanner);
   writeString("autoSwapEnabled", config.autoSwapEnabled);
   writeString("autoSwapInterval", config.autoSwapInterval);
   writeString("seasonYearOverride", config.seasonYearOverride);
@@ -156,6 +163,7 @@ function saveSettings() {
   restartAutoSwap();
   dataSources.updateConfig(config);
   updateTimeDisplay();
+  updateNextMatchBanner();
   return true;
 }
 
@@ -183,6 +191,18 @@ export function setupSettingsListeners() {
     displayMessage("Settings saved.", "message");
     panel.style.display = "none";
     getData();
+  });
+
+  window.addEventListener(OPEN_SETTINGS_EVENT, () => {
+    panel.style.display = "flex";
+  });
+  $("runWizardBtn")?.addEventListener("click", () => {
+    panel.style.display = "none";
+    window.dispatchEvent(new CustomEvent("pitbeacon:run-wizard"));
+  });
+  $("showWelcomeBtn")?.addEventListener("click", () => {
+    panel.style.display = "none";
+    window.dispatchEvent(new CustomEvent("pitbeacon:show-welcome"));
   });
 
   $("hideTopBtn").addEventListener("click", () => {
@@ -229,8 +249,24 @@ export function setupSettingsListeners() {
   });
 }
 
-/** First run: open Settings so the team number and TBA key can be entered. */
-export function openSettingsIfUnconfigured() {
-  if (!readString("tbaapikey")) $("settingscontainer").style.display = "flex";
+/**
+ * Apply the basics collected by the setup wizard the same way the Settings form would.
+ * Pass null for anything the user left alone.
+ */
+export function applyBasicSettings({ teamNumber = null, tbaKey = null } = {}) {
+  if (teamNumber) {
+    config.teamNumber = String(teamNumber);
+    $("teamNumber").value = config.teamNumber;
+    writeString("teamNumber", config.teamNumber);
+    stateManager.update({ teamNumber: Number.parseInt(config.teamNumber, 10) });
+  }
+  if (tbaKey) {
+    config.tbaapikey = tbaKey;
+    $("tbaapikey").value = tbaKey;
+    writeString("tbaapikey", tbaKey);
+  }
+  if (teamNumber || tbaKey) {
+    dataSources.updateConfig(config);
+    getData();
+  }
 }
-

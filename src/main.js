@@ -13,6 +13,7 @@ import { createLeaderboardCard } from "./cards/builtin/leaderboardCard.js";
 import { createPitNotesCard } from "./cards/builtin/pitNotesCard.js";
 import { createRobotViewerCard } from "./cards/builtin/robotViewerCard.js";
 import { createStatsCard } from "./cards/builtin/statsCard.js";
+import { createRobotSummaryCard } from "./cards/builtin/robotSummaryCard.js";
 import { installNotificationBridge } from "./core/notifications.js";
 import { startClock } from "./app/clock.js";
 import { installTeamDataBridge, restoreSnapshot, startPolling } from "./app/polling.js";
@@ -20,7 +21,10 @@ import { initConnectionStatus } from "./app/connectionStatus.js";
 import { restartAutoSwap } from "./app/profiles.js";
 import { initCardsModal, openCardsModal } from "./app/cardsModal.js";
 import { openLayoutEditor } from "./app/layoutEditor.js";
-import { loadSettings, openSettingsIfUnconfigured, setupSettingsListeners } from "./app/settings.js";
+import { loadSettings, setupSettingsListeners } from "./app/settings.js";
+import { initCardStatus } from "./app/cardStatus.js";
+import { initNextMatchBanner } from "./app/nextMatchBanner.js";
+import { startOnboarding } from "./app/onboarding.js";
 import {
   loadEasterEggPreference,
   scheduleEasterEgg,
@@ -38,6 +42,7 @@ registry.register("leaderboard-card", createLeaderboardCard());
 registry.register("pit-notes-card", createPitNotesCard());
 registry.register("robot-viewer-card", createRobotViewerCard());
 registry.register("stats-card", createStatsCard());
+registry.register("robot-summary-card", createRobotSummaryCard());
 registry.register("__fallback__", FallbackCard);
 
 function setupHeader() {
@@ -68,7 +73,9 @@ function start() {
   initOfflineStatus();
 
   installTeamDataBridge();
+  initNextMatchBanner();
   renderLayout();
+  initCardStatus();
   restartAutoSwap();
   if (easterEggsOn) scheduleEasterEgg();
 
@@ -78,7 +85,7 @@ function start() {
 
   registerServiceWorker();
   requestPersistentStorage();
-  openSettingsIfUnconfigured();
+  startOnboarding();
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);

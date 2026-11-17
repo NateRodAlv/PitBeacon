@@ -1,4 +1,6 @@
 // src/cards/builtin/webcastCard.js
+import { emptyInfoFor, renderEmptyInfo } from '../../ui/emptyState.js';
+
 export function createWebcastCard() {
     function renderWebcasts(element, state, sdk) {
         const eventData = state.currentEventData;
@@ -31,7 +33,8 @@ export function createWebcastCard() {
             }
         }
 
-        const renderKey = todaysWebcasts.map((webcast) => `${webcast.type}:${webcast.channel}:${webcast.url}`).join('|');
+        const emptyInfo = todaysWebcasts.length ? null : emptyInfoFor('webcasts', state);
+        const renderKey = emptyInfo ? `empty:${emptyInfo.reason}` : todaysWebcasts.map((webcast) => `${webcast.type}:${webcast.channel}:${webcast.url}`).join('|');
         if (element._webcastRenderKey === renderKey && element._webcastWrapper) {
             return;
         }
@@ -43,7 +46,7 @@ export function createWebcastCard() {
         wrapper.style.cssText = ``;
 
         if (!todaysWebcasts.length) {
-            wrapper.innerHTML = `<p class="inactive" style="text-align:center;color:var(--text-dim);font-style:italic;padding:20px;">No webcasts available.</p>`;
+            renderEmptyInfo(wrapper, emptyInfo);
             element.appendChild(wrapper);
             element._webcastWrapper = wrapper;
             return;
@@ -84,6 +87,7 @@ export function createWebcastCard() {
         icon: 'device-tv',
         lockedAspect: 16/11,
         builtin: true,
+        statusSource: 'tba',
         render: (element, state, sdk) => {
             if (!element._webcastCardInitialized) {
                 sdk.updateCard(
@@ -99,7 +103,12 @@ export function createWebcastCard() {
                     // guaranteed to look "changed" every tick just from fullDate
                     // ticking, and means stringifying event data / matches / etc.
                     // for a card that only needs to know about webcasts.
-                    (latestState) => latestState.currentEventData?.webcasts ?? null
+                    // The empty-state reason is part of the diff so "no key" -> "no event" -> "no webcast"
+                    // (or going offline) redraws the explanation.
+                    (latestState) => ({
+                        webcasts: latestState.currentEventData?.webcasts ?? null,
+                        empty: emptyInfoFor('webcasts', latestState).reason,
+                    })
                 );
                 element._webcastCardInitialized = true;
             }

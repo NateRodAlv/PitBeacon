@@ -16,14 +16,17 @@ import { findRobotPart, getRobotParts, ROBOT_PARTS_EVENT } from "../../data/robo
 import { icon } from "../../lib/icons.js";
 import { escapeHtml as esc } from "../../lib/html.js";
 import { readString, writeString } from "../../core/storage.js";
+import { renderEmptyInfo } from "../../ui/emptyState.js";
 
 export const FOCUS_PART_EVENT = "pitbeacon:focus-part";
+/** detail: { section: "tasks"|"batteries"|"parts"|"checkins", itemId?: string } */
+export const OPEN_NOTES_SECTION_EVENT = "pitbeacon:open-notes-section";
 
 const SECTION_META = {
-  tasks: { label: "Robot", title: "Robot Health", icon: "tool", add: "＋ Task", empty: "No robot tasks logged." },
-  batteries: { label: "Batteries", title: "Batteries", icon: "battery", add: "＋ Battery", empty: "No batteries logged." },
-  parts: { label: "Parts", title: "Parts Inventory", icon: "package", add: "＋ Part", empty: "No parts tracked." },
-  checkins: { label: "Check-in", title: "Pit Check-in", icon: "checklist", add: "＋ Task", empty: "No check-in items." },
+  tasks: { label: "Robot", title: "Robot Health", icon: "tool", add: "＋ Task", empty: { title: "No robot tasks yet", body: "Tap ＋ Task to log a repair, or select a part in the 3D viewer and add one there." } },
+  batteries: { label: "Batteries", title: "Batteries", icon: "battery", add: "＋ Battery", empty: { title: "No batteries logged", body: "Add each battery with its voltage and status so the Robot Summary can tell you how many are ready." } },
+  parts: { label: "Parts", title: "Parts Inventory", icon: "package", add: "＋ Part", empty: { title: "No spare parts tracked", body: "Add parts with a minimum stock level and low stock gets flagged here and on the Robot Summary." } },
+  checkins: { label: "Check-in", title: "Pit Check-in", icon: "checklist", add: "＋ Task", empty: { title: "No check-in items", body: "Add the things that must be done before each match, like inspection, bumpers and battery swap." } },
 };
 const SHOW_KEYS = { tasks: "showTasks", batteries: "showBatteries", parts: "showParts", checkins: "showCheckins" };
 
@@ -183,6 +186,7 @@ export function createPitNotesCard() {
     label: "Pit Notes",
     icon: "tool",
     builtin: true,
+    statusSource: "local",
     settings: PIT_NOTES_SETTINGS,
     render(element, state, sdk, cardId = "pit-notes-card") {
       const ctx = (element._pitNotes ??= mount(element, sdk, cardId));
@@ -271,7 +275,10 @@ function mount(element, sdk, cardId) {
     const items = sortItems(section, notes[section], settings);
     const body = root.querySelector("[data-body]");
     if (!items.length) {
-      body.innerHTML = `<p class="pit-empty">${esc(SECTION_META[section].empty)}</p>`;
+      const hiddenByFilter = settings.hideCompleted && notes[section].length > 0;
+      renderEmptyInfo(body, hiddenByFilter
+        ? { reason: "filtered", title: "Everything here is finished", body: "Finished items are hidden. Turn off \"Hide finished tasks and check-ins\" in this card's settings to see them." }
+        : { reason: "empty", ...SECTION_META[section].empty });
       return;
     }
     const rows = items.map((item) => ROW[section](item, { listId })).join("");
@@ -382,13 +389,30 @@ function mount(element, sdk, cardId) {
     window.removeEventListener(NOTES_EVENT, external);
     window.removeEventListener(ROBOT_PARTS_EVENT, external);
     window.removeEventListener("storage", onStorage);
+    window.removeEventListener(OPEN_NOTES_SECTION_EVENT, onOpenSection);
   };
   const onStorage = (event) => {
     if (event.key === null || event.key === "pitNotes" || event.key === "robotParts" || event.key === "cardSettings") external();
   };
+  const onOpenSection = (event) => {
+    if (!element.isConnected) return cleanup();
+    const { section, itemId } = event.detail || {};
+    if (!SECTION_META[section]) return;
+    ctx.active = section;
+    writeString("pitNotesSection", section);
+    draw();
+    element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    const row = itemId ? root.querySelector(`[data-id="${CSS.escape(itemId)}"]`) : null;
+    if (row) {
+      row.scrollIntoView({ block: "nearest" });
+      row.classList.add("pn-flash");
+      setTimeout(() => row.classList.remove("pn-flash"), 1600);
+    }
+  };
   window.addEventListener(NOTES_EVENT, external);
   window.addEventListener(ROBOT_PARTS_EVENT, external);
   window.addEventListener("storage", onStorage);
+  window.addEventListener(OPEN_NOTES_SECTION_EVENT, onOpenSection);
 
   return ctx;
 }
