@@ -65,7 +65,7 @@ const WHATS_NEW = [
   ["Next-match banner", "A slim strip with your next match, the countdown and your alliance color. It turns urgent near the alert time."],
   ["Card status dots", "A dot in each card's corner shows data freshness. Hover it for the last update time."],
   ["Robot Summary card", "Open and flagged tasks, battery state, low stock and the parts that need attention, with links into the 3D viewer and Pit Notes."],
-  ["Tidier 3D viewer", "A searchable parts list with a detail panel replaces the long drawer. Tap a part in the model to select it."],
+  ["New 3D viewer", "A new 3D Robot Viewer card to import and view your robot model, pin repair notes to parts, and see the robot in different poses. Export your model from CAD as a .glb, .gltf or .urdf file (with its mesh files) and load it in the card. .urdf files have mate connectors imported with them."],
   ["Helpful empty cards", "Cards with no data now say why and what to do next."],
 ];
 
@@ -106,6 +106,7 @@ export function openSetupWizard() {
   const draft = {
     team: readString("teamNumber", "") || "",
     key: hasRealTbaKey(config) ? config.tbaapikey : "",
+    match13key: readString("match13apikey", "") || "",
     modelFiles: null,
     modelName: "",
     accent: 0,
@@ -133,7 +134,8 @@ export function openSetupWizard() {
   async function apply() {
     const team = draft.team.trim();
     const key = draft.key.trim();
-    applyBasicSettings({ teamNumber: /^\d{1,5}$/.test(team) ? team : null, tbaKey: key || null });
+    const match13key = draft.match13key.trim();
+    applyBasicSettings({ teamNumber: /^\d{1,5}$/.test(team) ? team : null, tbaKey: key || null, match13Key: match13key });
     if (draft.modelFiles) {
       try {
         await saveRobotModel(draft.modelFiles);
@@ -174,21 +176,66 @@ export function openSetupWizard() {
   function stepTeam() {
     const team = h("input", { type: "text", inputmode: "numeric", maxlength: "5", placeholder: "e.g. 7250", value: draft.team, autocomplete: "off" });
     const key = h("input", { type: "password", placeholder: "Paste your TBA read key", value: draft.key, autocomplete: "off" });
-    const result = h("p", { class: "wizard-result", role: "status", "aria-live": "polite" });
-    team.addEventListener("input", () => { draft.team = team.value; });
-    key.addEventListener("input", () => { draft.key = key.value; result.textContent = ""; });
-    const test = h("button", { type: "button", class: "pb-btn", text: "Test key" });
-    test.addEventListener("click", async () => {
+    const match13key = h("input", { type: "password", placeholder: "Paste your Match13 read key", value: draft.match13key, autocomplete: "off" });
+    const tbaResult = h("p", { class: "wizard-result", role: "status", "aria-live": "polite" });
+    const match13Result = h("p", { class: "wizard-result", role: "status", "aria-live": "polite" });
+    team.addEventListener("input", () => {
+      draft.team = team.value;
+      match13Result.textContent = "";
+    });
+    key.addEventListener("input", () => { draft.key = key.value; tbaResult.textContent = ""; });
+    match13key.addEventListener("input", () => { draft.match13key = match13key.value; match13Result.textContent = ""; });
+    const testTba = h("button", { type: "button", class: "pb-btn", text: "Test TBA key" });
+    testTba.addEventListener("click", async () => {
       const value = key.value.trim();
-      result.dataset.ok = "false";
-      if (!hasRealTbaKey({ tbaapikey: value })) { result.textContent = "Paste a key first."; return; }
-      result.textContent = "Checking…";
+      tbaResult.dataset.ok = "false";
+      if (!hasRealTbaKey({ tbaapikey: value })) { tbaResult.textContent = "Paste a key first."; return; }
+      tbaResult.textContent = "Checking…";
       try {
         const response = await fetch(TBA_STATUS_URL, { headers: { "X-TBA-Auth-Key": value } });
-        result.dataset.ok = String(response.ok);
-        result.textContent = response.ok ? "Key works." : response.status === 401 ? "TBA rejected that key. Check that it was copied completely." : `TBA answered with HTTP ${response.status}.`;
+        tbaResult.dataset.ok = String(response.ok);
+        tbaResult.textContent = response.ok ? "Key works." : response.status === 401 ? "TBA rejected that key. Check that it was copied completely." : `TBA answered with HTTP ${response.status}.`;
       } catch {
-        result.textContent = "Couldn't reach TBA. You can still continue and check later.";
+        tbaResult.textContent = "Couldn't reach TBA. You can still continue and check later.";
+      }
+    });
+    const testMatch13 = h("button", { type: "button", class: "pb-btn", text: "Test Match13 key" });
+    testMatch13.addEventListener("click", async () => {
+      const value = match13key.value.trim().replace(/^Bearer\s+/i, "");
+      match13Result.dataset.ok = "false";
+      if (!value) { match13Result.textContent = "Paste a key first."; return; }
+      if (!value.startsWith("m13_live_")) {
+        match13Result.textContent = "Match13 keys should start with m13_live_. Check that the complete key was copied.";
+        return;
+      }
+      const teamNumber = team.value.trim();
+      if (!/^\d{1,5}$/.test(teamNumber)) {
+        match13Result.textContent = "Enter a valid team number to test this key.";
+        return;
+      }
+      const proxyUrl = String(config.match13ProxyUrl || "").trim().replace(/\/+$/, "");
+      if (!proxyUrl) {
+        match13Result.textContent = "PitBeacon's Match13 proxy is not configured. You can still continue and check later.";
+        return;
+      }
+      const year = config.seasonYearOverride || new Date().getFullYear();
+      match13Result.textContent = "Checking…";
+      try {
+        const response = await fetch(`${proxyUrl}/v1/teams/${teamNumber}/years/${year}`, {
+          headers: { Authorization: `Bearer ${value}` },
+        });
+        match13Result.dataset.ok = String(response.ok);
+        if (response.ok) {
+          match13Result.textContent = "Key works.";
+        } else if (response.status === 401 || response.status === 403) {
+          match13Result.textContent = "Match13 rejected that key. Check that it was copied completely.";
+        } else if (response.status === 404) {
+          match13Result.textContent = "Match13 returned no data for this team and season. Check the team number and season.";
+        } else {
+          match13Result.textContent = `Match13 answered with HTTP ${response.status}.`;
+        }
+      } catch {
+        match13Result.textContent = "Couldn't reach Match13 through PitBeacon's proxy. You can still continue and check later.";
       }
     });
     return h(
@@ -197,7 +244,9 @@ export function openSetupWizard() {
       h("p", { class: "wizard-lead", text: "PitBeacon pulls your matches and rankings from The Blue Alliance." }),
       field("Team number", team),
       field("TBA read API key", key, "Create one at thebluealliance.com/account under Read API Keys. Stored only in this browser."),
-      h("div", { class: "wizard-inline" }, test, result),
+      field("Match13 read API key", match13key, "Optional (for stats card). Create one at match13.com/account under Read API Keys. Stored only in the browser, goes through a Cloudflare worker."),
+      h("div", { class: "wizard-inline" }, testTba, tbaResult),
+      h("div", { class: "wizard-inline" }, testMatch13, match13Result),
     );
   }
 

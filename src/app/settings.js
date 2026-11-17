@@ -253,7 +253,7 @@ export function setupSettingsListeners() {
  * Apply the basics collected by the setup wizard the same way the Settings form would.
  * Pass null for anything the user left alone.
  */
-export function applyBasicSettings({ teamNumber = null, tbaKey = null } = {}) {
+export function applyBasicSettings({ teamNumber = null, tbaKey = null, match13Key = null } = {}) {
   if (teamNumber) {
     config.teamNumber = String(teamNumber);
     $("teamNumber").value = config.teamNumber;
@@ -265,7 +265,12 @@ export function applyBasicSettings({ teamNumber = null, tbaKey = null } = {}) {
     $("tbaapikey").value = tbaKey;
     writeString("tbaapikey", tbaKey);
   }
-  if (teamNumber || tbaKey) {
+  if (match13Key !== null) {
+    config.match13apikey = match13Key;
+    $("match13apikey").value = match13Key;
+    writeString("match13apikey", match13Key);
+  }
+  if (teamNumber || tbaKey || match13Key !== null) {
     dataSources.updateConfig(config);
     getData();
   }
