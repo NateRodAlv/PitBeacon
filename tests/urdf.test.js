@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import { readFile } from "node:fs/promises";
+import { fileURLToPath, URL } from "node:url";
 import { parseURDF } from "../src/viewer/urdf.js";
 
 function urdfFile(xml) {
@@ -22,7 +23,7 @@ endsolid triangle`;
 
 describe("URDF parsing", () => {
   it("loads the bundled example robot with its lift, pivot, and roller connectors", async () => {
-    const buffer = await readFile(new URL("../public/examples/robot-viewer-demo.urdf", import.meta.url));
+    const buffer = await readFile(fileURLToPath(new URL("../public/examples/robot-viewer-demo.urdf", import.meta.url)));
     const model = await parseURDF([{ name: "robot-viewer-demo.urdf", buffer }]);
     model.scene.updateMatrixWorld(true);
 
