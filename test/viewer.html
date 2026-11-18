@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Robot Viewer</title>
-    <script type="module" crossorigin src="./assets/viewer-D4ObLqbN.js"></script>
+    <script type="module" crossorigin src="./assets/viewer-DdDOi4Hn.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-XKyaHtl9.js">
     <link rel="modulepreload" crossorigin href="./assets/robotParts-DmQgVcwy.js">
-    <link rel="stylesheet" crossorigin href="./assets/viewer-DJBwAqfA.css">
+    <link rel="stylesheet" crossorigin href="./assets/viewer-DISJ4qEo.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
 <div class="rbv" id="rbvRoot">
@@ -21,14 +21,19 @@
     <div class="rbv-status" id="rbvStatus" role="status" aria-live="polite"></div>
 
     <div class="rbv-chrome rbv-bar" id="rbvBar">
-      <label class="rbv-file">
-        <input id="rbvFile" type="file" multiple accept=".urdf,.glb,.gltf,.stl,.obj,.dae,.bin,.png,.jpg,.jpeg,.webp">
-        <span class="rbv-btn">＋ Load model</span>
-      </label>
-      <label class="rbv-file">
-        <input id="rbvFolder" type="file" webkitdirectory directory multiple accept=".urdf,.glb,.gltf,.stl,.obj,.dae,.bin,.png,.jpg,.jpeg,.webp">
-        <span class="rbv-btn">Load URDF folder</span>
-      </label>
+      <details id="rbvLoadMenu" class="rbv-load-menu">
+        <summary class="rbv-btn">＋ Load model <span aria-hidden="true">▾</span></summary>
+        <div class="rbv-load-menu-options">
+          <label class="rbv-file rbv-load-option">
+            <input id="rbvFile" type="file" multiple accept=".urdf,.glb,.gltf,.stl,.obj,.dae,.bin,.png,.jpg,.jpeg,.webp">
+            <span class="rbv-btn rbv-btn-ghost">Choose model files</span>
+          </label>
+          <label class="rbv-file rbv-load-option">
+            <input id="rbvFolder" type="file" webkitdirectory directory multiple accept=".urdf,.glb,.gltf,.stl,.obj,.dae,.bin,.png,.jpg,.jpeg,.webp">
+            <span class="rbv-btn rbv-btn-ghost">Choose URDF folder</span>
+          </label>
+        </div>
+      </details>
       <button id="rbvHome" type="button" class="rbv-btn">Reset view</button>
       <button id="rbvToolbarPlay" type="button" class="rbv-btn" aria-label="Play model animation" title="Play model animation" disabled>Play</button>
       <button id="rbvSetupToggle" type="button" class="rbv-btn" aria-expanded="false" aria-controls="rbvSetup">Mate connectors</button>

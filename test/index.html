@@ -43,9 +43,9 @@
     <!-- Stylesheets and Resources -->
     <link rel="icon" href="favicon.png" type="image/png" />
     <meta name="theme-color" content="#1a1a1a" />
-    <script type="module" crossorigin src="./assets/main-zvZfZAeo.js"></script>
+    <script type="module" crossorigin src="./assets/main-CwtFMPgI.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/robotParts-DmQgVcwy.js">
-    <link rel="stylesheet" crossorigin href="./assets/main-B6cPcB0M.css">
+    <link rel="stylesheet" crossorigin href="./assets/main-BlG6txI4.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
     <div class="header" id="header">
@@ -276,218 +276,171 @@
     </button>
     <div class="settingscontainer" id="settingscontainer">
       <h2 class="settings-title">Settings</h2>
-      <div class="settingsdiv">
-        <div class="settings-section-title">General</div>
-        <div class="settings-field">
-          <label for="teamNumber">Team Number</label>
-          <input
-            class="teaminput"
-            type="text"
-            id="teamNumber"
-            name="teamNumber"
-            value="7250"
-          />
+      <div class="settings-content">
+        <div class="settingsdiv">
+          <div class="settings-section-title">Team &amp; data</div>
+          <div class="settings-field">
+            <label for="teamNumber">Team Number</label>
+            <input
+              class="teaminput"
+              type="text"
+              id="teamNumber"
+              name="teamNumber"
+              value="7250"
+            />
+          </div>
+          <div class="settings-field">
+            <label for="tbaapikey">TBA API Key</label>
+            <input
+              type="password"
+              id="tbaapikey"
+              name="tbaapikey"
+              autocomplete="off"
+            />
+          </div>
+          <div class="settings-field match13-key-field">
+            <label for="match13apikey">Match13 API Key</label>
+            <input
+              type="password"
+              id="match13apikey"
+              name="match13apikey"
+              autocomplete="off"
+              placeholder="match13.com/account"
+            />
+            <small class="match13-proxy-notice">
+              GitHub Pages sends this key through PitBeacon's Cloudflare proxy
+              when the team stats card loads. It is forwarded to Match13 and
+              not stored by the proxy.
+            </small>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="tbaapikey">TBA API Key</label>
-          <input
-            type="password"
-            id="tbaapikey"
-            name="tbaapikey"
-            value="TBA Key"
-            autocomplete="off"
-          />
-        </div>
-        <div class="settings-field match13-key-field">
-          <label for="match13apikey">Match13 API Key</label>
-          <input
-            type="password"
-            id="match13apikey"
-            name="match13apikey"
-            autocomplete="off"
-            placeholder="Get a key at match13.com/account"
-          />
-          <small class="match13-proxy-notice">
-            GitHub Pages cannot call Match13 directly, so your API key will be
-            sent through PitBeacon's Cloudflare proxy to Match13 when team stats card
-            loads. The proxy forwards the key without storing it.
-          </small>
-        </div>
-      </div>
-      <div class="settingsdiv">
-        <div class="settings-section-title">Appearance</div>
-        <p class="settings-description">
-          Personalize the colors used throughout PitBeacon.
-        </p>
-        <button class="settings-appearance-btn" id="openCustomColorsBtn">
-          <span aria-hidden="true">🎨</span>
-          <span>
+        <div class="settingsdiv">
+          <div class="settings-section-title">Appearance</div>
+          <div class="settings-field">
+            <label for="showCardStatusDots">Card status dots</label>
+            <input
+              type="checkbox"
+              id="showCardStatusDots"
+              name="showCardStatusDots"
+              checked
+            />
+          </div>
+          <button class="settings-appearance-btn" id="openCustomColorsBtn">
+            <span aria-hidden="true">🎨</span>
             <strong>Customize colors</strong>
-            <small>Preview and reset individual interface colors</small>
-          </span>
-          <span class="settings-appearance-arrow" aria-hidden="true">›</span>
-        </button>
-      </div>
-      <div class="settingsdiv">
-        <div class="settings-section-title">Alerts</div>
-        <div class="settings-field">
-          <label for="noteAlarmToggle">Flagged Items Alarm</label>
-          <input
-            type="checkbox"
-            id="noteAlarmToggle"
-            title="Toggle flagged items alarm"
-          />
-        </div>
-        <div class="settings-field">
-          <label for="noteAlarmSound">Note Sound</label>
-          <select id="noteAlarmSound" name="noteAlarmSound">
-            <option value="alarm1">Alarm 1</option>
-            <option value="alarm2">Alarm 2</option>
-            <option value="alarm3">Alarm 3</option>
-            <option value="beep">Beep</option>
-          </select>
-        </div>
-        <div class="settings-field">
-          <label for="matchAlarmToggle">Match Alert</label>
-          <input
-            type="checkbox"
-            id="matchAlarmToggle"
-            name="matchAlarmToggle"
-            checked
-          />
-        </div>
-        <div class="settings-field">
-          <label for="matchAlertThreshold">Match Alert (seconds before)</label>
-          <input
-            type="number"
-            id="matchAlertThreshold"
-            name="matchAlertThreshold"
-            min="30"
-            max="600"
-            value="300"
-          />
-        </div>
-        <div class="settings-field">
-          <label for="showNextMatchBanner">Show next-match banner</label>
-          <input
-            type="checkbox"
-            id="showNextMatchBanner"
-            name="showNextMatchBanner"
-            checked
-          />
-        </div>
-        <div class="settings-field">
-          <label for="matchAlarmSound">Match Sound</label>
-          <select id="matchAlarmSound" name="matchAlarmSound">
-            <option value="alarm1">Alarm 1</option>
-            <option value="alarm2">Alarm 2</option>
-            <option value="alarm3">Alarm 3</option>
-            <option value="beep">Beep</option>
-          </select>
-        </div>
-      </div>
-      <div class="settingsdiv">
-        <div class="settings-section-title">Layout Profiles</div>
-        <div class="settings-field">
-          <label for="profileSelect">Active Profile</label>
-          <select id="profileSelect" name="profileSelect"></select>
-        </div>
-        <div class="settings-field">
-          <label for="newProfileName">New Profile Name</label>
-          <input
-            type="text"
-            id="newProfileName"
-            name="newProfileName"
-            placeholder="e.g. Quals View"
-          />
-        </div>
-        <div class="settings-field" style="gap: 6px">
-          <button
-            class="savebutton"
-            id="saveProfileBtn"
-            style="flex: 1; margin: 0; padding: 6px 8px; font-size: 0.8rem"
-          >
-            Save as Profile
-          </button>
-          <button
-            class="savebutton"
-            id="deleteProfileBtn"
-            style="
-              flex: 1;
-              margin: 0;
-              padding: 6px 8px;
-              font-size: 0.8rem;
-              background: rgb(120, 40, 40);
-            "
-          >
-            Delete Profile
+            <span class="settings-appearance-arrow" aria-hidden="true">›</span>
           </button>
         </div>
-        <div class="settings-section-title" style="margin-top: 12px">
-          Auto-Swap
+        <div class="settingsdiv">
+          <div class="settings-section-title">Alerts</div>
+          <div class="settings-field">
+            <label for="noteAlarmToggle">Flagged items alarm</label>
+            <input type="checkbox" id="noteAlarmToggle" />
+          </div>
+          <div class="settings-field">
+            <label for="noteAlarmSound">Note sound</label>
+            <select id="noteAlarmSound" name="noteAlarmSound">
+              <option value="alarm1">Alarm 1</option>
+              <option value="alarm2">Alarm 2</option>
+              <option value="alarm3">Alarm 3</option>
+              <option value="beep">Beep</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label for="matchAlarmToggle">Match alert</label>
+            <input type="checkbox" id="matchAlarmToggle" name="matchAlarmToggle" checked />
+          </div>
+          <div class="settings-field">
+            <label for="matchAlertThreshold">Lead time (seconds)</label>
+            <input
+              type="number"
+              id="matchAlertThreshold"
+              name="matchAlertThreshold"
+              min="30"
+              max="600"
+              value="300"
+            />
+          </div>
+          <div class="settings-field">
+            <label for="showNextMatchBanner">Next-match banner</label>
+            <input type="checkbox" id="showNextMatchBanner" name="showNextMatchBanner" checked />
+          </div>
+          <div class="settings-field">
+            <label for="matchAlarmSound">Match sound</label>
+            <select id="matchAlarmSound" name="matchAlarmSound">
+              <option value="alarm1">Alarm 1</option>
+              <option value="alarm2">Alarm 2</option>
+              <option value="alarm3">Alarm 3</option>
+              <option value="beep">Beep</option>
+            </select>
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="autoSwapEnabled">Enable Auto-Swap</label>
-          <input type="checkbox" id="autoSwapEnabled" name="autoSwapEnabled" />
+        <div class="settingsdiv">
+          <div class="settings-section-title">Layout profiles</div>
+          <div class="settings-field">
+            <label for="profileSelect">Active profile</label>
+            <select id="profileSelect" name="profileSelect"></select>
+          </div>
+          <div class="settings-field">
+            <label for="newProfileName">New profile</label>
+            <input
+              type="text"
+              id="newProfileName"
+              name="newProfileName"
+              placeholder="e.g. Quals View"
+            />
+          </div>
+          <div class="settings-actions">
+            <button class="settings-action-button" id="saveProfileBtn">Save profile</button>
+            <button class="settings-action-button settings-action-danger" id="deleteProfileBtn">Delete</button>
+          </div>
+          <div class="settings-section-title settings-subtitle">Auto-swap</div>
+          <div class="settings-field">
+            <label for="autoSwapEnabled">Enable auto-swap</label>
+            <input type="checkbox" id="autoSwapEnabled" name="autoSwapEnabled" />
+          </div>
+          <div class="settings-field">
+            <label for="autoSwapInterval">Swap interval (seconds)</label>
+            <input
+              type="number"
+              id="autoSwapInterval"
+              name="autoSwapInterval"
+              min="5"
+              max="3600"
+              value="30"
+            />
+          </div>
         </div>
-        <div class="settings-field">
-          <label for="autoSwapInterval">Swap Interval (seconds)</label>
-          <input
-            type="number"
-            id="autoSwapInterval"
-            name="autoSwapInterval"
-            min="5"
-            max="3600"
-            value="30"
-          />
-        </div>
-      </div>
-      <div class="settingsdiv">
-        <div class="settings-section-title">Offline</div>
-        <p class="settings-description">
-          Open PitBeacon once with a good connection and it keeps working
-          without Wi-Fi.
-        </p>
-        <ul class="offline-ready-list" id="offlineReady" aria-live="polite"></ul>
-        <small class="settings-description" id="offlineStorage"></small>
-      </div>
-      <div class="settingsdiv">
-        <div class="settings-section-title">Setup &amp; what's new</div>
-        <p class="settings-description">
-          Walk through team number, TBA key, robot model and colors again, or
-          bring back the 2027 highlights.
-        </p>
-        <div class="settings-field" style="gap: 6px">
-          <button class="savebutton" id="runWizardBtn" type="button" style="flex: 1; margin: 0; padding: 6px 8px; font-size: 0.8rem">Run setup wizard</button>
-          <button class="savebutton" id="showWelcomeBtn" type="button" style="flex: 1; margin: 0; padding: 6px 8px; font-size: 0.8rem">Show what's new</button>
-        </div>
-      </div>
-      <div class="settingsdiv">
-        <div class="settings-section-title">Testing</div>
-        <div class="settings-field">
-          <label for="seasonYearOverride">Season year (blank = automatic)</label>
-          <input
-            type="text"
-            id="seasonYearOverride"
-            name="seasonYearOverride"
-            inputmode="numeric"
-            placeholder="e.g. 2026"
-            maxlength="4"
-          />
-        </div>
-        <div class="settings-field">
-          <label for="testMode">Test Mode</label>
-          <input type="checkbox" id="testMode" name="testMode" />
-        </div>
-        <div class="settings-field">
-          <label for="testDate">Test Date (YYYY-MM-DD)</label>
-          <input
-            type="text"
-            id="testDate"
-            name="testDate"
-            placeholder="2026-04-26"
-            style="display: none"
-          />
+        <div class="settingsdiv settings-more">
+          <section class="settings-subsection">
+            <h3 class="settings-section-title">Offline</h3>
+            <ul class="offline-ready-list" id="offlineReady" aria-live="polite"></ul>
+            <small class="settings-description" id="offlineStorage"></small>
+          </section>
+          <section class="settings-subsection">
+            <h3 class="settings-section-title">Setup</h3>
+            <div class="settings-actions">
+              <button class="settings-action-button" id="runWizardBtn" type="button">Run setup wizard</button>
+              <button class="settings-action-button" id="showWelcomeBtn" type="button">Show what's new</button>
+            </div>
+          </section>
+          <section class="settings-subsection">
+            <h3 class="settings-section-title">Advanced</h3>
+            <div class="settings-field">
+              <label for="testMode">Test mode</label>
+              <input type="checkbox" id="testMode" name="testMode" />
+            </div>
+            <div class="settings-field">
+              <label for="testDate">Test date</label>
+              <input
+                type="text"
+                id="testDate"
+                name="testDate"
+                placeholder="YYYY-MM-DD"
+                style="display: none"
+              />
+            </div>
+          </section>
         </div>
       </div>
       <button class="savebutton" id="savebutton">Save</button>
