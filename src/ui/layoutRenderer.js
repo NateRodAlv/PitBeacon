@@ -1,4 +1,7 @@
 // src/ui/layoutRenderer.js
+const PORTRAIT_COLS = 2;
+const PORTRAIT_MIN_ROW_PX = 160;
+
 export class LayoutRenderer {
     constructor(registry, validator, stateManager, dataSources, sdk) {
         this._registry = registry;
@@ -34,13 +37,33 @@ render(config, container) {
         console.warn('Layout warnings:', validation.warnings);
     }
 
-    const validatedLayout = validation.layout;
+    let validatedLayout = validation.layout;
 
+    // Portrait layout: reflow the saved landscape layout into a tall 2-column
+    // grid. The saved layout/profiles are never modified.
+    const portrait = !!config.portraitLayout;
+    let portraitRows = 0;
+    if (portrait) {
+        const visible = Object.entries(validatedLayout).filter(
+            ([id]) => !hiddenCards.includes(id) && this._registry.get(id)
+        );
+        const reflowed = this._buildPortraitLayout(visible, gridCols, gridRows);
+        validatedLayout = reflowed.layout;
+        portraitRows = reflowed.rows;
+    }
+
+    container.dataset.portrait = portrait ? 'true' : 'false';
     container.style.display = 'grid';
-    container.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
-    container.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
+    if (portrait) {
+        container.style.gridTemplateColumns = `repeat(${PORTRAIT_COLS}, minmax(0, 1fr))`;
+        container.style.gridTemplateRows = `repeat(${Math.max(1, portraitRows)}, minmax(${PORTRAIT_MIN_ROW_PX}px, 1fr))`;
+    } else {
+        container.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+        container.style.gridTemplateRows = `repeat(${gridRows}, 1fr)`;
+    }
     container.style.gap = '12px';
-    container.style.height = 'calc(100vh - var(--header-height, 4.5rem) - var(--banner-height, 0px))';
+    // --view-h is the visible height (swapped to 100vw when the display is rotated)
+    container.style.height = 'calc(var(--view-h, 100vh) - var(--header-height, 4.5rem) - var(--banner-height, 0px))';
     container.style.padding = '12px';
     container.style.overflow = 'auto';
     container.style.background = 'transparent';
@@ -74,6 +97,14 @@ render(config, container) {
         element.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
         element.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
         element.style.display = '';
+        // Lets card CSS adapt to how much room it got in portrait layout
+        if (portrait) {
+            element.dataset.pspan = String(pos.width);
+            element.dataset.prows = String(pos.height);
+        } else {
+            delete element.dataset.pspan;
+            delete element.dataset.prows;
+        }
         this._syncDot(cardId, def, pos, container, config.showCardStatusDots !== false);
 
         if (def.render) {
@@ -135,6 +166,50 @@ render(config, container) {
     /** [cardId, dotElement] pairs for every built-in card currently on screen. */
     getDots() {
         return [...this._dots.entries()];
+    }
+
+    /**
+     * Reflow a landscape layout into a PORTRAIT_COLS-wide grid.
+     * Cards are placed in reading order (top-to-bottom, left-to-right).
+     * Cards that were at least half the grid wide/tall get a full row / two
+     * rows; narrow ones pair up side by side. Returns { layout, rows }.
+     */
+    _buildPortraitLayout(entries, gridCols, gridRows) {
+        const sorted = entries.slice().sort(
+            (a, b) => a[1].y - b[1].y || a[1].x - b[1].x
+        );
+        const occupied = [];
+        const fits = (r, c, w, h) => {
+            if (c + w > PORTRAIT_COLS) return false;
+            for (let rr = r; rr < r + h; rr++) {
+                for (let cc = c; cc < c + w; cc++) {
+                    if (occupied[rr] && occupied[rr][cc]) return false;
+                }
+            }
+            return true;
+        };
+
+        const layout = {};
+        let rows = 0;
+        for (const [id, pos] of sorted) {
+            const w = pos.width / gridCols >= 0.5 ? PORTRAIT_COLS : 1;
+            const h = pos.height / gridRows >= 0.5 ? 2 : 1;
+            let placed = false;
+            for (let r = 0; !placed; r++) {
+                for (let c = 0; c + w <= PORTRAIT_COLS; c++) {
+                    if (!fits(r, c, w, h)) continue;
+                    for (let rr = r; rr < r + h; rr++) {
+                        occupied[rr] = occupied[rr] || [];
+                        for (let cc = c; cc < c + w; cc++) occupied[rr][cc] = true;
+                    }
+                    layout[id] = { x: c, y: r, width: w, height: h };
+                    rows = Math.max(rows, r + h);
+                    placed = true;
+                    break;
+                }
+            }
+        }
+        return { layout, rows };
     }
 
     updateCards(state) {

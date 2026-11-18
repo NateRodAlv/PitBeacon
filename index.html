@@ -219,6 +219,29 @@
           </svg>
         </button>
 
+        <!-- Portrait Mode Toggle -->
+        <button
+          class="mheader-btn"
+          id="portraitBtn"
+          title="Toggle portrait mode (rotate display)"
+          aria-label="Toggle portrait mode"
+          aria-pressed="false"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="7" y="2" width="10" height="20" rx="2"></rect>
+            <path d="M11 18h2"></path>
+          </svg>
+        </button>
+
         <button
           class="mheader-btn"
           id="settingsBtn"
@@ -408,6 +431,16 @@
               max="3600"
               value="30"
             />
+          </div>
+          <div class="settings-section-title settings-subtitle">Display</div>
+          <div class="settings-field">
+            <label for="portraitMode">Orientation</label>
+            <select id="portraitMode" name="portraitMode">
+              <option value="auto">Auto (portrait layout on portrait screens)</option>
+              <option value="landscape">Landscape (always)</option>
+              <option value="rotate-cw">Portrait: rotate display 90° clockwise</option>
+              <option value="rotate-ccw">Portrait: rotate display 90° counter-clockwise</option>
+            </select>
           </div>
         </div>
         <div class="settingsdiv settings-more">

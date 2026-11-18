@@ -22,6 +22,7 @@ import { restartAutoSwap } from "./app/profiles.js";
 import { initCardsModal, openCardsModal } from "./app/cardsModal.js";
 import { openLayoutEditor } from "./app/layoutEditor.js";
 import { loadSettings, setupSettingsListeners } from "./app/settings.js";
+import { initOrientation } from "./app/orientation.js";
 import { initCardStatus } from "./app/cardStatus.js";
 import { initNextMatchBanner } from "./app/nextMatchBanner.js";
 import { startOnboarding } from "./app/onboarding.js";
@@ -67,6 +68,7 @@ function start() {
   loadSettings();
   setupSettingsListeners();
   setupHeader();
+  initOrientation();
   updateEasterEggToggle();
   initCardsModal();
   initConnectionStatus();

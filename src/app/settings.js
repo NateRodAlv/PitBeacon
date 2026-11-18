@@ -26,6 +26,7 @@ import { loadCustomColors, setupCustomColorsEditor, updateCustomColorPicker } fr
 import { updateTimeDisplay } from "./clock.js";
 import { OPEN_SETTINGS_EVENT } from "../ui/emptyState.js";
 import { updateNextMatchBanner } from "./nextMatchBanner.js";
+import { loadOrientation, setPortraitMode } from "./orientation.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -117,6 +118,8 @@ export function loadSettings() {
   $("autoSwapEnabled").checked = config.autoSwapEnabled;
   $("autoSwapInterval").value = config.autoSwapInterval;
 
+  loadOrientation();
+
   refreshProfileUI();
   loadCustomColors();
 }
@@ -166,6 +169,7 @@ function saveSettings() {
 
   document.documentElement.setAttribute("data-theme", config.theme);
   restartAutoSwap();
+  setPortraitMode($("portraitMode").value);
   dataSources.updateConfig(config);
   if (config.showCardStatusDots !== previousShowCardStatusDots) renderLayout();
   updateTimeDisplay();
@@ -175,8 +179,42 @@ function saveSettings() {
 
 export function setupSettingsListeners() {
   const panel = $("settingscontainer");
+  const header = $("header");
   const testMode = $("testMode");
   const testDate = $("testDate");
+  const syncHeaderPosition = (measureWhenHidden = false) => {
+    const hidden = header.classList.contains("hidden");
+    if (hidden && !measureWhenHidden) {
+      document.documentElement.style.setProperty("--header-height", "0px");
+      return;
+    }
+
+    if (hidden) header.classList.remove("hidden");
+    const height = header.offsetHeight;
+    const spacer = header.querySelector(".spacer");
+    const spacerRect = spacer.getBoundingClientRect();
+    const center = new DOMPoint(
+      spacerRect.left + spacerRect.width / 2,
+      spacerRect.top + spacerRect.height / 2,
+    );
+    const bodyTransform = getComputedStyle(document.body).transform;
+    const position = bodyTransform === "none"
+      ? center
+      : center.matrixTransform(new DOMMatrix(bodyTransform).inverse());
+
+    document.documentElement.style.setProperty("--hide-top-btn-left", `${position.x}px`);
+    document.documentElement.style.setProperty("--hide-top-btn-top", `${position.y}px`);
+
+    if (hidden) header.classList.add("hidden");
+    document.documentElement.style.setProperty("--header-height", hidden ? "0px" : `${height}px`);
+  };
+  syncHeaderPosition();
+  if ("ResizeObserver" in window) new ResizeObserver(() => syncHeaderPosition()).observe(header);
+  window.addEventListener("resize", () => syncHeaderPosition(true));
+  new MutationObserver(() => syncHeaderPosition(true)).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
 
   testMode.addEventListener("change", () => {
     testDate.style.display = testMode.checked ? "block" : "none";
@@ -212,9 +250,8 @@ export function setupSettingsListeners() {
   });
 
   $("hideTopBtn").addEventListener("click", () => {
-    const header = $("header");
-    const hidden = header.classList.toggle("hidden");
-    document.documentElement.style.setProperty("--header-height", hidden ? "0px" : "4.5rem");
+    header.classList.toggle("hidden");
+    syncHeaderPosition();
   });
 
   setupCustomColorsEditor($("customColorsModal"));
