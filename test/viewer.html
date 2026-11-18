@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="rbv-viewer-document">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Robot Viewer</title>
-    <script type="module" crossorigin src="./assets/viewer-JkstQXwZ.js"></script>
+    <script type="module" crossorigin src="./assets/viewer-X1rnJ4bV.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-XKyaHtl9.js">
-    <link rel="modulepreload" crossorigin href="./assets/robotParts-DmQgVcwy.js">
-    <link rel="stylesheet" crossorigin href="./assets/viewer-C9SnWhYX.css">
+    <link rel="modulepreload" crossorigin href="./assets/robotParts-qXroFm2z.js">
+    <link rel="stylesheet" crossorigin href="./assets/robotParts-C1QrLtVa.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
-  <body>
+  <body class="rbv-viewer-document">
 <div class="rbv" id="rbvRoot">
   <div class="rbv-stage" id="rbvStage">
     <div class="rbv-empty" id="rbvEmpty">
@@ -41,18 +41,11 @@
 
     <div class="rbv-chrome rbv-info" id="rbvModelInfo">No model loaded</div>
 
-    <aside id="rbvSetup" class="rbv-chrome rbv-drawer" hidden>
-      <div class="rbv-drawer-head">
-        <strong>Mate connectors &amp; poses</strong>
-        <span>
-          <button id="rbvEditToggle" type="button" class="rbv-btn rbv-btn-ghost" aria-pressed="false">Edit</button>
-          <button id="rbvCloseDrawer" type="button" class="rbv-btn rbv-btn-ghost" aria-label="Close">×</button>
-        </span>
-      </div>
-
+    <aside id="rbvSetup" class="rbv rbv-drawer rbv-floating-panel" hidden>
       <section class="rbv-panel">
         <div class="rbv-panel-title">
           <h3>Parts &amp; connectors</h3>
+          <button id="rbvEditToggle" type="button" class="rbv-btn rbv-btn-ghost" aria-pressed="false">Edit</button>
           <button id="rbvAddMechanism" type="button" class="rbv-btn rbv-btn-ghost rbv-edit-only">＋ Add connector</button>
         </div>
         <div class="rbv-mech-add rbv-edit-only" id="rbvMechAdd" hidden>
@@ -112,8 +105,7 @@
         <p class="rbv-footnote rbv-edit-only">URDF joints are imported as typed mate connectors. Manual connectors attach to one part origin. Export saves connectors and poses, not the model file.</p>
       </section>
     </aside>
-    <aside id="rbvSettingsPanel" class="rbv-chrome rbv-drawer rbv-settings-panel" hidden>
-      <div class="rbv-drawer-head"><strong>Robot viewer settings</strong><button id="rbvSettingsClose" type="button" class="rbv-btn rbv-btn-ghost" aria-label="Close settings">×</button></div>
+    <aside id="rbvSettingsPanel" class="rbv rbv-drawer rbv-floating-panel rbv-settings-panel" hidden>
       <p class="rbv-setting-note">These controls are saved for this card on this browser.</p>
       <label>Display style<select id="rbvSettingDisplayStyle"><option value="solid">Solid</option><option value="edges">Solid + edges</option><option value="wireframe">Wireframe</option><option value="xray">X-ray</option><option value="blueprint">Blueprint</option></select></label>
       <label>Lighting preset<select id="rbvSettingLightingPreset"><option value="studio">Studio</option><option value="warm">Warm</option><option value="cool">Cool</option><option value="dramatic">Dramatic</option><option value="sunset">Sunset</option><option value="custom">Custom</option></select></label>
@@ -128,6 +120,7 @@
       <label class="rbv-setting-check"><input id="rbvSettingAntialias" type="checkbox"> Smooth edges (antialiasing)</label>
       <p class="rbv-setting-note">Antialiasing changes after you reload the card.</p>
       <label class="rbv-setting-check"><input id="rbvSettingShowGrid" type="checkbox"> Show floor grid</label>
+      <label class="rbv-setting-check"><input id="rbvSettingAutoRotate" type="checkbox"> Auto-rotate model</label>
       <label class="rbv-setting-check"><input id="rbvSettingShowAxes" type="checkbox"> Show axes</label>
       <label>Background color<input id="rbvSettingBackground" type="color"></label>
       <label>Model bottom<select id="rbvModelBottom"><option value="bottom">Bottom</option><option value="top">Top</option><option value="front">Front</option><option value="back">Back</option><option value="left">Left</option><option value="right">Right</option></select></label>
