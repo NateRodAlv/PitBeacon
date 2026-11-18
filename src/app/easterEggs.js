@@ -1,4 +1,5 @@
 import { setItemSafe } from "./_ls.js";
+import { icon } from "../lib/icons.js";
 
 let easterEggsEnabled = false;
 let easterEggTimer = null;
@@ -59,7 +60,7 @@ function showEasterEgg() {
   duck.setAttribute("role", "button");
   duck.setAttribute("tabindex", "0");
   duck.setAttribute("aria-label", "Make the duck walk");
-  duck.textContent = "🦆";
+  duck.innerHTML = icon("duck", 40);
   duck.addEventListener("click", (event) => {
     event.stopPropagation();
     startDuckWalk(duck);

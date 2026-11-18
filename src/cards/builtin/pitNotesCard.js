@@ -149,7 +149,7 @@ const ROW = {
         <span class="part-divider">/</span>
         <div class="part-qty-block"><span class="part-qty-num part-qty-min">${min}</span><span class="part-qty-label">min</span></div>
       </div>
-      ${low ? `<div class="part-low-badge">⚠ LOW STOCK</div>` : `<div class="part-ok-badge">✓ OK</div>`}
+      ${low ? `<div class="part-low-badge">${icon("warning", 14)} LOW STOCK</div>` : `<div class="part-ok-badge">${icon("check", 14)} OK</div>`}
       <div class="part-inputs-row">
         <label class="part-micro-label">Qty<input class="pit-input" data-field="quantity" data-restock type="number" min="0" value="${esc(item.quantity)}"></label>
         <label class="part-micro-label">Min<input class="pit-input" data-field="minStock" data-restock type="number" min="0" value="${esc(item.minStock)}"></label>

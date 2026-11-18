@@ -1,4 +1,6 @@
 // src/cards/developerCardRuntime.js
+import { icon } from "../lib/icons.js";
+
 export class DeveloperCardRuntime {
   constructor(registry, sdk) {
     this._registry = registry;
@@ -784,7 +786,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
     picker.className = "dc-picker";
     picker.innerHTML = `
     <div class="dc-picker-inner">
-      <button class="vb-btn vb-btn-primary" id="devCardPickerNew">➕ Create New Card</button>
+      <button class="vb-btn vb-btn-primary" id="devCardPickerNew">${icon("plus", 16)} Create New Card</button>
       <div class="dc-picker-divider">or edit an existing card</div>
       <div class="dc-picker-list" id="devCardPickerList"></div>
     </div>

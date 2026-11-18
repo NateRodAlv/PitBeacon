@@ -147,12 +147,10 @@ html {
   animation: duck-poof 0.65s ease-out forwards;
 }
 .easter-egg-duck.duck-poof::after {
-  content: "💥";
+  content: "";
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 46px;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='m24 2 4 10 10-7-2 12 11 2-9 7 8 9-12-1-2 12-7-10-9 8 1-12-12-2 10-7-8-9 12 1z' fill='%23f2bc3e' stroke='%23e67e22' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M24 14v9m0 7h.01' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 @keyframes duck-walk-bob {
   from { margin-bottom: 0; }
@@ -1208,10 +1206,12 @@ input[type="checkbox"]:checked::before {
   border-color: #ff6b6b;
 }
 .flag-toggle:checked::after {
-  content: "🚩";
-  color: white;
-  font-size: 0.9rem;
-  font-weight: bold;
+  content: "";
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  -webkit-mask: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M4 2h2v2h13l-3 5 3 5H6v8H4zm2 4v6h9.5L13.7 9 15.5 6z'/%3E%3C/svg%3E");
+  mask: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M4 2h2v2h13l-3 5 3 5H6v8H4zm2 4v6h9.5L13.7 9 15.5 6z'/%3E%3C/svg%3E");
 }
 
 /* Battery */
@@ -2108,61 +2108,8 @@ input[type="checkbox"]:checked::before {
   width: 22px;
   height: 22px;
 }
-.le-card-settings-modal {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.66);
-}
-.le-card-settings-modal[hidden] {
-  display: none;
-}
-.le-card-settings-dialog {
-  width: min(480px, 100%);
-  max-height: min(calc(var(--vh, 1vh) * 80), 640px);
-  overflow-y: auto;
+.le-card-settings-content {
   background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-}
-.le-card-settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 14px 16px;
-  background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
-}
-.le-card-settings-header strong {
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-.le-card-settings-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  color: var(--text-dim);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-.le-card-settings-close:hover,
-.le-card-settings-close:focus-visible {
-  color: var(--text-primary);
-  background: var(--bg-input);
-  border-color: var(--border);
 }
 .le-card-settings-hint {
   margin: 0;
@@ -2171,30 +2118,30 @@ input[type="checkbox"]:checked::before {
   font-size: 0.74rem;
   line-height: 1.4;
 }
-.le-card-settings-dialog .card-settings-controls {
+.le-card-settings-content .card-settings-controls {
   max-height: none;
   overflow: visible;
   gap: 10px;
   padding: 14px 16px 18px;
   font-size: 0.8rem;
 }
-.le-card-settings-dialog .card-settings-controls strong {
+.le-card-settings-content .card-settings-controls strong {
   display: none;
 }
-.le-card-settings-dialog .card-setting-field {
+.le-card-settings-content .card-setting-field {
   min-height: 36px;
   gap: 16px;
 }
-.le-card-settings-dialog .card-setting-field > span {
+.le-card-settings-content .card-setting-field > span {
   color: var(--text-muted);
   font-size: 0.8rem;
 }
-.le-card-settings-dialog .card-setting-field input,
-.le-card-settings-dialog .card-setting-field select {
+.le-card-settings-content .card-setting-field input,
+.le-card-settings-content .card-setting-field select {
   width: min(56%, 240px);
   font-size: 0.8rem;
 }
-.le-card-settings-dialog .card-setting-field input[type="checkbox"] {
+.le-card-settings-content .card-setting-field input[type="checkbox"] {
   margin: 0 0 0 auto;
 }
 .le-actions {

@@ -1,0 +1,87 @@
+.floating-modal-host {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  pointer-events: none;
+}
+.floating-modal-host--viewport {
+  position: fixed;
+  z-index: 12000;
+}
+.floating-modal-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: min(280px, calc(100vw - 24px));
+  min-height: 180px;
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 24px);
+  overflow: hidden;
+  resize: both;
+  pointer-events: auto;
+  background: var(--bg-surface, #101722);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+  border-radius: 8px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+.floating-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  background: var(--bg-raised, #17212f);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.14));
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+}
+.floating-modal-title {
+  margin: 0;
+  color: var(--text-primary, #f1f5f9);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.floating-modal-lock,
+.floating-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--text-dim, #94a3b8);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.floating-modal-lock {
+  min-width: 34px;
+  padding: 0 4px;
+}
+.floating-modal-lock[aria-pressed="true"] {
+  color: var(--accent, #6597f5);
+}
+.floating-modal-window.is-locked .floating-modal-header {
+  cursor: default;
+}
+.floating-modal-window.is-locked {
+  resize: none;
+}
+.floating-modal-close:hover,
+.floating-modal-lock:hover,
+.floating-modal-close:focus-visible,
+.floating-modal-lock:focus-visible {
+  color: var(--text-primary, #f1f5f9);
+  background: var(--bg-input, #202938);
+  border-color: var(--border, rgba(255, 255, 255, 0.14));
+}
+.floating-modal-body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}

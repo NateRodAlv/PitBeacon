@@ -1,4 +1,6 @@
 // src/ui/layoutRenderer.js
+import { icon } from "../lib/icons.js";
+
 const PORTRAIT_COLS = 2;
 const PORTRAIT_MIN_ROW_PX = 160;
 
@@ -114,7 +116,7 @@ render(config, container) {
                 console.error(`Error rendering card "${cardId}":`, err);
                 element.innerHTML = `
                     <div class="card-error">
-                        <span class="card-error-icon">⚠</span>
+                        <span class="card-error-icon">${icon("warning", 22)}</span>
                         <span class="card-error-msg">Error rendering card</span>
                         <span class="card-error-detail">${err.message}</span>
                     </div>

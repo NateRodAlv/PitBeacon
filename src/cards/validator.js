@@ -1,3 +1,5 @@
+import { icon } from "../lib/icons.js";
+
 export class LayoutValidator {
     constructor(registry) {
         this._registry = registry;
@@ -40,14 +42,14 @@ export class LayoutValidator {
             if (!this._registry.has(inj.replacementId)) {
                 this._registry.register(inj.replacementId, {
                     id: inj.replacementId,
-                    label: `⚠ Missing: ${inj.originalId}`,
+                    label: `Missing: ${inj.originalId}`,
                     icon: 'alert-circle',
                     builtin: false,
                     fallback: true,
                     render: (element, state, sdk) => {
                         element.innerHTML = `
                             <div class="fallback-card">
-                                <div class="fallback-icon">⚠</div>
+                                <div class="fallback-icon">${icon("warning", 32)}</div>
                                 <div class="fallback-title">Missing Card</div>
                                 <div class="fallback-id">${inj.originalId}</div>
                                 <div class="fallback-hint">This card was not found in the registry.</div>

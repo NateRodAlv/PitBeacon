@@ -1,5 +1,6 @@
 // src/cards/builtin/matchCard.js
 import { emptyInfoFor, renderEmptyState } from '../../ui/emptyState.js';
+import { icon } from '../../lib/icons.js';
 
 export function createMatchCard() {
     return {
@@ -90,7 +91,7 @@ function renderMatchCardContent(element, state, sdk) {
                     
                     card.innerHTML = `
                         <div class="upcoming-basicinfo">
-                            <h1 class="match-title">⏰ Match Starting Soon!</h1>
+                            <h1 class="match-title">${icon("clock", 22)} Match Starting Soon!</h1>
                             <p>Match: ${match.comp_level.toUpperCase()} ${match.match_number}</p>
                             <p>Est: ${new Date(matchStartTime * 1000).toLocaleTimeString()}</p>
                             <p class="${countdownClass}">Time Until: ${minutes}m ${seconds}s</p>

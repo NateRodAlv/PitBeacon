@@ -7,6 +7,7 @@ import { setRobotParts } from "../data/robotParts.js";
 import { DETAIL_CONNECTOR_CAP, PART_ROW_LIMIT, connectorsForPart, countConnectorsByPart, filterAndSortParts, filterConnectors } from "./partBrowser.js";
 import { NOTES_EVENT, NOTES_KEY, TASK_STATUSES, addItem, loadNotes, saveNotes, summarizeParts, updateItem } from "../data/pitNotes.js";
 import { parseURDF } from "./urdf.js";
+import { icon } from "../lib/icons.js";
 import "./viewer.css";
 
 // Since r155 lights are physically based; legacy intensities need x PI to look the same.
@@ -14,7 +15,8 @@ const LIGHT_SCALE = Math.PI;
 
 
   // ───────── Helpers ─────────
-  const $ = (id) => document.getElementById(id);
+  const $ = (id) =>
+    document.getElementById(id) || window.parent.document.getElementById(id);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const DEFAULT_VIEWER_SETTINGS = {
     displayStyle: "solid",
@@ -27,6 +29,7 @@ const LIGHT_SCALE = Math.PI;
     renderScale: 0.75,
     antialias: false,
     showGrid: true,
+    autoRotate: false,
     showAxes: false,
     background: "#101722",
     controlsMode: "auto-hide",
@@ -59,6 +62,7 @@ const LIGHT_SCALE = Math.PI;
       renderScale: clamp(Number(settings.renderScale) || DEFAULT_VIEWER_SETTINGS.renderScale, 0.5, 1.5),
       antialias: typeof settings.antialias === "boolean" ? settings.antialias : DEFAULT_VIEWER_SETTINGS.antialias,
       showGrid: typeof settings.showGrid === "boolean" ? settings.showGrid : DEFAULT_VIEWER_SETTINGS.showGrid,
+      autoRotate: typeof settings.autoRotate === "boolean" ? settings.autoRotate : DEFAULT_VIEWER_SETTINGS.autoRotate,
       showAxes: typeof settings.showAxes === "boolean" ? settings.showAxes : DEFAULT_VIEWER_SETTINGS.showAxes,
       background: /^#[0-9a-f]{6}$/i.test(settings.background || "") ? settings.background : DEFAULT_VIEWER_SETTINGS.background,
       controlsMode: ["auto-hide", "always show", "hidden"].includes(settings.controlsMode) ? settings.controlsMode : DEFAULT_VIEWER_SETTINGS.controlsMode,
@@ -106,6 +110,7 @@ const LIGHT_SCALE = Math.PI;
     renderScale: readLegacySetting("viewerRenderScale", DEFAULT_VIEWER_SETTINGS.renderScale),
     antialias: readLegacySetting("viewerAntialias", DEFAULT_VIEWER_SETTINGS.antialias),
     showGrid: readLegacySetting("viewerShowGrid", DEFAULT_VIEWER_SETTINGS.showGrid),
+    autoRotate: readLegacySetting("viewerAutoRotate", DEFAULT_VIEWER_SETTINGS.autoRotate),
     showAxes: readLegacySetting("viewerShowAxes", DEFAULT_VIEWER_SETTINGS.showAxes),
     background: readLegacySetting("viewerBackground", DEFAULT_VIEWER_SETTINGS.background),
     controlsMode: readLegacySetting("viewerControlsMode", DEFAULT_VIEWER_SETTINGS.controlsMode),
@@ -128,6 +133,7 @@ const LIGHT_SCALE = Math.PI;
     $("rbvSettingRenderScale").value = String(viewerSettings.renderScale);
     $("rbvSettingAntialias").checked = viewerSettings.antialias;
     $("rbvSettingShowGrid").checked = viewerSettings.showGrid;
+    $("rbvSettingAutoRotate").checked = viewerSettings.autoRotate;
     $("rbvSettingShowAxes").checked = viewerSettings.showAxes;
     $("rbvSettingBackground").value = viewerSettings.background;
     $("rbvSettingControlsMode").value = viewerSettings.controlsMode;
@@ -180,6 +186,7 @@ const LIGHT_SCALE = Math.PI;
     if (viewerSettings.antialias !== previous.antialias && renderer) {
       setStatus("Antialiasing changes after you reload the card.");
     }
+    lastAutoRotateFrame = 0;
     if (renderer) requestRender();
   }
   function bindViewerSetting(id, key, type) {
@@ -311,7 +318,7 @@ const LIGHT_SCALE = Math.PI;
   let edgeObjects = [], edgeToken = 0, edgeMat = null;
   let currentMeshes = [];
   const styledMaterialCache = new Map();
-  let gridOn = !!viewerSettings.showGrid, gridFor = null;
+  let gridOn = !!viewerSettings.showGrid, gridFor = null, lastAutoRotateFrame = 0;
 
   function applyLightingSettings() {
     const preset = LIGHTING_PRESETS[viewerSettings.lightingPreset] || LIGHTING_PRESETS.studio;
@@ -374,9 +381,19 @@ const LIGHT_SCALE = Math.PI;
 
   function renderNow() {
     if (!renderer) return;
+    if (viewerSettings.autoRotate && robotRoot) {
+      const now = performance.now();
+      if (lastAutoRotateFrame) {
+        yaw += Math.min(Math.max((now - lastAutoRotateFrame) / 1000, 0), 0.05) * 0.35;
+      }
+      lastAutoRotateFrame = now;
+    } else {
+      lastAutoRotateFrame = 0;
+    }
     updateCamera();
     if (markersDirty) refreshMarkerBoxes();
     renderer.render(scene, camera);
+    if (viewerSettings.autoRotate && robotRoot) requestRender();
   }
   function requestRender() {
     if (!renderer || raf) return;
@@ -1274,27 +1291,60 @@ const LIGHT_SCALE = Math.PI;
     if (t === "drop" && e.dataTransfer && e.dataTransfer.files.length) readFiles(e.dataTransfer.files);
   }));
   $("rbvHome").addEventListener("click", () => { yaw = 0.7; pitch = 0.45; autoFit = true; fitModel(); });
-  function setDrawer(open) {
-    if (open && settingsOpen) {
-      settingsOpen = false; settingsPanel.hidden = true;
-      $("rbvSettingsToggle").setAttribute("aria-expanded", "false");
-    }
-    drawerOpen = open; drawer.hidden = !open;
+  function setDrawer(open, notifyParent = true) {
+    if (open === drawerOpen) return;
+    drawerOpen = open;
+    drawer.hidden = !open;
     $("rbvSetupToggle").setAttribute("aria-expanded", String(open));
-    if (!open) { root.classList.remove("rbv-editing"); $("rbvEditToggle").setAttribute("aria-pressed", "false"); closeAddForm(); }
+    if (!open) {
+      drawer.classList.remove("rbv-editing");
+      $("rbvEditToggle").setAttribute("aria-pressed", "false");
+      closeAddForm();
+    }
+    if (notifyParent) {
+      window.parent.postMessage(
+        {
+          source: "pitbeacon-viewer",
+          type: open ? "floating-window-open" : "floating-window-close",
+          panelId: "rbvSetup",
+        },
+        location.origin,
+      );
+    }
     revealed = true; applyUiState();
     requestRender();
   }
-  function setSettingsMenu(open) {
-    if (open && drawerOpen) setDrawer(false);
-    settingsOpen = open; settingsPanel.hidden = !open;
+  function setSettingsMenu(open, notifyParent = true) {
+    if (open === settingsOpen) return;
+    settingsOpen = open;
+    settingsPanel.hidden = !open;
     $("rbvSettingsToggle").setAttribute("aria-expanded", String(open));
+    if (notifyParent) {
+      window.parent.postMessage(
+        {
+          source: "pitbeacon-viewer",
+          type: open ? "floating-window-open" : "floating-window-close",
+          panelId: "rbvSettingsPanel",
+        },
+        location.origin,
+      );
+    }
     revealed = true; applyUiState();
   }
-  $("rbvSetupToggle").addEventListener("click", () => setDrawer(drawer.hidden));
-  $("rbvCloseDrawer").addEventListener("click", () => setDrawer(false));
-  $("rbvSettingsToggle").addEventListener("click", () => setSettingsMenu(settingsPanel.hidden));
-  $("rbvSettingsClose").addEventListener("click", () => setSettingsMenu(false));
+  $("rbvSetupToggle").addEventListener("click", () => setDrawer(!drawerOpen));
+  $("rbvSettingsToggle").addEventListener("click", () => setSettingsMenu(!settingsOpen));
+  window.addEventListener("message", (event) => {
+    if (
+      event.origin !== location.origin ||
+      event.source !== window.parent ||
+      event.data?.source !== "pitbeacon" ||
+      event.data?.type !== "viewer-floating-window-closed"
+    ) {
+      return;
+    }
+    if (event.data.panelId === "rbvSetup") setDrawer(false, false);
+    if (event.data.panelId === "rbvSettingsPanel") setSettingsMenu(false, false);
+  });
   bindViewerSetting("rbvSettingDisplayStyle", "displayStyle", "select");
   $("rbvSettingLightingPreset").addEventListener("change", (event) => applyLightingPreset(event.currentTarget.value));
   bindViewerSetting("rbvSettingLightSky", "lightSky", "color");
@@ -1305,6 +1355,7 @@ const LIGHT_SCALE = Math.PI;
   bindViewerSetting("rbvSettingRenderScale", "renderScale", "number");
   bindViewerSetting("rbvSettingAntialias", "antialias", "checkbox");
   bindViewerSetting("rbvSettingShowGrid", "showGrid", "checkbox");
+  bindViewerSetting("rbvSettingAutoRotate", "autoRotate", "checkbox");
   bindViewerSetting("rbvSettingShowAxes", "showAxes", "checkbox");
   bindViewerSetting("rbvSettingBackground", "background", "color");
   bindViewerSetting("rbvSettingControlsMode", "controlsMode", "select");
@@ -1321,8 +1372,8 @@ const LIGHT_SCALE = Math.PI;
     saveViewerSettings();
   });
   $("rbvEditToggle").addEventListener("click", () => {
-    const on = !root.classList.contains("rbv-editing");
-    root.classList.toggle("rbv-editing", on);
+    const on = !drawer.classList.contains("rbv-editing");
+    drawer.classList.toggle("rbv-editing", on);
     $("rbvEditToggle").setAttribute("aria-pressed", String(on));
     if (!on) closeAddForm();
   });
@@ -1484,7 +1535,12 @@ const LIGHT_SCALE = Math.PI;
   function partRowEl(row) {
     const sel = row.label === selectedPartId;
     const meta = el("span", { class: "rbv-row-meta" });
-    if (row.connectors) meta.append(el("span", { class: "rbv-conn-mark", title: row.connectors + (row.connectors === 1 ? " connector affects" : " connectors affect") + " this part", text: "⚙" + row.connectors }));
+    if (row.connectors) {
+      const mark = el("span", { class: "rbv-conn-mark", title: row.connectors + (row.connectors === 1 ? " connector affects" : " connectors affect") + " this part" });
+      mark.innerHTML = icon("settings", 12);
+      mark.append(document.createTextNode(String(row.connectors)));
+      meta.append(mark);
+    }
     if (row.open) meta.append(el("span", { class: "rbv-badge rbv-badge-" + row.state, title: row.open + " open · " + row.state, text: String(row.open) }));
     return el("button", { type: "button", role: "option", class: "rbv-row" + (sel ? " selected" : ""), "aria-selected": String(sel), "data-part-id": row.label },
       el("span", { class: "rbv-row-name", text: row.label }), meta);
@@ -1551,8 +1607,9 @@ const LIGHT_SCALE = Math.PI;
         type: "button",
         class: "rbv-task-chip rbv-task-" + (task.flagged ? "flagged" : task.status),
         title: "Tap to change status",
-        text: (task.flagged ? "⚑ " : "") + (task.task || "Untitled task") + " · " + (STATUS_LABEL[task.status] || task.status),
       });
+      if (task.flagged) chip.innerHTML = icon("flag", 12);
+      chip.append(document.createTextNode((task.task || "Untitled task") + " · " + (STATUS_LABEL[task.status] || task.status)));
       chip.addEventListener("click", () => {
         const next = TASK_STATUSES[(TASK_STATUSES.indexOf(task.status) + 1) % TASK_STATUSES.length];
         updateItem("tasks", task.id, { status: next });

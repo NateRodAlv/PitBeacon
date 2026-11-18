@@ -2,6 +2,7 @@ import { config, registry, devCardRuntime, cardCatalog, renderLayout } from "./c
 import { displayMessage } from "../core/notifications.js";
 import { writeJson } from "../core/storage.js";
 import { escapeHtml } from "../lib/html.js";
+import { icon } from "../lib/icons.js";
 import { openCatalogCardDetails } from "./cardsCatalog.js";
 
 let panel = null;
@@ -19,7 +20,7 @@ function itemMarkup(id) {
   return `<div class="card-manager-item" data-card-id="${safeId}">
     <div class="card-manager-item-info">
       ${isDev ? `<label class="card-manager-export-select" title="Select ${safeId} for export"><input type="checkbox" class="card-export-checkbox" data-card-id="${safeId}"> Export</label>` : ""}
-      <span class="card-manager-item-icon">📄</span>
+      <span class="card-manager-item-icon">${icon("file", 18)}</span>
       <span class="card-manager-item-id">${safeId}</span>
       <span class="card-manager-item-label">${escapeHtml(def.label)}</span>
       ${isDev && local?.description ? `<span class="card-manager-item-description">${escapeHtml(local.description)}</span>` : ""}

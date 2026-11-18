@@ -7,6 +7,11 @@ import {
   getCardSettingsDefinition,
   renderCardSettingsControls,
 } from "./cardSettings.js";
+import {
+  closeFloatingModals,
+  openFloatingModal,
+} from "../ui/floatingModal.js";
+import { icon } from "../lib/icons.js";
 
 // Layout editor
 
@@ -21,6 +26,7 @@ let layoutEditorState = {
 export function openLayoutEditor() {
   const modal = document.getElementById("layoutEditorModal");
   // Clear existing content
+  closeFloatingModals(modal);
   modal.innerHTML = "";
   modal.classList.add("active");
   layoutEditorState.modal = modal;
@@ -96,7 +102,7 @@ export function renderLayoutEditor(modal) {
                         return `<div class="le-palette-item ${inLayout ? "in-layout" : ""}" draggable="${!inLayout}" data-card-id="${id}">
                             ${getCardIconMarkup(id, def)}
                             <span class="le-card-label">${def.label}</span>
-                            ${hasSettings ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
+                            ${hasSettings ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">${icon("settings", 14)}</button>` : ""}
                             ${inLayout ? '<span class="le-added-badge">Added</span>' : ""}
                         </div>`;
                       })
@@ -123,7 +129,7 @@ export function renderLayoutEditor(modal) {
                         return `<div class="layout-item" data-card-id="${id}" style="grid-column:${pos.x + 1}/span ${pos.width};grid-row:${pos.y + 1}/span ${pos.height};">
                             <div class="layout-item-header">
                                 <span class="layout-item-title">${getCardIconMarkup(id, def)}<span class="le-card-label">${def.label}</span></span>
-                                ${Object.keys(getCardSettingsDefinition(def)).length ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
+                                ${Object.keys(getCardSettingsDefinition(def)).length ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">${icon("settings", 14)}</button>` : ""}
                                 <button class="le-remove-btn" type="button" data-card-id="${id}" aria-label="Remove ${def.label}" title="Remove card">×</button>
                             </div>
                             <div class="layout-item-hint">${pos.width} × ${pos.height} cells</div>
@@ -138,55 +144,10 @@ export function renderLayoutEditor(modal) {
   modal.appendChild(shell);
   layoutEditorState.shell = shell;
 
-  const cardSettingsModal = document.createElement("div");
-  cardSettingsModal.className = "le-card-settings-modal";
-  cardSettingsModal.hidden = true;
-  cardSettingsModal.setAttribute("role", "dialog");
-  cardSettingsModal.setAttribute("aria-modal", "true");
-  modal.appendChild(cardSettingsModal);
-
   // Grid controls
   const colsInput = shell.querySelector("#leGridCols");
   const rowsInput = shell.querySelector("#leGridRows");
   const grid = shell.querySelector("#leGrid");
-  let settingsOpener = null;
-
-  function closeCardSettings() {
-    cardSettingsModal.hidden = true;
-    cardSettingsModal.replaceChildren();
-    cardSettingsModal.removeAttribute("aria-labelledby");
-    shell.removeAttribute("inert");
-    shell.removeAttribute("aria-hidden");
-    shell.setAttribute("aria-modal", "true");
-    if (settingsOpener?.isConnected) settingsOpener.focus();
-    settingsOpener = null;
-  }
-
-  cardSettingsModal.addEventListener("click", (event) => {
-    if (event.target === cardSettingsModal) closeCardSettings();
-  });
-  cardSettingsModal.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeCardSettings();
-      return;
-    }
-
-    if (event.key === "Tab") {
-      const focusableElements = cardSettingsModal.querySelectorAll(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
-      const firstElement = focusableElements[0];
-      const lastElement = focusableElements[focusableElements.length - 1];
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault();
-        lastElement.focus();
-      } else if (!event.shiftKey && document.activeElement === lastElement) {
-        event.preventDefault();
-        firstElement.focus();
-      }
-    }
-  });
 
   function updateGrid() {
     const newCols = Math.max(2, Math.min(12, parseInt(colsInput.value) || 3));
@@ -219,33 +180,16 @@ export function renderLayoutEditor(modal) {
 
       const settings = getCardSettingsDefinition(card);
       if (!Object.keys(settings).length) return;
-      settingsOpener = button;
-      cardSettingsModal.replaceChildren();
-
-      const dialog = document.createElement("div");
-      dialog.className = "le-card-settings-dialog";
-      const header = document.createElement("div");
-      header.className = "le-card-settings-header";
-      const title = document.createElement("strong");
-      title.id = "leCardSettingsTitle";
-      title.textContent = `${card.label} settings`;
-      const closeButton = document.createElement("button");
-      closeButton.type = "button";
-      closeButton.className = "le-card-settings-close";
-      closeButton.setAttribute("aria-label", "Close card settings");
-      closeButton.textContent = "×";
-      closeButton.addEventListener("click", closeCardSettings);
-      header.append(title, closeButton);
-      dialog.appendChild(header);
-      cardSettingsModal.setAttribute("aria-labelledby", title.id);
+      const content = document.createElement("div");
+      content.className = "le-card-settings-content";
 
       const hint = document.createElement("p");
       hint.className = "le-card-settings-hint";
       hint.textContent = "Changes are saved automatically and apply immediately.";
-      dialog.appendChild(hint);
+      content.appendChild(hint);
 
       const values = getCardSettingValues(card);
-      renderCardSettingsControls(dialog, card, values, (nextValues) => {
+      renderCardSettingsControls(content, card, values, (nextValues) => {
         card.settingsValues = nextValues;
         if (card.developer && config.developerCards[card.id]) {
           config.developerCards[card.id].settingsValues = nextValues;
@@ -256,12 +200,15 @@ export function renderLayoutEditor(modal) {
         }
         renderer.updateCards(stateManager.getState());
       });
-      cardSettingsModal.appendChild(dialog);
-      cardSettingsModal.hidden = false;
-      shell.setAttribute("inert", "");
-      shell.setAttribute("aria-hidden", "true");
-      shell.setAttribute("aria-modal", "false");
-      closeButton.focus();
+      openFloatingModal({
+        parent: modal,
+        id: `layout-card-settings:${card.id}`,
+        title: `${card.label} settings`,
+        content,
+        opener: button,
+        width: 460,
+        height: 380,
+      });
     });
   });
 
@@ -284,6 +231,7 @@ export function renderLayoutEditor(modal) {
       const id = btn.dataset.cardId;
       delete config.layout[id];
       localStorage.setItem("layout", JSON.stringify(config.layout));
+      closeFloatingModals(modal);
       modal.innerHTML = "";
       renderLayoutEditor(modal);
     });
@@ -333,6 +281,7 @@ export function renderLayoutEditor(modal) {
 
     config.layout[cardId] = { x, y, width: 1, height: 1 };
     localStorage.setItem("layout", JSON.stringify(config.layout));
+    closeFloatingModals(modal);
     modal.innerHTML = "";
     renderLayoutEditor(modal);
   });
@@ -396,6 +345,7 @@ export function renderLayoutEditor(modal) {
             JSON.stringify(config.hiddenSections),
           );
           displayMessage("Layout imported!", "message");
+          closeFloatingModals(modal);
           modal.innerHTML = "";
           renderLayoutEditor(modal);
         } catch (err) {
@@ -419,6 +369,7 @@ export function renderLayoutEditor(modal) {
     localStorage.setItem("layout", JSON.stringify(config.layout));
     localStorage.setItem("hiddenCards", JSON.stringify(config.hiddenSections));
     displayMessage("Layout reset to default", "message");
+    closeFloatingModals(modal);
     modal.innerHTML = "";
     renderLayoutEditor(modal);
   });
@@ -429,6 +380,7 @@ export function renderLayoutEditor(modal) {
 
 export function closeLayoutEditor() {
   if (layoutEditorState.modal) {
+    closeFloatingModals(layoutEditorState.modal);
     layoutEditorState.modal.classList.remove("active");
     layoutEditorState.modal.innerHTML = "";
     layoutEditorState.modal = null;

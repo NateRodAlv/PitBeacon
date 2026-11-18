@@ -2,6 +2,8 @@
 // this file only registers the built-in cards and starts the app in order.
 
 import "./styles/main.css";
+import "./ui/floatingModal.css";
+import "./viewer/viewer.css";
 import "@fontsource-variable/rubik";
 import "@fontsource-variable/quicksand";
 

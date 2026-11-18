@@ -1,14 +1,16 @@
+import { icon } from "../lib/icons.js";
+
 // src/cards/fallbackCard.js
 export const FallbackCard = {
     id: '__fallback__',
-    label: '⚠ Missing Card',
+    label: 'Missing Card',
     icon: 'alert-circle',
     builtin: true,
     render: (element, state, sdk, cardId) => {
         // cardId is the specific fallback instance ID
         element.innerHTML = `
             <div class="fallback-card">
-                <div class="fallback-icon">⚠</div>
+                <div class="fallback-icon">${icon("warning", 32)}</div>
                 <div class="fallback-title">Missing Card</div>
                 <div class="fallback-id">${cardId}</div>
                 <div class="fallback-hint">This card was not found in the registry.</div>

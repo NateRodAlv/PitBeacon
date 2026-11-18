@@ -1,8 +1,9 @@
 /** The focused 3x3 layout a fresh install starts with and what "Reset layout" restores. */
 export const DEFAULT_LAYOUT = {
   "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
-  "pit-notes-card": { x: 0, y: 2, width: 1, height: 1 },
   "match-card": { x: 2, y: 0, width: 1, height: 3 },
+  "robot-viewer-card": { x: 0, y: 1, width: 1, height: 2 },
+  "leaderboard-card": { x: 1, y: 0, width: 1, height: 3 },
 };
 
 export const config = {
@@ -28,7 +29,8 @@ export const config = {
   autoSwapEnabled: false,
   autoSwapInterval: 30,
   supabaseUrl: "https://mbojqtezmtngsehtyzpa.supabase.co",
-  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ib2pxdGV6bXRuZ3NlaHR5enBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNzcxNjAsImV4cCI6MjEwMzk1MzE2MH0.5PArCN5Nz9Aubc2t5iPas4qlo9oLDWxyJ8tMC_e7h90",
+  supabaseAnonKey:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ib2pxdGV6bXRuZ3NlaHR5enBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNzcxNjAsImV4cCI6MjEwMzk1MzE2MH0.5PArCN5Nz9Aubc2t5iPas4qlo9oLDWxyJ8tMC_e7h90",
   cardSubmitFunctionUrl: "https://mbojqtezmtngsehtyzpa.supabase.co/functions/v1/index",
 
   defaultCards: [
