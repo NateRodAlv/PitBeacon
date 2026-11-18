@@ -9,10 +9,10 @@ export function hasRealTbaKey(config) {
   return !PLACEHOLDER_KEYS.includes(key.toLowerCase());
 }
 
-/** The season to query: the user's override, else the year of the date being shown. */
-export function seasonFor(config, state) {
+/** The season to query: the year of the date being shown. */
+export function seasonFor(state) {
   const shown = state?.fullDate instanceof Date ? state.fullDate : new Date();
-  return getSeasonYear(shown, config?.seasonYearOverride);
+  return getSeasonYear(shown);
 }
 
 export async function fetchJsonWithRetry(url, options = {}, retries = 2) {

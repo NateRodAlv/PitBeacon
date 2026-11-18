@@ -71,7 +71,7 @@ export class DataSourceManager {
   }
 
   _season() {
-    return seasonFor(this._config, this._state.getState());
+    return seasonFor(this._state.getState());
   }
 
   async _request(url, headers) {

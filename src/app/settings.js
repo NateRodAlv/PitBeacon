@@ -11,7 +11,6 @@ import {
 } from "./context.js";
 import { displayMessage } from "../core/notifications.js";
 import { readString, readJson, writeString, removeKey } from "../core/storage.js";
-import { parseSeasonOverride } from "../core/season.js";
 import { getNow, parseTestDate } from "../core/clock.js";
 import { migrateHiddenList, migrateLayout } from "../core/layoutMigration.js";
 import { detectConfigurableSettings } from "../data/cardCatalog.js";
@@ -105,9 +104,6 @@ export function loadSettings() {
 
   registerDeveloperCards();
 
-  config.seasonYearOverride = readString("seasonYearOverride", "") || "";
-  $("seasonYearOverride").value = config.seasonYearOverride;
-
   config.testMode = readString("testMode") === "true";
   config.testDate = readString("testDate", "");
   $("testMode").checked = config.testMode;
@@ -140,9 +136,6 @@ function saveSettings() {
   config.showNextMatchBanner = $("showNextMatchBanner").checked;
   config.showCardStatusDots = $("showCardStatusDots").checked;
 
-  const season = parseSeasonOverride($("seasonYearOverride").value);
-  config.seasonYearOverride = season ? String(season) : "";
-
   const testMode = $("testMode").checked;
   const testDate = $("testDate").value.trim();
   if (testMode && !parseTestDate(testDate)) {
@@ -167,7 +160,6 @@ function saveSettings() {
   writeString("showCardStatusDots", config.showCardStatusDots);
   writeString("autoSwapEnabled", config.autoSwapEnabled);
   writeString("autoSwapInterval", config.autoSwapInterval);
-  writeString("seasonYearOverride", config.seasonYearOverride);
   writeString("testMode", config.testMode);
   if (config.testMode) writeString("testDate", config.testDate);
   else removeKey("testDate");

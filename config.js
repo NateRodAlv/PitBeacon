@@ -13,8 +13,6 @@ export const config = {
   tbaapikey: "YOUR_AUTH_KEY",
   match13apikey: "",
   match13ProxyUrl: "https://pitbeacon.rodriguezalvaradonathan.workers.dev",
-  // Pin a past season (for example 2026) to replay it. Empty follows the date being shown.
-  seasonYearOverride: "",
   noteAlarmToggle: false,
   noteAlarmThreshold: 8,
   noteAlarmSound: "alarm1",

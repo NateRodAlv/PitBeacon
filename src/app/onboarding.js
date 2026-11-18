@@ -6,6 +6,7 @@ import { applyBasicSettings } from "./settings.js";
 import { saveCustomColors } from "./customColors.js";
 import { hasRealTbaKey } from "../data/tba.js";
 import { readModelFiles, saveRobotModel, MODEL_EXTENSIONS } from "../data/robotModel.js";
+import { getNow } from "../core/clock.js";
 import { readString, writeString } from "../core/storage.js";
 
 export const RUN_WIZARD_EVENT = "pitbeacon:run-wizard";
@@ -219,7 +220,7 @@ export function openSetupWizard() {
         match13Result.textContent = "PitBeacon's Match13 proxy is not configured. You can still continue and check later.";
         return;
       }
-      const year = config.seasonYearOverride || new Date().getFullYear();
+      const year = getNow(config).getFullYear();
       match13Result.textContent = "Checking…";
       try {
         const response = await fetch(`${proxyUrl}/v1/teams/${teamNumber}/years/${year}`, {
