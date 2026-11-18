@@ -16,7 +16,8 @@ Load your robot model in the **Robot Viewer** card (`.glb`, `.gltf` with its
 files, or a `.urdf` with all referenced STL, OBJ, or DAE mesh files selected
 together. For URDF exports, **Load URDF folder** can select the complete export
 folder and preserve mesh paths; Draco and Meshopt compression work offline for
-glTF). URDF joints
+glTF). Until you load a model, the viewer shows a small lift-and-intake example
+with sample poses; its files are in `public/examples/`. URDF joints
 are imported as mate connectors: revolute and continuous joints rotate,
 prismatic joints slide, and fixed joints are shown without a control. Joint
 motion follows standard URDF kinematics: the child link and its descendants

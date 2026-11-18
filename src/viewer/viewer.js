@@ -27,7 +27,6 @@ const LIGHT_SCALE = Math.PI;
     renderScale: 0.75,
     antialias: false,
     showGrid: true,
-    autoRotate: false,
     showAxes: false,
     background: "#101722",
     controlsMode: "auto-hide",
@@ -60,7 +59,6 @@ const LIGHT_SCALE = Math.PI;
       renderScale: clamp(Number(settings.renderScale) || DEFAULT_VIEWER_SETTINGS.renderScale, 0.5, 1.5),
       antialias: typeof settings.antialias === "boolean" ? settings.antialias : DEFAULT_VIEWER_SETTINGS.antialias,
       showGrid: typeof settings.showGrid === "boolean" ? settings.showGrid : DEFAULT_VIEWER_SETTINGS.showGrid,
-      autoRotate: typeof settings.autoRotate === "boolean" ? settings.autoRotate : DEFAULT_VIEWER_SETTINGS.autoRotate,
       showAxes: typeof settings.showAxes === "boolean" ? settings.showAxes : DEFAULT_VIEWER_SETTINGS.showAxes,
       background: /^#[0-9a-f]{6}$/i.test(settings.background || "") ? settings.background : DEFAULT_VIEWER_SETTINGS.background,
       controlsMode: ["auto-hide", "always show", "hidden"].includes(settings.controlsMode) ? settings.controlsMode : DEFAULT_VIEWER_SETTINGS.controlsMode,
@@ -108,7 +106,6 @@ const LIGHT_SCALE = Math.PI;
     renderScale: readLegacySetting("viewerRenderScale", DEFAULT_VIEWER_SETTINGS.renderScale),
     antialias: readLegacySetting("viewerAntialias", DEFAULT_VIEWER_SETTINGS.antialias),
     showGrid: readLegacySetting("viewerShowGrid", DEFAULT_VIEWER_SETTINGS.showGrid),
-    autoRotate: readLegacySetting("viewerAutoRotate", DEFAULT_VIEWER_SETTINGS.autoRotate),
     showAxes: readLegacySetting("viewerShowAxes", DEFAULT_VIEWER_SETTINGS.showAxes),
     background: readLegacySetting("viewerBackground", DEFAULT_VIEWER_SETTINGS.background),
     controlsMode: readLegacySetting("viewerControlsMode", DEFAULT_VIEWER_SETTINGS.controlsMode),
@@ -131,7 +128,6 @@ const LIGHT_SCALE = Math.PI;
     $("rbvSettingRenderScale").value = String(viewerSettings.renderScale);
     $("rbvSettingAntialias").checked = viewerSettings.antialias;
     $("rbvSettingShowGrid").checked = viewerSettings.showGrid;
-    $("rbvSettingAutoRotate").checked = viewerSettings.autoRotate;
     $("rbvSettingShowAxes").checked = viewerSettings.showAxes;
     $("rbvSettingBackground").value = viewerSettings.background;
     $("rbvSettingControlsMode").value = viewerSettings.controlsMode;
@@ -184,9 +180,7 @@ const LIGHT_SCALE = Math.PI;
     if (viewerSettings.antialias !== previous.antialias && renderer) {
       setStatus("Antialiasing changes after you reload the card.");
     }
-    lastAutoRotateFrame = 0;
-    if (viewerSettings.autoRotate) requestRender();
-    else if (renderer) requestRender();
+    if (renderer) requestRender();
   }
   function bindViewerSetting(id, key, type) {
     $(id).addEventListener("change", (event) => {
@@ -280,7 +274,14 @@ const LIGHT_SCALE = Math.PI;
       if (!window.indexedDB) return reject(new Error("IndexedDB unavailable"));
       const req = indexedDB.open(DB_NAME, 1);
       req.onupgradeneeded = () => { req.result.createObjectStore("models"); req.result.createObjectStore("libs"); };
-      req.onsuccess = () => resolve(req.result);
+      req.onsuccess = () => {
+        const db = req.result;
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
+      };
       req.onerror = () => reject(req.error);
     });
     dbPromise.catch(() => { dbPromise = null; });
@@ -310,9 +311,7 @@ const LIGHT_SCALE = Math.PI;
   let edgeObjects = [], edgeToken = 0, edgeMat = null;
   let currentMeshes = [];
   const styledMaterialCache = new Map();
-  let modelAnimations = [], animationMixer = null, animationAction = null;
-  let activeAnimationIndex = 0, modelAnimationPlaying = false, modelAnimationLoop = false, lastAnimationFrame = 0;
-  let gridOn = !!viewerSettings.showGrid, gridFor = null, lastAutoRotateFrame = 0;
+  let gridOn = !!viewerSettings.showGrid, gridFor = null;
 
   function applyLightingSettings() {
     const preset = LIGHTING_PRESETS[viewerSettings.lightingPreset] || LIGHTING_PRESETS.studio;
@@ -373,359 +372,11 @@ const LIGHT_SCALE = Math.PI;
     if (autoFit && robotRoot) fitModel(); else renderNow();
   }
 
-  const EASING_TYPES = ["linear", "ease-in", "ease-out", "ease-in-out"];
-  const easeProgress = (value, easing) => {
-    if (easing === "ease-in") return value * value;
-    if (easing === "ease-out") return 1 - (1 - value) * (1 - value);
-    if (easing === "ease-in-out") return value < 0.5 ? 2 * value * value : 1 - Math.pow(-2 * value + 2, 2) / 2;
-    return value;
-  };
-  function cameraPose() {
-    updateCamera();
-    return { position: camera.position.toArray(), target: target.toArray() };
-  }
-  function applyCameraPose(pose) {
-    if (!camera || !target || !pose || !Array.isArray(pose.position) || !Array.isArray(pose.target)) return;
-    target.fromArray(pose.target);
-    const offset = new THREE.Vector3().fromArray(pose.position).sub(target);
-    const length = Math.max(offset.length(), 0.001);
-    dist = clamp(length, minDist, maxDist);
-    yaw = Math.atan2(offset.x, offset.z);
-    pitch = Math.asin(clamp(offset.y / length, -1, 1));
-    autoFit = false;
-  }
-  function orbitFromCameraPose(pose) {
-    if (!pose) return null;
-    const offset = new THREE.Vector3().fromArray(pose.position).sub(new THREE.Vector3().fromArray(pose.target));
-    const length = Math.max(offset.length(), 0.001);
-    return {
-      target: pose.target.slice(0, 3),
-      zoom: length,
-      yaw: Math.atan2(offset.x, offset.z),
-      pitch: Math.asin(clamp(offset.y / length, -1, 1)),
-    };
-  }
-  function cameraPoseFromOrbit(orbit) {
-    const pitch = clamp(orbit.pitch, -1.5, 1.5), cp = Math.cos(pitch);
-    const dir = [cp * Math.sin(orbit.yaw), Math.sin(pitch), cp * Math.cos(orbit.yaw)];
-    return {
-      target: orbit.target.slice(0, 3),
-      position: orbit.target.map((value, i) => value + dir[i] * clamp(orbit.zoom, minDist, maxDist)),
-    };
-  }
-  function timelineCameraPoseAt(time) {
-    const frames = timeline.keyframes;
-    if (!frames.length) return cameraPose();
-    let before = frames[0], after = frames[0];
-    if (time >= frames[frames.length - 1].time) before = after = frames[frames.length - 1];
-    else if (time > frames[0].time) {
-      for (let i = 0; i < frames.length - 1; i++) {
-        if (time <= frames[i + 1].time) { before = frames[i]; after = frames[i + 1]; break; }
-      }
-    }
-    const span = after.time - before.time;
-    const amount = before === after || span <= 0 ? 0 : easeProgress(clamp((time - before.time) / span, 0, 1), before.easing);
-    const a = before.camera || after.camera, b = after.camera || before.camera;
-    if (!a || !b) return cameraPose();
-    return {
-      position: a.position.map((value, i) => value + (b.position[i] - value) * amount),
-      target: a.target.map((value, i) => value + (b.target[i] - value) * amount),
-    };
-  }
-  function setTimelineCameraPoseAt(time, pose) {
-    const frame = ensureKeyframe(time, false);
-    frame.camera = pose;
-    if (timelineCameraEnabled) applyCameraPose(pose);
-    return frame;
-  }
-  function syncCameraEditor() {
-    const editor = $("rbvCameraEditor");
-    if (!editor || !camera || !target) return;
-    const orbit = orbitFromCameraPose(timelineCameraPoseAt(timelineTime));
-    if (!orbit) return;
-    const values = {
-      rbvCameraX: orbit.target[0],
-      rbvCameraY: orbit.target[1],
-      rbvCameraZ: orbit.target[2],
-      rbvCameraZoom: orbit.zoom,
-      rbvCameraYaw: THREE.MathUtils.radToDeg(orbit.yaw),
-      rbvCameraPitch: THREE.MathUtils.radToDeg(orbit.pitch),
-    };
-    Object.entries(values).forEach(([id, value]) => {
-      const input = $(id);
-      if (document.activeElement !== input) input.value = String(Number(value));
-    });
-    editor.disabled = !robotRoot || !drawerOpen || !timeline.keyframes.length || timelinePlaying;
-  }
-  function frameAt(time) {
-    return timeline.keyframes.find((frame) => Math.abs(frame.time - time) < 0.025);
-  }
-  function ensureKeyframe(time, captureCamera) {
-    time = clamp(Number(time) || 0, 0, timeline.duration);
-    let frame = frameAt(time);
-    if (!frame) {
-      frame = {
-        id: "key-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6),
-        time,
-        easing: "linear",
-        values: Object.fromEntries(mechanisms.map((mech) => [mech.id, Number(mech.value) || 0])),
-        camera: cameraPose(),
-      };
-      timeline.keyframes.push(frame);
-      timeline.keyframes.sort((a, b) => a.time - b.time);
-    } else {
-      mechanisms.forEach((mech) => {
-        if (frame.values[mech.id] === undefined) frame.values[mech.id] = Number(mech.value) || 0;
-      });
-      if (captureCamera) frame.camera = cameraPose();
-    }
-    return frame;
-  }
-  function renderTimelineTracks() {
-    const tracks = $("rbvTimelineTracks");
-    if (!tracks) return;
-    tracks.replaceChildren();
-    const ruler = el("div", { class: "rbv-track-ruler" });
-    ruler.append(el("div", { class: "rbv-track-label", text: "Time" }));
-    const rulerLane = el("div", { class: "rbv-track-lane", "data-track-lane": "ruler" });
-    for (let tick = 0; tick <= 4; tick++) {
-      const time = timeline.duration * tick / 4;
-      rulerLane.append(el("span", { class: "rbv-track-tick", text: time.toFixed(time < 10 ? 1 : 0), style: "left:" + (tick * 25) + "%" }));
-    }
-    rulerLane.append(el("div", { class: "rbv-track-playhead", style: "left:" + (timelineTime / timeline.duration * 100) + "%" }));
-    ruler.append(rulerLane);
-    tracks.append(ruler);
-    const lanes = [{ id: "camera", label: "Camera", camera: true }]
-      .concat(mechanisms.map((mech) => ({ id: mech.id, label: mech.name, camera: false })));
-    if (!timeline.keyframes.length) {
-      tracks.append(el("div", { class: "rbv-track-empty", text: "Add a keyframe to start building tracks." }));
-      return;
-    }
-    lanes.forEach((lane) => {
-      const row = el("div", { class: "rbv-track-row" });
-      row.append(el("div", { class: "rbv-track-label", text: lane.label, title: lane.label }));
-      const track = el("div", { class: "rbv-track-lane", "data-track-lane": lane.id });
-      timeline.keyframes.forEach((frame) => {
-        if (lane.camera ? !frame.camera : !Object.prototype.hasOwnProperty.call(frame.values || {}, lane.id)) return;
-        const marker = el("button", {
-          type: "button",
-          class: "rbv-track-marker" + (lane.camera ? " camera" : "") + (Math.abs(frame.time - timelineTime) < 0.05 ? " active" : ""),
-          "data-frame-id": frame.id,
-          "aria-label": (lane.camera ? "Camera" : lane.label) + " keyframe at " + frame.time.toFixed(2) + " seconds",
-          title: frame.time.toFixed(2) + " s · " + (lane.camera ? "Camera" : lane.label),
-          style: "left:" + (frame.time / timeline.duration * 100) + "%",
-          onclick: (event) => { event.stopPropagation(); timelineTime = frame.time; applyTimelineAt(timelineTime); },
-          onpointerdown: (event) => {
-            if (event.button !== 0) return;
-            event.preventDefault();
-            event.stopPropagation();
-            timelineDrag = { pointerId: event.pointerId, frameId: frame.id, lane: track, bounds: track.getBoundingClientRect(), startX: event.clientX, moved: false };
-            marker.setPointerCapture(event.pointerId);
-          },
-        });
-        track.append(marker);
-      });
-      track.append(el("div", { class: "rbv-track-playhead", style: "left:" + (timelineTime / timeline.duration * 100) + "%" }));
-      row.append(track);
-      tracks.append(row);
-    });
-  }
-  function syncTimelineTrackPositions() {
-    $("rbvTimelineTracks").querySelectorAll(".rbv-track-marker").forEach((marker) => {
-      const frame = timeline.keyframes.find((item) => item.id === marker.dataset.frameId);
-      if (!frame) return;
-      marker.style.left = (frame.time / timeline.duration * 100) + "%";
-      marker.classList.toggle("active", Math.abs(frame.time - timelineTime) < 0.05);
-      marker.title = frame.time.toFixed(2) + " s";
-    });
-    $("rbvTimelineTracks").querySelectorAll(".rbv-track-playhead").forEach((playhead) => {
-      playhead.style.left = (timelineTime / timeline.duration * 100) + "%";
-    });
-  }
-  function seekTimelineFromTrack(event) {
-    const lane = event.target.closest("[data-track-lane]");
-    if (!lane || timelineDrag) return;
-    const bounds = lane.getBoundingClientRect();
-    if (!bounds.width) return;
-    timelinePlaying = false; timelineLastFrame = 0;
-    applyTimelineAt(clamp((event.clientX - bounds.left) / bounds.width, 0, 1) * timeline.duration);
-  }
-  function finishTimelineDrag() {
-    if (!timelineDrag) return;
-    const moved = timelineDrag.moved;
-    timelineDrag = null;
-    if (!moved) return;
-    timeline.keyframes.sort((a, b) => a.time - b.time);
-    renderTimelineTracks();
-    renderTimelineKeyframes();
-    updateTimelineControls();
-    saveSetup();
-  }
-  function updateTimelineControls() {
-    const slider = $("rbvTimelineTime");
-    if (!slider) return;
-    slider.max = String(timeline.duration);
-    slider.value = String(timelineTime);
-    $("rbvTimelineTimeLabel").textContent = timelineTime.toFixed(1) + " s";
-    $("rbvTimelineDuration").value = String(timeline.duration);
-    $("rbvTimelinePlay").textContent = timelinePlaying ? "Pause" : "Play";
-    $("rbvToolbarPlay").textContent = timelinePlaying ? "Pause" : "Play";
-    $("rbvToolbarPlay").title = timelinePlaying ? "Pause timeline animation" : "Play timeline animation";
-    $("rbvToolbarPlay").setAttribute("aria-label", timelinePlaying ? "Pause timeline animation" : "Play timeline animation");
-    $("rbvToolbarPlay").setAttribute("aria-pressed", String(timelinePlaying));
-    $("rbvToolbarPlay").disabled = !robotRoot || !timeline.keyframes.length;
-    $("rbvTimelinePlay").disabled = !robotRoot || !timeline.keyframes.length;
-    $("rbvTimelineLoop").checked = timeline.loop;
-    $("rbvCameraFree").setAttribute("aria-pressed", String(!timelineCameraEnabled));
-    $("rbvCameraTimeline").setAttribute("aria-pressed", String(timelineCameraEnabled));
-    $("rbvCameraFree").disabled = !robotRoot || !timeline.keyframes.length;
-    $("rbvCameraTimeline").disabled = !robotRoot || !timeline.keyframes.length;
-    $("rbvTimelineEasing").disabled = !timeline.keyframes.length;
-    const frame = timeline.keyframes.slice().reverse().find((item) => item.time <= timelineTime + 0.001);
-    $("rbvTimelineEasing").value = frame && EASING_TYPES.includes(frame.easing) ? frame.easing : "linear";
-    $("rbvTimelineSelect").value = activeTimelineId;
-    $("rbvTimelineDelete").disabled = savedTimelines.length < 2;
-    $("rbvTimelineKeyframes").querySelectorAll("[data-keyframe-id]").forEach((row) => {
-      row.classList.toggle("active", Math.abs(Number(row.dataset.keyframeTime) - timelineTime) < 0.05);
-    });
-    syncTimelineTrackPositions();
-    syncCameraEditor();
-  }
-  function renderTimelineKeyframes() {
-    renderTimelineTracks();
-    const list = $("rbvTimelineKeyframes");
-    if (!list) return;
-    list.replaceChildren();
-    if (!timeline.keyframes.length) {
-      list.append(el("div", { class: "rbv-hint", text: "Move connectors and camera, then add a keyframe." }));
-      return;
-    }
-    timeline.keyframes.forEach((frame) => {
-      const row = el("div", { class: "rbv-keyframe" + (Math.abs(frame.time - timelineTime) < 0.05 ? " active" : ""), "data-keyframe-id": frame.id, "data-keyframe-time": frame.time });
-      row.append(
-        el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: frame.time.toFixed(1) + " s", onclick: () => { timelineTime = frame.time; applyTimelineAt(timelineTime); updateTimelineControls(); } }),
-        el("button", { type: "button", class: "rbv-btn rbv-btn-ghost", text: "×", "aria-label": "Delete keyframe at " + frame.time.toFixed(1) + " seconds", onclick: () => {
-          timeline.keyframes = timeline.keyframes.filter((item) => item.id !== frame.id);
-          timelinePlaying = false;
-          applyTimelineAt(timelineTime);
-          renderTimelineKeyframes();
-          updateTimelineControls();
-          saveSetup();
-        } })
-      );
-      list.append(row);
-    });
-  }
-  function applyTimelineAt(time) {
-    if (!timeline.keyframes.length) {
-      timelineTime = clamp(time, 0, timeline.duration);
-      updateTimelineControls();
-      return;
-    }
-    timelineTime = clamp(time, 0, timeline.duration);
-    const frames = timeline.keyframes;
-    let before = frames[0], after = frames[0];
-    if (timelineTime >= frames[frames.length - 1].time) {
-      before = frames[frames.length - 1]; after = before;
-    } else if (timelineTime > frames[0].time) {
-      for (let i = 0; i < frames.length - 1; i++) {
-        if (timelineTime <= frames[i + 1].time) {
-          before = frames[i]; after = frames[i + 1]; break;
-        }
-      }
-    }
-    const span = after.time - before.time;
-    const amount = before === after || span <= 0 ? 0 : easeProgress(clamp((timelineTime - before.time) / span, 0, 1), before.easing);
-    mechanisms.forEach((mech) => {
-      const start = Number(before.values[mech.id] ?? mech.value) || 0;
-      const end = Number(after.values[mech.id] ?? start) || 0;
-      setMechanismValue(mech, start + (end - start) * amount, true);
-    });
-    if (timelineCameraEnabled && before.camera && after.camera) {
-      const position = before.camera.position.map((value, i) => value + (after.camera.position[i] - value) * amount);
-      const lookAt = before.camera.target.map((value, i) => value + (after.camera.target[i] - value) * amount);
-      applyCameraPose({ position, target: lookAt });
-    } else if (timelineCameraEnabled && (before.camera || after.camera)) applyCameraPose(before.camera || after.camera);
-    requestRender();
-    updateTimelineControls();
-  }
-  function upsertTimelineKeyframe(time) {
-    const frameCamera = timelineCameraEnabled ? cameraPose() : timelineCameraPoseAt(time);
-    const frame = ensureKeyframe(time, true);
-    frame.values = Object.fromEntries(mechanisms.map((mech) => [mech.id, Number(mech.value) || 0]));
-    frame.camera = frameCamera;
-    return frame;
-  }
-  function stepTimeline(now) {
-    if (!timelinePlaying) return;
-    if (timelineLastFrame) timelineTime += Math.min((now - timelineLastFrame) / 1000, 0.05);
-    timelineLastFrame = now;
-    if (timelineTime >= timeline.duration) {
-      if (timeline.loop) timelineTime %= timeline.duration;
-      else {
-        timelineTime = timeline.duration;
-        timelinePlaying = false;
-        timelineLastFrame = 0;
-      }
-    }
-    applyTimelineAt(timelineTime);
-  }
-  function normalizeTimeline(value) {
-    const duration = clamp(Number(value && value.duration) || 10, 1, 300);
-    const keyframes = Array.isArray(value && value.keyframes) ? value.keyframes.map((frame, index) => ({
-      id: String(frame.id || "key-loaded-" + index),
-      time: clamp(Number(frame.time) || 0, 0, duration),
-      easing: EASING_TYPES.includes(frame.easing) ? frame.easing : "linear",
-      values: frame.values && typeof frame.values === "object" ? frame.values : {},
-      camera: frame.camera && Array.isArray(frame.camera.position) && Array.isArray(frame.camera.target)
-        ? { position: frame.camera.position.slice(0, 3).map((n) => Number.isFinite(Number(n)) ? Number(n) : 0), target: frame.camera.target.slice(0, 3).map((n) => Number.isFinite(Number(n)) ? Number(n) : 0) }
-        : null,
-    })).sort((a, b) => a.time - b.time) : [];
-    return {
-      id: String(value && value.id || "timeline-" + Math.random().toString(36).slice(2, 9)),
-      name: String(value && value.name || "Timeline"),
-      duration, loop: !!(value && value.loop), keyframes,
-    };
-  }
-  function backfillTimelineValues() {
-    timeline.keyframes.forEach((frame) => {
-      if (!frame.values || typeof frame.values !== "object") frame.values = {};
-      mechanisms.forEach((mech) => {
-        if (!Number.isFinite(Number(frame.values[mech.id]))) frame.values[mech.id] = Number(mech.value) || 0;
-      });
-    });
-  }
-  function addTimelineKeyframe() {
-    if (!robotRoot) { setStatus("Load a model before adding animation keyframes.", { error: true }); return; }
-    const frame = upsertTimelineKeyframe(timelineTime);
-    renderTimelineKeyframes();
-    updateTimelineControls();
-    saveSetup();
-    requestRender();
-    setStatus("Keyframe added at " + frame.time.toFixed(1) + " seconds.");
-  }
-
   function renderNow() {
     if (!renderer) return;
-    if (viewerSettings.autoRotate && robotRoot) {
-      const now = performance.now();
-      if (lastAutoRotateFrame) yaw += Math.min(Math.max((now - lastAutoRotateFrame) / 1000, 0), 0.05) * 0.35;
-      lastAutoRotateFrame = now;
-    } else lastAutoRotateFrame = 0;
-    if (modelAnimationPlaying && animationMixer) {
-      const now = performance.now();
-      const delta = lastAnimationFrame ? Math.min((now - lastAnimationFrame) / 1000, 0.05) : 0;
-      lastAnimationFrame = now;
-      animationMixer.update(delta);
-    } else lastAnimationFrame = 0;
-    if (timelinePlaying) {
-      stepTimeline(performance.now());
-      if (!timelinePlaying) updateTimelineControls(); // reached the end
-    }
     updateCamera();
     if (markersDirty) refreshMarkerBoxes();
     renderer.render(scene, camera);
-    if ((viewerSettings.autoRotate && robotRoot) || modelAnimationPlaying || timelinePlaying) requestRender();
   }
   function requestRender() {
     if (!renderer || raf) return;
@@ -848,12 +499,9 @@ const LIGHT_SCALE = Math.PI;
   // ───────── Model state ─────────
   let nodeMap = new Map(), nodeList = [];
   let mechanisms = [], presets = [], editingMechanismId = null;
-  let timeline = { id: "timeline-default", name: "Timeline 1", duration: 10, loop: false, keyframes: [] }, savedTimelines = [], activeTimelineId = timeline.id, timelineTime = 0, timelinePlaying = false, timelineLastFrame = 0;
-  let timelineCameraEnabled = true;
-  let timelineDrag = null;
   const bases = new Map();      // mech.id → rest transform of its node (kept out of saved JSON)
   const mechUI = new Map();     // mech.id → { slider, out }
-  let modelName = "", modelSize = 1;
+  let modelName = "", modelSize = 1, usingBundledExample = false;
 
   function collectNodes(rootObj) {
     nodeMap = new Map(); nodeList = [];
@@ -1125,7 +773,7 @@ const LIGHT_SCALE = Math.PI;
 
   async function parseModel(files) {
     if (files.some((file) => /\.urdf$/i.test(file.name))) {
-      return { ...(await parseURDF(files)), animations: [], format: "urdf" };
+      return { ...(await parseURDF(files)), format: "urdf" };
     }
     const main = files.find((f) => /\.glb$/i.test(f.name)) || files.find((f) => /\.gltf$/i.test(f.name));
     if (!main) throw new Error("Choose a .urdf, .glb, or .gltf file.");
@@ -1169,105 +817,6 @@ const LIGHT_SCALE = Math.PI;
     }
   }
 
-  function updateAnimationControls() {
-    const select = $("rbvAnimationSelect");
-    const play = $("rbvAnimationPlay");
-    const toolbar = $("rbvToolbarPlay");
-    if (select) {
-      select.replaceChildren();
-      if (!modelAnimations.length) {
-        select.append(el("option", { value: "", text: "No animation found" }));
-        select.disabled = true;
-      } else {
-        modelAnimations.forEach((clip, index) => {
-          const name = String(clip.name || "").trim() || "Animation " + (index + 1);
-          select.append(el("option", { value: String(index), text: name }));
-        });
-        select.disabled = false;
-        select.value = String(activeAnimationIndex);
-      }
-    }
-    const disabled = !robotRoot || !modelAnimations.length;
-    if (play) {
-      play.textContent = modelAnimationPlaying ? "Pause" : "Play";
-      play.disabled = disabled;
-      play.setAttribute("aria-pressed", String(modelAnimationPlaying));
-    }
-    if (toolbar) {
-      toolbar.textContent = modelAnimationPlaying ? "Pause" : "Play";
-      toolbar.title = modelAnimationPlaying ? "Pause model animation" : "Play model animation";
-      toolbar.setAttribute("aria-label", modelAnimationPlaying ? "Pause model animation" : "Play model animation");
-      toolbar.setAttribute("aria-pressed", String(modelAnimationPlaying));
-      toolbar.disabled = disabled;
-    }
-    const loop = $("rbvAnimationLoop");
-    if (loop) loop.checked = modelAnimationLoop;
-  }
-
-  function stopModelAnimation() {
-    modelAnimationPlaying = false;
-    lastAnimationFrame = 0;
-    if (animationMixer) {
-      animationMixer.stopAllAction();
-      if (robotRoot) animationMixer.uncacheRoot(robotRoot);
-    }
-    animationMixer = null;
-    animationAction = null;
-  }
-
-  function selectModelAnimation(index, playNow) {
-    if (!robotRoot || !modelAnimations.length) return;
-    const nextIndex = clamp(Math.floor(Number(index) || 0), 0, modelAnimations.length - 1);
-    if (!animationMixer) {
-      animationMixer = new THREE.AnimationMixer(robotRoot);
-      animationMixer.addEventListener("finished", (event) => {
-        if (event.action !== animationAction || modelAnimationLoop) return;
-        modelAnimationPlaying = false;
-        lastAnimationFrame = 0;
-        updateAnimationControls();
-      });
-    }
-    if (animationAction) {
-      animationAction.stop();
-      animationMixer.uncacheAction(animationAction.getClip(), robotRoot);
-    }
-    activeAnimationIndex = nextIndex;
-    animationAction = animationMixer.clipAction(modelAnimations[activeAnimationIndex]);
-    animationAction.setLoop(modelAnimationLoop ? THREE.LoopRepeat : THREE.LoopOnce, modelAnimationLoop ? Infinity : 1);
-    animationAction.clampWhenFinished = !modelAnimationLoop;
-    animationAction.reset();
-    modelAnimationPlaying = !!playNow;
-    if (modelAnimationPlaying) animationAction.play();
-    updateAnimationControls();
-    requestRender();
-  }
-
-  function setupModelAnimations(clips) {
-    stopModelAnimation();
-    modelAnimations = Array.isArray(clips) ? clips : [];
-    activeAnimationIndex = 0;
-    modelAnimationLoop = !!$("rbvAnimationLoop").checked;
-    updateAnimationControls();
-  }
-
-  function toggleModelAnimation() {
-    if (!animationAction || !modelAnimations.length) {
-      if (modelAnimations.length) selectModelAnimation(activeAnimationIndex, true);
-      return;
-    }
-    modelAnimationPlaying = !modelAnimationPlaying;
-    if (modelAnimationPlaying) {
-      animationAction.paused = false;
-      animationAction.play();
-      lastAnimationFrame = 0;
-    } else {
-      animationAction.paused = true;
-      lastAnimationFrame = 0;
-    }
-    updateAnimationControls();
-    requestRender();
-  }
-
   async function loadModel(files, persist) {
     setStatus("Loading model…", { sticky: true });
     try {
@@ -1278,11 +827,15 @@ const LIGHT_SCALE = Math.PI;
       const sceneRoot = gltf.scene || (gltf.scenes && gltf.scenes[0]);
       if (!sceneRoot) throw new Error("No scene was found in this model.");
       const info = optimizeModel(sceneRoot);
+      if (persist && usingBundledExample) {
+        mechanisms = [];
+        presets = [];
+        usingBundledExample = false;
+      }
       const legacyPartIds = new Map(mechanisms
         .filter((connector) => connector.source === "legacy" && connector.nodes.length === 1)
         .map((connector) => [connector.id, connector.nodes[0]]));
 
-      stopModelAnimation();
       disposeRobot();
       mechanisms.forEach((connector) => {
         connector.motion = null;
@@ -1304,7 +857,6 @@ const LIGHT_SCALE = Math.PI;
           };
         }).concat(manual);
       }
-      modelAnimations = Array.isArray(gltf.animations) ? gltf.animations : [];
       bases.clear();
       robotRoot = sceneRoot;
       scene.add(robotRoot);
@@ -1320,7 +872,6 @@ const LIGHT_SCALE = Math.PI;
       applyModelBottom(modelBottom);
       modelName = (files.find((f) => /\.(urdf|glb|gltf)$/i.test(f.name)) || files[0]).name.split(/[\\/]/).pop();
       applyStyle(info.meshes);
-      setupModelAnimations(modelAnimations);
       emptyEl.style.display = "none";
       infoEl.textContent = modelName + " · " + info.parts + " parts · " + (info.tris / 1000).toFixed(info.tris > 99999 ? 0 : 1) + "k triangles" + (info.hidden ? " · " + info.hidden + " tiny parts hidden" : "");
       resetMechRange();
@@ -1561,52 +1112,33 @@ const LIGHT_SCALE = Math.PI;
     });
   }
 
-  function renderTimelineLibrary() {
-    const select = $("rbvTimelineSelect");
-    select.replaceChildren();
-    if (!savedTimelines.length) savedTimelines = [timeline];
-    savedTimelines.forEach((item) => select.append(el("option", { value: item.id, text: item.name })));
-    select.value = activeTimelineId;
-  }
-  function syncActiveTimeline() {
-    const index = savedTimelines.findIndex((item) => item.id === activeTimelineId);
-    if (index < 0) savedTimelines.push(timeline);
-    else savedTimelines[index] = timeline;
-  }
-
   // ───────── Saving the setup (viewer settings live separately) ─────────
   let saveTimer = 0;
   const saveSetup = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveSetupNow, 400); };
-  const setupSnapshot = () => {
-    syncActiveTimeline();
-    return {
-      version: 2,
-      modelName,
-      modelBottom,
-      connectors: mechanisms.map((connector) => ({
-        id: connector.id,
-        name: connector.name,
-        nodes: connector.nodes,
-        partId: connector.partId,
-        source: connector.source,
-        jointType: connector.jointType,
-        space: connector.space,
-        pivotMode: connector.pivotMode,
-        pivot: connector.pivot,
-        type: connector.type,
-        axis: connector.axis,
-        axisVector: connector.axisVector,
-        range: connector.range,
-        min: connector.min,
-        max: connector.max,
-        value: connector.value,
-      })),
-      presets,
-      timeline,
-      timelines: savedTimelines,
-      activeTimelineId,
-    };
-  };
+  const setupSnapshot = () => ({
+    version: 2,
+    modelName,
+    modelBottom,
+    connectors: mechanisms.map((connector) => ({
+      id: connector.id,
+      name: connector.name,
+      nodes: connector.nodes,
+      partId: connector.partId,
+      source: connector.source,
+      jointType: connector.jointType,
+      space: connector.space,
+      pivotMode: connector.pivotMode,
+      pivot: connector.pivot,
+      type: connector.type,
+      axis: connector.axis,
+      axisVector: connector.axisVector,
+      range: connector.range,
+      min: connector.min,
+      max: connector.max,
+      value: connector.value,
+    })),
+    presets,
+  });
   function normMech(m) {
     m = Object.assign({}, m);
     if (!Array.isArray(m.nodes)) { m.nodes = m.node ? [m.node] : []; m.space = "local"; } // first-version controls keep their original behaviour
@@ -1632,23 +1164,20 @@ const LIGHT_SCALE = Math.PI;
     try { if (sdk.storage && sdk.storage.set) await sdk.storage.set("robotViewerSetup", setup); } catch (_) {}
     try { localStorage.setItem("pitbeaconRobotViewerSetup", JSON.stringify(setup)); } catch (_) {}
   }
-  async function loadSetup() {
+  async function loadSetup(useExample = false) {
     let setup = null;
     try { if (sdk.storage && sdk.storage.get) setup = await sdk.storage.get("robotViewerSetup"); } catch (_) {}
     if (!setup) { try { setup = JSON.parse(localStorage.getItem("pitbeaconRobotViewerSetup") || "null"); } catch (_) {} }
+    if (!setup && useExample) {
+      const response = await fetch(new URL("examples/robot-viewer-demo.json", document.baseURI));
+      if (!response.ok) throw new Error("Could not load the example robot viewer setup.");
+      setup = await response.json();
+    }
     if (setup && [1, 2].includes(setup.version)) {
       const savedConnectors = setup.version === 2 ? setup.connectors : setup.mechanisms;
       mechanisms = Array.isArray(savedConnectors) ? savedConnectors.map(normMech) : [];
       presets = Array.isArray(setup.presets) ? setup.presets : [];
-      savedTimelines = Array.isArray(setup.timelines) && setup.timelines.length
-        ? setup.timelines.map(normalizeTimeline)
-        : [normalizeTimeline(setup.timeline)];
-      activeTimelineId = savedTimelines.some((item) => item.id === setup.activeTimelineId) ? setup.activeTimelineId : savedTimelines[0].id;
-      timeline = savedTimelines.find((item) => item.id === activeTimelineId);
-      backfillTimelineValues();
-      timelineTime = 0;
     }
-    if (!savedTimelines.length) savedTimelines = [timeline];
     modelBottom = normalizeModelBottom(setup && setup.modelBottom ? setup.modelBottom : modelBottom);
     const bottomSelect = $("rbvModelBottom");
     if (bottomSelect) bottomSelect.value = modelBottom;
@@ -1766,151 +1295,6 @@ const LIGHT_SCALE = Math.PI;
   $("rbvCloseDrawer").addEventListener("click", () => setDrawer(false));
   $("rbvSettingsToggle").addEventListener("click", () => setSettingsMenu(settingsPanel.hidden));
   $("rbvSettingsClose").addEventListener("click", () => setSettingsMenu(false));
-  if ($("rbvTimelineAddKeyframe")) {
-  $("rbvTimelineAddKeyframe").addEventListener("click", addTimelineKeyframe);
-  $("rbvTimelineSelect").addEventListener("change", (event) => {
-    syncActiveTimeline();
-    const selected = savedTimelines.find((item) => item.id === event.currentTarget.value);
-    if (!selected) return;
-    timelinePlaying = false; timelineLastFrame = 0;
-    activeTimelineId = selected.id;
-    timeline = selected;
-    timelineTime = 0;
-    renderTimelineKeyframes();
-    applyTimelineAt(timelineTime);
-    updateTimelineControls();
-    saveSetup();
-  });
-  $("rbvTimelineSave").addEventListener("click", () => {
-    const name = $("rbvTimelineName").value.trim();
-    if (!name) { fail("Enter a name for the saved timeline."); return; }
-    syncActiveTimeline();
-    const copy = JSON.parse(JSON.stringify(timeline));
-    copy.id = "timeline-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
-    copy.name = name.slice(0, 32);
-    savedTimelines.push(copy);
-    activeTimelineId = copy.id;
-    timeline = copy;
-    timelineTime = 0;
-    timelinePlaying = false; timelineLastFrame = 0;
-    $("rbvTimelineName").value = "";
-    renderTimelineLibrary();
-    renderTimelineKeyframes();
-    applyTimelineAt(timelineTime);
-    updateTimelineControls();
-    saveSetup();
-  });
-  $("rbvTimelineDelete").addEventListener("click", () => {
-    if (savedTimelines.length < 2) return;
-    savedTimelines = savedTimelines.filter((item) => item.id !== activeTimelineId);
-    timeline = savedTimelines[0];
-    activeTimelineId = timeline.id;
-    timelineTime = 0;
-    timelinePlaying = false; timelineLastFrame = 0;
-    renderTimelineLibrary();
-    renderTimelineKeyframes();
-    applyTimelineAt(timelineTime);
-    updateTimelineControls();
-    saveSetup();
-  });
-  $("rbvTimelineTracks").addEventListener("click", seekTimelineFromTrack);
-  $("rbvTimelineTracks").addEventListener("pointermove", (event) => {
-    if (!timelineDrag || timelineDrag.pointerId !== event.pointerId) return;
-    if (!timelineDrag.moved && Math.abs(event.clientX - timelineDrag.startX) < 3) return;
-    timelineDrag.moved = true;
-    timelinePlaying = false; timelineLastFrame = 0;
-    const frame = timeline.keyframes.find((item) => item.id === timelineDrag.frameId);
-    const bounds = timelineDrag.bounds;
-    if (!frame || !bounds.width) return;
-    frame.time = clamp(Math.round((event.clientX - bounds.left) / bounds.width * timeline.duration * 100) / 100, 0, timeline.duration);
-    timelineTime = frame.time;
-    applyTimelineAt(timelineTime);
-    syncTimelineTrackPositions();
-  });
-  ["pointerup", "pointercancel", "lostpointercapture"].forEach((type) => $("rbvTimelineTracks").addEventListener(type, finishTimelineDrag));
-  function toggleTimelinePlayback() {
-    if (!robotRoot || !timeline.keyframes.length) { setStatus("Load a model and add at least one keyframe before playback.", { error: true }); return; }
-    if (timelinePlaying) {
-      timelinePlaying = false; timelineLastFrame = 0;
-    } else {
-      if (timelineTime >= timeline.duration) timelineTime = 0;
-      timelinePlaying = true; timelineLastFrame = 0;
-      applyTimelineAt(timelineTime);
-    }
-    updateTimelineControls();
-    requestRender();
-  }
-  $("rbvTimelinePlay").addEventListener("click", toggleTimelinePlayback);
-  $("rbvToolbarPlay").addEventListener("click", toggleTimelinePlayback);
-  $("rbvTimelineLoop").addEventListener("change", (event) => {
-    timeline.loop = event.currentTarget.checked;
-    updateTimelineControls();
-    saveSetup();
-  });
-  $("rbvCameraFree").addEventListener("click", () => {
-    if (!timeline.keyframes.length) return;
-    timelineCameraEnabled = false;
-    updateTimelineControls();
-    requestRender();
-  });
-  $("rbvCameraTimeline").addEventListener("click", () => {
-    if (!timeline.keyframes.length) return;
-    timelineCameraEnabled = true;
-    applyTimelineAt(timelineTime);
-    requestRender();
-  });
-  function applyCameraEditor() {
-    if (!timeline.keyframes.length) return;
-    const values = ["rbvCameraX", "rbvCameraY", "rbvCameraZ", "rbvCameraZoom", "rbvCameraYaw", "rbvCameraPitch"].map((id) => Number($(id).value));
-    if (!values.every(Number.isFinite)) { fail("Enter valid camera coordinates, zoom, and rotation."); syncCameraEditor(); return; }
-    const pose = cameraPoseFromOrbit({
-      target: values.slice(0, 3),
-      zoom: values[3],
-      yaw: THREE.MathUtils.degToRad(values[4]),
-      pitch: THREE.MathUtils.degToRad(values[5]),
-    });
-    setTimelineCameraPoseAt(timelineTime, pose);
-    renderTimelineKeyframes();
-    updateTimelineControls();
-    saveSetup();
-    requestRender();
-  }
-  ["rbvCameraX", "rbvCameraY", "rbvCameraZ", "rbvCameraZoom", "rbvCameraYaw", "rbvCameraPitch"].forEach((id) => {
-    $(id).addEventListener("change", applyCameraEditor);
-  });
-  $("rbvTimelineTime").addEventListener("input", (event) => {
-    timelinePlaying = false; timelineLastFrame = 0;
-    applyTimelineAt(Number(event.currentTarget.value));
-  });
-  $("rbvTimelineDuration").addEventListener("change", (event) => {
-    const lastKeyframe = timeline.keyframes.length ? timeline.keyframes[timeline.keyframes.length - 1].time : 0;
-    timeline.duration = clamp(Number(event.currentTarget.value) || 10, Math.max(1, lastKeyframe), 300);
-    timelineTime = clamp(timelineTime, 0, timeline.duration);
-    renderTimelineTracks();
-    updateTimelineControls();
-    saveSetup();
-  });
-  $("rbvTimelineEasing").addEventListener("change", (event) => {
-    const frame = timeline.keyframes.slice().reverse().find((item) => item.time <= timelineTime + 0.001);
-    if (!frame) return;
-    frame.easing = EASING_TYPES.includes(event.currentTarget.value) ? event.currentTarget.value : "linear";
-    renderTimelineKeyframes();
-    saveSetup();
-  });
-  }
-  $("rbvAnimationSelect").addEventListener("change", (event) => {
-    selectModelAnimation(event.currentTarget.value, false);
-  });
-  $("rbvAnimationLoop").addEventListener("change", (event) => {
-    modelAnimationLoop = event.currentTarget.checked;
-    if (animationAction) {
-      animationAction.setLoop(modelAnimationLoop ? THREE.LoopRepeat : THREE.LoopOnce, modelAnimationLoop ? Infinity : 1);
-      animationAction.clampWhenFinished = !modelAnimationLoop;
-    }
-    updateAnimationControls();
-  });
-  $("rbvAnimationPlay").addEventListener("click", toggleModelAnimation);
-  $("rbvToolbarPlay").addEventListener("click", toggleModelAnimation);
   bindViewerSetting("rbvSettingDisplayStyle", "displayStyle", "select");
   $("rbvSettingLightingPreset").addEventListener("change", (event) => applyLightingPreset(event.currentTarget.value));
   bindViewerSetting("rbvSettingLightSky", "lightSky", "color");
@@ -1921,7 +1305,6 @@ const LIGHT_SCALE = Math.PI;
   bindViewerSetting("rbvSettingRenderScale", "renderScale", "number");
   bindViewerSetting("rbvSettingAntialias", "antialias", "checkbox");
   bindViewerSetting("rbvSettingShowGrid", "showGrid", "checkbox");
-  bindViewerSetting("rbvSettingAutoRotate", "autoRotate", "checkbox");
   bindViewerSetting("rbvSettingShowAxes", "showAxes", "checkbox");
   bindViewerSetting("rbvSettingBackground", "background", "color");
   bindViewerSetting("rbvSettingControlsMode", "controlsMode", "select");
@@ -1979,7 +1362,6 @@ const LIGHT_SCALE = Math.PI;
       return;
     }
     mechanisms.push(connector);
-    backfillTimelineValues();
     closeAddForm(); renderMechanisms(); saveSetup();
   });
   $("rbvSavePreset").addEventListener("click", () => {
@@ -2015,13 +1397,6 @@ const LIGHT_SCALE = Math.PI;
         }
       });
       presets = Array.isArray(data.presets) ? data.presets : [];
-      timeline = normalizeTimeline(data.timeline);
-      savedTimelines = Array.isArray(data.timelines) && data.timelines.length ? data.timelines.map(normalizeTimeline) : [timeline];
-      if (!savedTimelines.some((item) => item.id === timeline.id)) savedTimelines.unshift(timeline);
-      activeTimelineId = savedTimelines.some((item) => item.id === data.activeTimelineId) ? data.activeTimelineId : timeline.id;
-      timeline = savedTimelines.find((item) => item.id === activeTimelineId);
-      backfillTimelineValues();
-      timelineTime = 0;
       mechanisms.forEach((connector) => {
         if (connector.value) setMechanismValue(connector, connector.value, true);
       });
@@ -2371,17 +1746,34 @@ const LIGHT_SCALE = Math.PI;
   });
   const applyPendingFocus = () => { if (pendingFocus && focusPart(pendingFocus)) pendingFocus = null; };
 
-  // ───────── Start: fetch 3D libs and the saved model in parallel ─────────
+  // ───────── Start: load the saved model or the bundled example ─────────
   (async function init() {
     await loadViewerSettings();
     applyUiState();
     const libs = ensureThree().catch((e) => e);
-    const [, saved] = await Promise.all([loadSetup(), dbGet("models", "last").catch(() => null)]);
+    const saved = await dbGet("models", "last").catch(() => null);
+    let setupError = null;
+    try {
+      await loadSetup(!saved);
+    } catch (err) {
+      setupError = err;
+    }
     if (saved && saved.files && saved.files.length) {
       await loadModel(saved.files, false);
       applyPendingFocus();
     } else {
+      try {
+        const response = await fetch(new URL("examples/robot-viewer-demo.urdf", document.baseURI));
+        if (!response.ok) throw new Error("Could not load the example robot model.");
+        await loadModel([{ name: "robot-viewer-demo.urdf", buffer: await response.arrayBuffer() }], false);
+        usingBundledExample = !!robotRoot;
+      } catch (err) {
+        fail(err && err.message ? err.message : "Could not load the example robot model.");
+      }
       const r = await libs;
       if (r instanceof Error) fail(r.message);
+    }
+    if (setupError && robotRoot) {
+      fail("Could not load the example robot viewer setup: " + (setupError.message || "unknown error"));
     }
   })();

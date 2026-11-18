@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot name="Lift and intake example">
+  <material name="frame"><color rgba="0.22 0.30 0.40 1"/></material>
+  <material name="accent"><color rgba="0.12 0.55 0.88 1"/></material>
+  <material name="roller"><color rgba="0.92 0.42 0.12 1"/></material>
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.25"/>
+      <geometry><box size="2.0 1.25 0.3"/></geometry>
+      <material name="frame"/>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.48"/>
+      <geometry><box size="0.16 0.16 0.42"/></geometry>
+      <material name="accent"/>
+    </visual>
+  </link>
+
+  <link name="lift_carriage">
+    <visual>
+      <origin xyz="0 0 0.02"/>
+      <geometry><box size="0.7 0.72 0.12"/></geometry>
+      <material name="accent"/>
+    </visual>
+  </link>
+  <joint name="lift_slide" type="prismatic">
+    <parent link="base_link"/>
+    <child link="lift_carriage"/>
+    <origin xyz="0 0 0.62"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="0" upper="0.55" effort="100" velocity="1"/>
+  </joint>
+
+  <link name="intake_arm">
+    <visual>
+      <origin xyz="0.82 0 0"/>
+      <geometry><box size="1.64 0.12 0.12"/></geometry>
+      <material name="frame"/>
+    </visual>
+    <visual>
+      <origin xyz="0.12 0 0"/>
+      <geometry><cylinder radius="0.12" length="0.2"/></geometry>
+      <material name="accent"/>
+    </visual>
+  </link>
+  <joint name="shoulder_pivot" type="revolute">
+    <parent link="lift_carriage"/>
+    <child link="intake_arm"/>
+    <origin xyz="0 0 0.1"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.05" upper="1.05" effort="100" velocity="2"/>
+  </joint>
+
+  <link name="intake_roller">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.16" length="1.0"/></geometry>
+      <material name="roller"/>
+    </visual>
+    <visual>
+      <origin xyz="0.56 0 0" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.2" length="0.12"/></geometry>
+      <material name="frame"/>
+    </visual>
+    <visual>
+      <origin xyz="-0.56 0 0" rpy="0 1.5708 0"/>
+      <geometry><cylinder radius="0.2" length="0.12"/></geometry>
+      <material name="frame"/>
+    </visual>
+  </link>
+  <joint name="intake_roller_spin" type="continuous">
+    <parent link="intake_arm"/>
+    <child link="intake_roller"/>
+    <origin xyz="1.64 0 0"/>
+    <axis xyz="1 0 0"/>
+  </joint>
+</robot>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
+import { readFile } from "node:fs/promises";
 import { parseURDF } from "../src/viewer/urdf.js";
 
 function urdfFile(xml) {
@@ -20,6 +21,31 @@ endsolid triangle`;
 }
 
 describe("URDF parsing", () => {
+  it("loads the bundled example robot with its lift, pivot, and roller connectors", async () => {
+    const buffer = await readFile(new URL("../public/examples/robot-viewer-demo.urdf", import.meta.url));
+    const model = await parseURDF([{ name: "robot-viewer-demo.urdf", buffer }]);
+    model.scene.updateMatrixWorld(true);
+
+    expect(model.connectors.map(({ id, type, jointType }) => ({ id, type, jointType }))).toEqual([
+      { id: "urdf:lift_slide", type: "translate", jointType: "prismatic" },
+      { id: "urdf:shoulder_pivot", type: "rotate", jointType: "revolute" },
+      { id: "urdf:intake_roller_spin", type: "rotate", jointType: "continuous" },
+    ]);
+    let rollerLink;
+    model.scene.traverse((object) => {
+      if (object.name === "intake_roller") rollerLink = object;
+    });
+    const rollerVisuals = rollerLink.userData.rbvVisuals;
+    expect(rollerVisuals.children).toHaveLength(3);
+    rollerVisuals.children.forEach((frame) => {
+      const cylinder = frame.children[0];
+      const axis = new THREE.Vector3(0, 1, 0).applyQuaternion(cylinder.getWorldQuaternion(new THREE.Quaternion()));
+      expect(axis.x).toBeCloseTo(1);
+      expect(axis.y).toBeCloseTo(0);
+      expect(axis.z).toBeCloseTo(0);
+    });
+  });
+
   it("builds link visuals and imports typed joint connectors", async () => {
     const model = await parseURDF([urdfFile(`
       <robot name="test">
@@ -55,7 +81,7 @@ describe("URDF parsing", () => {
     expect(jointFrame.quaternion.y).toBeCloseTo(expectedOriginRotation.y);
     expect(jointFrame.quaternion.z).toBeCloseTo(expectedOriginRotation.z);
     expect(jointFrame.quaternion.w).toBeCloseTo(expectedOriginRotation.w);
-    expect(model.rootLink.userData.rbvVisuals.children[0].geometry).toBeTruthy();
+    expect(model.rootLink.userData.rbvVisuals.children[0].children[0].geometry).toBeTruthy();
   });
 
   it("rejects missing URDF mesh files instead of silently omitting geometry", async () => {
@@ -79,7 +105,7 @@ describe("URDF parsing", () => {
       stlFile("export/other/base.stl", 2),
     ]);
 
-    const position = model.rootLink.userData.rbvVisuals.children[0].geometry.attributes.position;
+    const position = model.rootLink.userData.rbvVisuals.children[0].children[0].geometry.attributes.position;
     expect(Math.max(...position.array)).toBe(1);
   });
 

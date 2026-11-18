@@ -49,7 +49,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,woff2,mp3,png,svg,wasm,json,glb,webmanifest}"],
+        globPatterns: ["**/*.{js,css,html,woff2,mp3,png,svg,wasm,json,urdf,glb,webmanifest}"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         navigateFallback: "index.html",
         navigateFallbackDenylist: [/googlef.*\.html$/, /viewer\.html$/, /\/test\//],

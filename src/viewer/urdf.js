@@ -202,10 +202,14 @@ export async function parseURDF(files) {
       if (!geometryElement) continue;
       const mesh = await loadVisualGeometry(geometryElement, files, materialFor(visual, materials));
       const pose = origin(child(visual, "origin"));
-      mesh.position.set(...pose.xyz);
-      mesh.quaternion.copy(pose.quaternion);
+      const frame = new THREE.Group();
+      frame.name = "__visual_frame__" + name;
+      frame.userData.rbvInternal = true;
+      frame.position.set(...pose.xyz);
+      frame.quaternion.copy(pose.quaternion);
       mesh.name = child(visual, "geometry")?.firstElementChild?.getAttribute("name") || name + " visual";
-      visuals.add(mesh);
+      frame.add(mesh);
+      visuals.add(frame);
     }
   }
   if (!links.size) throw new Error("The URDF contains no links.");

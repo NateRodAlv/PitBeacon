@@ -1,10 +1,7 @@
-/** The layout a fresh install starts with (3x3 grid) and what "Reset layout" restores. */
+/** The focused 3x3 layout a fresh install starts with and what "Reset layout" restores. */
 export const DEFAULT_LAYOUT = {
   "webcast-card": { x: 0, y: 0, width: 1, height: 1 },
-  "stats-card": { x: 0, y: 1, width: 1, height: 1 },
   "pit-notes-card": { x: 0, y: 2, width: 1, height: 1 },
-  "robot-viewer-card": { x: 1, y: 0, width: 1, height: 2 },
-  "leaderboard-card": { x: 1, y: 2, width: 1, height: 1 },
   "match-card": { x: 2, y: 0, width: 1, height: 3 },
 };
 
@@ -78,8 +75,6 @@ export const config = {
       selfRefresh: false,
       builtin: true,
     },
-    // Not in DEFAULT_LAYOUT on purpose: existing layouts stay as they are, and this
-    // card is added from the Layout Editor palette.
     {
       id: "robot-summary-card",
       label: "Robot Summary",

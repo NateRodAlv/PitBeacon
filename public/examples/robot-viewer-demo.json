@@ -1,0 +1,84 @@
+{
+  "version": 2,
+  "modelName": "robot-viewer-demo.urdf",
+  "modelBottom": "bottom",
+  "connectors": [
+    {
+      "id": "urdf:lift_slide",
+      "name": "Lift",
+      "nodes": ["lift_carriage"],
+      "partId": "lift_carriage",
+      "source": "urdf",
+      "jointType": "prismatic",
+      "space": "mate",
+      "type": "translate",
+      "axis": "z",
+      "axisVector": [0, 0, 1],
+      "range": 0.55,
+      "min": 0,
+      "max": 0.55,
+      "value": 0
+    },
+    {
+      "id": "urdf:shoulder_pivot",
+      "name": "Intake arm pivot",
+      "nodes": ["intake_arm"],
+      "partId": "intake_arm",
+      "source": "urdf",
+      "jointType": "revolute",
+      "space": "mate",
+      "type": "rotate",
+      "axis": "y",
+      "axisVector": [0, 1, 0],
+      "range": 60,
+      "min": -60,
+      "max": 60,
+      "value": 0
+    },
+    {
+      "id": "urdf:intake_roller_spin",
+      "name": "Intake roller",
+      "nodes": ["intake_roller"],
+      "partId": "intake_roller",
+      "source": "urdf",
+      "jointType": "continuous",
+      "space": "mate",
+      "type": "rotate",
+      "axis": "x",
+      "axisVector": [1, 0, 0],
+      "range": 180,
+      "min": -180,
+      "max": 180,
+      "value": 0
+    }
+  ],
+  "presets": [
+    {
+      "id": "example-neutral",
+      "name": "Neutral",
+      "values": {
+        "urdf:lift_slide": 0,
+        "urdf:shoulder_pivot": 0,
+        "urdf:intake_roller_spin": 0
+      }
+    },
+    {
+      "id": "example-raised",
+      "name": "Lift raised",
+      "values": {
+        "urdf:lift_slide": 0.4,
+        "urdf:shoulder_pivot": 25,
+        "urdf:intake_roller_spin": 90
+      }
+    },
+    {
+      "id": "example-intake",
+      "name": "Intake extended",
+      "values": {
+        "urdf:lift_slide": 0.1,
+        "urdf:shoulder_pivot": -45,
+        "urdf:intake_roller_spin": 180
+      }
+    }
+  ]
+}

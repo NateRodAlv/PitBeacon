@@ -2,7 +2,7 @@
 // object stores. Used for data that is too big or too binary for localStorage
 // (cached event data, robot models).
 
-const DB_NAME = "pitbeacon";
+export const DB_NAME = "pitbeacon";
 const DB_VERSION = 1;
 export const STORES = ["snapshots", "models"];
 
@@ -22,7 +22,14 @@ function openDb() {
         if (!db.objectStoreNames.contains(store)) db.createObjectStore(store);
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      db.onversionchange = () => {
+        db.close();
+        dbPromise = null;
+      };
+      resolve(db);
+    };
     request.onerror = () => reject(request.error);
     request.onblocked = () => reject(new Error("IndexedDB upgrade blocked by another tab"));
   }).catch((error) => {

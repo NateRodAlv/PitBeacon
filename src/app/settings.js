@@ -27,6 +27,7 @@ import { updateTimeDisplay } from "./clock.js";
 import { OPEN_SETTINGS_EVENT } from "../ui/emptyState.js";
 import { updateNextMatchBanner } from "./nextMatchBanner.js";
 import { loadOrientation, setPortraitMode } from "./orientation.js";
+import { clearApplicationData } from "../core/resetApplication.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -247,6 +248,21 @@ export function setupSettingsListeners() {
   $("showWelcomeBtn")?.addEventListener("click", () => {
     panel.style.display = "none";
     window.dispatchEvent(new CustomEvent("pitbeacon:show-welcome"));
+  });
+  $("resetApplicationBtn")?.addEventListener("click", async (event) => {
+    const confirmed = confirm(
+      "This permanently clears local storage, saved models, event data, and offline caches for this site. Continue?",
+    );
+    if (!confirmed) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await clearApplicationData();
+      window.location.reload();
+    } catch (error) {
+      button.disabled = false;
+      displayMessage(`Application reset was incomplete: ${error.message}`, "error");
+    }
   });
 
   $("hideTopBtn").addEventListener("click", () => {
