@@ -14,12 +14,24 @@ html,body{margin:0;height:100%;background:transparent}
 .rbv-ui-hidden .rbv-chrome{opacity:0;pointer-events:none}
 .rbv-ui-hidden .rbv-chrome *{pointer-events:none}
 
-.rbv-btn{display:inline-block;border:1px solid var(--border,rgba(255,255,255,.16));background:rgba(30,41,59,.88);color:var(--text-primary,#f1f5f9);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;line-height:1.2}
+summary.rbv-btn {
+    font-size: 16px;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-weight: normal;
+    padding: 8px 10px;
+}
+.rbv-btn{display:inline-block;border:1px solid var(--border,rgba(255,255,255,.16));background:rgba(30,41,59,.88);color:var(--text-primary,#f1f5f9);border-radius:8px;padding:8px 10px;font-size:11px;font-weight:600;cursor:pointer;line-height:1.2}
 .rbv-btn:hover{border-color:var(--accent,#6597f5)}
 .rbv-btn-ghost{background:transparent}
 .rbv-btn[aria-pressed="true"]{border-color:var(--accent,#6597f5);background:rgba(101,151,245,.22)}
 .rbv-file{display:inline-flex;position:relative}
 .rbv-file input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.rbv-load-menu{position:relative;display:inline-block}
+.rbv-load-menu>summary{list-style:none}
+.rbv-load-menu>summary::-webkit-details-marker{display:none}
+.rbv-load-menu-options{position:absolute;top:calc(100% + 5px);left:0;z-index:5;display:flex;flex-direction:column;gap:4px;min-width:160px;padding:5px;border:1px solid var(--border,rgba(255,255,255,.16));border-radius:8px;background:rgba(15,22,33,.98);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.rbv-load-option{width:100%;cursor:pointer}
+.rbv-load-option>span{width:100%;text-align:left}
 
 .rbv-bar{position:absolute;top:8px;left:8px;right:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;pointer-events:none}
 .rbv-bar>*{pointer-events:auto}

@@ -21,6 +21,7 @@ export const config = {
   matchAlarmToggle: true,
   matchAlertThreshold: 300,
   showNextMatchBanner: true,
+  showCardStatusDots: true,
   matchAlarmSound: "alarm1",
   gridSize: 3,
   gridCols: 3,

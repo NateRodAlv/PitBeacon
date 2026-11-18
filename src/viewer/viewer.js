@@ -1737,6 +1737,7 @@ const LIGHT_SCALE = Math.PI;
   // ───────── Wiring ─────────
   ["rbvFile", "rbvFolder"].forEach((id) => $(id).addEventListener("change", async (e) => {
     const files = e.target.files; if (!files || !files.length) return;
+    $("rbvLoadMenu").open = false;
     try { await readFiles(files); } finally { e.target.value = ""; }
   }));
   ["dragover", "drop"].forEach((t) => stage.addEventListener(t, (e) => {

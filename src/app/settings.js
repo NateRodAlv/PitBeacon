@@ -1,7 +1,14 @@
 // Settings: loading saved values into config and the form, saving them back,
 // and the small amount of wiring the Settings panel needs.
 
-import { config, stateManager, dataSources, registry, devCardRuntime } from "./context.js";
+import {
+  config,
+  stateManager,
+  dataSources,
+  registry,
+  devCardRuntime,
+  renderLayout,
+} from "./context.js";
 import { displayMessage } from "../core/notifications.js";
 import { readString, readJson, writeString, removeKey } from "../core/storage.js";
 import { parseSeasonOverride } from "../core/season.js";
@@ -74,6 +81,9 @@ export function loadSettings() {
   config.showNextMatchBanner = readString("showNextMatchBanner") !== "false";
   $("showNextMatchBanner").checked = config.showNextMatchBanner;
 
+  config.showCardStatusDots = readString("showCardStatusDots") !== "false";
+  $("showCardStatusDots").checked = config.showCardStatusDots;
+
   config.gridCols = Number.parseInt(readString("gridCols", config.gridCols), 10) || config.gridCols;
   config.gridRows = Number.parseInt(readString("gridRows", config.gridRows), 10) || config.gridRows;
   config.gridSize = config.gridCols;
@@ -116,6 +126,7 @@ export function loadSettings() {
 }
 
 function saveSettings() {
+  const previousShowCardStatusDots = config.showCardStatusDots;
   config.teamNumber = $("teamNumber").value.trim();
   config.tbaapikey = $("tbaapikey").value.trim();
   config.match13apikey = $("match13apikey").value.trim();
@@ -127,6 +138,7 @@ function saveSettings() {
   config.autoSwapEnabled = $("autoSwapEnabled").checked;
   config.autoSwapInterval = Number.parseInt($("autoSwapInterval").value, 10) || 30;
   config.showNextMatchBanner = $("showNextMatchBanner").checked;
+  config.showCardStatusDots = $("showCardStatusDots").checked;
 
   const season = parseSeasonOverride($("seasonYearOverride").value);
   config.seasonYearOverride = season ? String(season) : "";
@@ -152,6 +164,7 @@ function saveSettings() {
   writeString("matchAlertThreshold", config.matchAlertThreshold);
   writeString("matchAlarmSound", config.matchAlarmSound);
   writeString("showNextMatchBanner", config.showNextMatchBanner);
+  writeString("showCardStatusDots", config.showCardStatusDots);
   writeString("autoSwapEnabled", config.autoSwapEnabled);
   writeString("autoSwapInterval", config.autoSwapInterval);
   writeString("seasonYearOverride", config.seasonYearOverride);
@@ -162,6 +175,7 @@ function saveSettings() {
   document.documentElement.setAttribute("data-theme", config.theme);
   restartAutoSwap();
   dataSources.updateConfig(config);
+  if (config.showCardStatusDots !== previousShowCardStatusDots) renderLayout();
   updateTimeDisplay();
   updateNextMatchBanner();
   return true;

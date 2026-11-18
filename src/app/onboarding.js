@@ -62,6 +62,7 @@ function openDialog({ labelId, className, onDismiss }) {
 
 const WHATS_NEW = [
   ["Setup wizard", "Team number, TBA key, robot model and colors in one short flow. Re-run it any time from Settings."],
+  ["Note Cards", "Merged all pit notes into one comprehensive card. Integrated with the 3D viewer to pin notes to parts."],
   ["Next-match banner", "A slim strip with your next match, the countdown and your alliance color. It turns urgent near the alert time."],
   ["Card status dots", "A dot in each card's corner shows data freshness. Hover it for the last update time."],
   ["Robot Summary card", "Open and flagged tasks, battery state, low stock and the parts that need attention, with links into the 3D viewer and Pit Notes."],

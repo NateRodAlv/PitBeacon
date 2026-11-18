@@ -53,7 +53,6 @@ export function renderCardSettingsControls(container, card, values, onChange) {
     label.appendChild(caption);
     const input = document.createElement(setting.type === "select" ? "select" : "input");
     input.name = key;
-    input.type = setting.type === "select" ? "text" : setting.type || "text";
     if (setting.type === "select") {
       (setting.options || []).forEach((option) => {
         const optionEl = document.createElement("option");
@@ -61,6 +60,8 @@ export function renderCardSettingsControls(container, card, values, onChange) {
         optionEl.textContent = option.label ?? option;
         input.appendChild(optionEl);
       });
+    } else {
+      input.type = setting.type || "text";
     }
     if (setting.min !== undefined) input.min = setting.min;
     if (setting.max !== undefined) input.max = setting.max;

@@ -74,7 +74,7 @@ render(config, container) {
         element.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
         element.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
         element.style.display = '';
-        this._syncDot(cardId, def, pos, container);
+        this._syncDot(cardId, def, pos, container, config.showCardStatusDots !== false);
 
         if (def.render) {
             try {
@@ -111,9 +111,9 @@ render(config, container) {
     window.dispatchEvent(new CustomEvent('pitbeacon:layout-rendered'));
 }
 
-    _syncDot(cardId, def, pos, container) {
+    _syncDot(cardId, def, pos, container, showStatusDots) {
         let dot = this._dots.get(cardId);
-        if (!def.builtin || def.statusDot === false) {
+        if (!showStatusDots || !def.builtin || def.statusDot === false) {
             if (dot) { dot.remove(); this._dots.delete(cardId); }
             return;
         }

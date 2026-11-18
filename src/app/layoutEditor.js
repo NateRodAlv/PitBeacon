@@ -63,22 +63,29 @@ export function renderLayoutEditor(modal) {
   const shell = document.createElement("div");
   shell.className = "le-shell";
   shell.id = "leShell";
+  shell.setAttribute("role", "dialog");
+  shell.setAttribute("aria-modal", "true");
+  shell.setAttribute("aria-labelledby", "leTitle");
   shell.innerHTML = `
-        <div class="le-header">
-            <div class="le-header-left">
-                <h2 class="le-title">📐 Layout Editor</h2>
-                <div class="le-controls">
-                    <label>Cols <input type="number" id="leGridCols" min="2" max="12" value="${cols}"></label>
-                    <label>Rows <input type="number" id="leGridRows" min="2" max="12" value="${rows}"></label>
+        <header class="le-header">
+            <div class="le-header-copy">
+                <h2 class="le-title" id="leTitle">Layout editor</h2>
+                <p class="le-description">Arrange the cards shown on your PitBeacon display.</p>
+            </div>
+            <div class="le-header-actions">
+                <div class="le-controls" role="group" aria-label="Display grid size">
+                    <label for="leGridCols">Columns <input type="number" id="leGridCols" min="2" max="12" value="${cols}"></label>
+                    <label for="leGridRows">Rows <input type="number" id="leGridRows" min="2" max="12" value="${rows}"></label>
                 </div>
+                <button class="le-close-btn" id="leClose" type="button" aria-label="Close layout editor" title="Close">×</button>
             </div>
-            <div class="le-header-right">
-                <button class="le-close-btn" id="leClose">✕</button>
-            </div>
-        </div>
+        </header>
         <div class="le-body">
-            <div class="le-palette">
-                <div class="le-palette-title">📦 Available Cards</div>
+            <aside class="le-palette" aria-label="Available cards">
+                <div class="le-palette-heading">
+                    <h3 class="le-palette-title">Available cards</h3>
+                    <p class="le-palette-hint">Drag a card onto the preview to add it.</p>
+                </div>
                 <div class="le-palette-list" id="leCardList">
                     ${cardIds
                       .filter((id) => id !== "__fallback__")
@@ -86,25 +93,28 @@ export function renderLayoutEditor(modal) {
                         const def = registry.get(id);
                         const inLayout = config.layout[id] !== undefined;
                         const hasSettings = Object.keys(getCardSettingsDefinition(def)).length > 0;
-                        return `<div class="le-palette-item ${inLayout ? "in-layout" : ""}" draggable="true" data-card-id="${id}" style="${inLayout ? "opacity:0.4;cursor:default;" : ""}">
+                        return `<div class="le-palette-item ${inLayout ? "in-layout" : ""}" draggable="${!inLayout}" data-card-id="${id}">
                             ${getCardIconMarkup(id, def)}
                             <span class="le-card-label">${def.label}</span>
                             ${hasSettings ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
-                            ${inLayout ? " ✓" : ""}
+                            ${inLayout ? '<span class="le-added-badge">Added</span>' : ""}
                         </div>`;
                       })
                       .join("")}
                     ${cardIds.filter((id) => id !== "__fallback__").length === 0 ? '<div class="le-palette-empty">No cards available</div>' : ""}
                 </div>
-                <section class="le-card-settings" id="leCardSettings" hidden></section>
-                <div class="le-palette-title" style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px;">💾 Actions</div>
-                <div style="padding:8px 11px;display:flex;flex-direction:column;gap:6px;">
-                    <button class="btn-export" id="leExport" style="width:100%;padding:6px;">Export Layout</button>
-                    <button class="btn-import" id="leImport" style="width:100%;padding:6px;">Import Layout</button>
-                    <button class="btn-reset" id="leReset" style="width:100%;padding:6px;">Reset to Default</button>
+                <div class="le-actions">
+                    <h3 class="le-actions-title">Layout settings</h3>
+                    <button class="le-action-btn le-action-primary" id="leExport" type="button">Export layout</button>
+                    <button class="le-action-btn" id="leImport" type="button">Import layout</button>
+                    <button class="le-action-btn le-action-reset" id="leReset" type="button">Reset to default</button>
                 </div>
-            </div>
-            <div class="le-canvas">
+            </aside>
+            <section class="le-canvas" aria-label="Display preview">
+                <div class="le-canvas-toolbar">
+                    <span class="le-canvas-label">Display preview</span>
+                    <span class="le-canvas-hint">Drag cards to move them · use a corner handle to resize</span>
+                </div>
                 <div class="layout-grid" id="leGrid" style="--grid-cols:${cols};--grid-rows:${rows};grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);">
                     ${Object.entries(config.layout)
                       .map(([id, pos]) => {
@@ -112,27 +122,71 @@ export function renderLayoutEditor(modal) {
                         if (!def) return "";
                         return `<div class="layout-item" data-card-id="${id}" style="grid-column:${pos.x + 1}/span ${pos.width};grid-row:${pos.y + 1}/span ${pos.height};">
                             <div class="layout-item-header">
-                                <span>${getCardIconMarkup(id, def)}<span class="le-card-label">${def.label}</span></span>
+                                <span class="layout-item-title">${getCardIconMarkup(id, def)}<span class="le-card-label">${def.label}</span></span>
                                 ${Object.keys(getCardSettingsDefinition(def)).length ? `<button class="le-settings-btn" type="button" data-card-id="${id}" aria-label="Settings for ${def.label}" title="Configure ${def.label}">⚙</button>` : ""}
-                                <button class="le-remove-btn" data-card-id="${id}">✕</button>
+                                <button class="le-remove-btn" type="button" data-card-id="${id}" aria-label="Remove ${def.label}" title="Remove card">×</button>
                             </div>
-                            <div class="layout-item-hint">${pos.width}×${pos.height}</div>
-                            <div class="resize-handle"></div>
+                            <div class="layout-item-hint">${pos.width} × ${pos.height} cells</div>
+                            <div class="resize-handle" aria-hidden="true"></div>
                         </div>`;
                       })
                       .join("")}
                 </div>
-            </div>
+            </section>
         </div>
     `;
   modal.appendChild(shell);
   layoutEditorState.shell = shell;
 
+  const cardSettingsModal = document.createElement("div");
+  cardSettingsModal.className = "le-card-settings-modal";
+  cardSettingsModal.hidden = true;
+  cardSettingsModal.setAttribute("role", "dialog");
+  cardSettingsModal.setAttribute("aria-modal", "true");
+  modal.appendChild(cardSettingsModal);
+
   // Grid controls
   const colsInput = shell.querySelector("#leGridCols");
   const rowsInput = shell.querySelector("#leGridRows");
   const grid = shell.querySelector("#leGrid");
-  const cardSettingsPanel = shell.querySelector("#leCardSettings");
+  let settingsOpener = null;
+
+  function closeCardSettings() {
+    cardSettingsModal.hidden = true;
+    cardSettingsModal.replaceChildren();
+    cardSettingsModal.removeAttribute("aria-labelledby");
+    shell.removeAttribute("inert");
+    shell.removeAttribute("aria-hidden");
+    shell.setAttribute("aria-modal", "true");
+    if (settingsOpener?.isConnected) settingsOpener.focus();
+    settingsOpener = null;
+  }
+
+  cardSettingsModal.addEventListener("click", (event) => {
+    if (event.target === cardSettingsModal) closeCardSettings();
+  });
+  cardSettingsModal.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeCardSettings();
+      return;
+    }
+
+    if (event.key === "Tab") {
+      const focusableElements = cardSettingsModal.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    }
+  });
 
   function updateGrid() {
     const newCols = Math.max(2, Math.min(12, parseInt(colsInput.value) || 3));
@@ -165,32 +219,33 @@ export function renderLayoutEditor(modal) {
 
       const settings = getCardSettingsDefinition(card);
       if (!Object.keys(settings).length) return;
-      cardSettingsPanel.hidden = false;
-      cardSettingsPanel.replaceChildren();
+      settingsOpener = button;
+      cardSettingsModal.replaceChildren();
 
+      const dialog = document.createElement("div");
+      dialog.className = "le-card-settings-dialog";
       const header = document.createElement("div");
       header.className = "le-card-settings-header";
       const title = document.createElement("strong");
+      title.id = "leCardSettingsTitle";
       title.textContent = `${card.label} settings`;
       const closeButton = document.createElement("button");
       closeButton.type = "button";
       closeButton.className = "le-card-settings-close";
       closeButton.setAttribute("aria-label", "Close card settings");
       closeButton.textContent = "×";
-      closeButton.addEventListener("click", () => {
-        cardSettingsPanel.hidden = true;
-        cardSettingsPanel.replaceChildren();
-      });
+      closeButton.addEventListener("click", closeCardSettings);
       header.append(title, closeButton);
-      cardSettingsPanel.appendChild(header);
+      dialog.appendChild(header);
+      cardSettingsModal.setAttribute("aria-labelledby", title.id);
 
       const hint = document.createElement("p");
       hint.className = "le-card-settings-hint";
       hint.textContent = "Changes are saved automatically and apply immediately.";
-      cardSettingsPanel.appendChild(hint);
+      dialog.appendChild(hint);
 
       const values = getCardSettingValues(card);
-      renderCardSettingsControls(cardSettingsPanel, card, values, (nextValues) => {
+      renderCardSettingsControls(dialog, card, values, (nextValues) => {
         card.settingsValues = nextValues;
         if (card.developer && config.developerCards[card.id]) {
           config.developerCards[card.id].settingsValues = nextValues;
@@ -201,6 +256,12 @@ export function renderLayoutEditor(modal) {
         }
         renderer.updateCards(stateManager.getState());
       });
+      cardSettingsModal.appendChild(dialog);
+      cardSettingsModal.hidden = false;
+      shell.setAttribute("inert", "");
+      shell.setAttribute("aria-hidden", "true");
+      shell.setAttribute("aria-modal", "false");
+      closeButton.focus();
     });
   });
 
@@ -471,7 +532,7 @@ export function setupCardResize(grid) {
         item.style.gridColumn = `${pos.x + 1} / span ${pos.width}`;
         item.style.gridRow = `${pos.y + 1} / span ${pos.height}`;
         const hint = item.querySelector(".layout-item-hint");
-        if (hint) hint.textContent = `${pos.width}×${pos.height}`;
+        if (hint) hint.textContent = `${pos.width} × ${pos.height} cells`;
       }
     };
 
