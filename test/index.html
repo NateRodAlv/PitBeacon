@@ -43,9 +43,9 @@
     <!-- Stylesheets and Resources -->
     <link rel="icon" href="favicon.png" type="image/png" />
     <meta name="theme-color" content="#1a1a1a" />
-    <script type="module" crossorigin src="./assets/main-CP3pRCsG.js"></script>
+    <script type="module" crossorigin src="./assets/main-CooO7Tcn.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/robotParts-DmQgVcwy.js">
-    <link rel="stylesheet" crossorigin href="./assets/main-BlG6txI4.css">
+    <link rel="stylesheet" crossorigin href="./assets/main-7hFGpMqI.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
     <div class="header" id="header">
@@ -217,6 +217,29 @@
             <rect x="4" y="4" width="16" height="4" rx="1"></rect>
             <rect x="4" y="10" width="16" height="4" rx="1"></rect>
             <rect x="4" y="16" width="16" height="4" rx="1"></rect>
+          </svg>
+        </button>
+
+        <!-- Portrait Mode Toggle -->
+        <button
+          class="mheader-btn"
+          id="portraitBtn"
+          title="Toggle portrait mode (rotate display)"
+          aria-label="Toggle portrait mode"
+          aria-pressed="false"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="7" y="2" width="10" height="20" rx="2"></rect>
+            <path d="M11 18h2"></path>
           </svg>
         </button>
 
@@ -409,6 +432,16 @@
               max="3600"
               value="30"
             />
+          </div>
+          <div class="settings-section-title settings-subtitle">Display</div>
+          <div class="settings-field">
+            <label for="portraitMode">Orientation</label>
+            <select id="portraitMode" name="portraitMode">
+              <option value="auto">Auto (portrait layout on portrait screens)</option>
+              <option value="landscape">Landscape (always)</option>
+              <option value="rotate-cw">Portrait: rotate display 90° clockwise</option>
+              <option value="rotate-ccw">Portrait: rotate display 90° counter-clockwise</option>
+            </select>
           </div>
         </div>
         <div class="settingsdiv settings-more">
