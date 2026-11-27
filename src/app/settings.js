@@ -365,7 +365,14 @@ export function setupSettingsListeners() {
  * Apply the basics collected by the setup wizard the same way the Settings form would.
  * Pass null for anything the user left alone.
  */
-export function applyBasicSettings({ teamNumber = null, tbaKey = null, match13Key = null } = {}) {
+export function applyBasicSettings({
+  teamNumber = null,
+  tbaKey = null,
+  match13Key = null,
+  testMode = null,
+  testDate = null,
+} = {}) {
+  let shouldRefresh = Boolean(teamNumber || tbaKey || match13Key !== null);
   if (teamNumber) {
     config.teamNumber = String(teamNumber);
     $("teamNumber").value = config.teamNumber;
@@ -382,7 +389,20 @@ export function applyBasicSettings({ teamNumber = null, tbaKey = null, match13Ke
     $("match13apikey").value = match13Key;
     writeString("match13apikey", match13Key);
   }
-  if (teamNumber || tbaKey || match13Key !== null) {
+  if (testMode !== null) {
+    config.testMode = testMode;
+    config.testDate = testMode ? String(testDate || "").trim() : "";
+    $("testMode").checked = config.testMode;
+    $("testDate").value = config.testDate;
+    $("testDate").style.display = config.testMode ? "block" : "none";
+    writeString("testMode", config.testMode);
+    if (config.testMode) writeString("testDate", config.testDate);
+    else removeKey("testDate");
+    updateTimeDisplay();
+    updateNextMatchBanner();
+    shouldRefresh = true;
+  }
+  if (shouldRefresh) {
     dataSources.updateConfig(config);
     getData();
   }

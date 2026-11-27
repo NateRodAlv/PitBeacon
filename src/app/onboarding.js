@@ -6,14 +6,15 @@ import { applyBasicSettings } from "./settings.js";
 import { saveCustomColors } from "./customColors.js";
 import { hasRealTbaKey } from "../data/tba.js";
 import { readModelFiles, saveRobotModel, MODEL_EXTENSIONS } from "../data/robotModel.js";
-import { getNow } from "../core/clock.js";
+import { getNow, parseTestDate } from "../core/clock.js";
 import { readString, writeString } from "../core/storage.js";
 
 export const RUN_WIZARD_EVENT = "pitbeacon:run-wizard";
 export const SHOW_WELCOME_EVENT = "pitbeacon:show-welcome";
 const WIZARD_KEY = "setupWizardDone"; // "true" (finished) or "skipped"
 const WELCOME_KEY = "welcomeDismissed2027";
-const TBA_STATUS_URL = "https://www.thebluealliance.com/api/v3/status";
+const TBA_API_BASE = "https://www.thebluealliance.com/api/v3";
+const TBA_STATUS_URL = `${TBA_API_BASE}/status`;
 
 const ACCENT_VARS = ["--accent", "--accent-hover", "--border-accent"];
 const ACCENTS = [
@@ -35,6 +36,50 @@ function h(tag, props = {}, ...kids) {
   }
   kids.forEach((kid) => kid != null && node.append(kid));
   return node;
+}
+
+async function fetchTbaJson(path, key) {
+  const response = await fetch(`${TBA_API_BASE}${path}`, {
+    headers: { "X-TBA-Auth-Key": key },
+  });
+  if (!response.ok) {
+    const message = response.status === 401
+      ? "TBA rejected the API key."
+      : `TBA request failed (HTTP ${response.status}).`;
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+function eventDays(event) {
+  const start = parseTestDate(event.start_date);
+  const end = parseTestDate(event.end_date);
+  if (!start || !end) return [];
+  const firstDay = new Date(start.year, start.month, start.day);
+  const lastDay = new Date(end.year, end.month, end.day);
+  if (
+    firstDay.getFullYear() !== start.year
+    || firstDay.getMonth() !== start.month
+    || firstDay.getDate() !== start.day
+    || lastDay.getFullYear() !== end.year
+    || lastDay.getMonth() !== end.month
+    || lastDay.getDate() !== end.day
+    || firstDay > lastDay
+  ) return [];
+
+  const days = [];
+  for (const date = firstDay; date <= lastDay; date.setDate(date.getDate() + 1)) {
+    const value = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+    days.push({
+      value,
+      label: `${date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${value}`,
+    });
+  }
+  return days;
 }
 
 /** A modal dialog with a backdrop. Returns { dialog, close }. Escape and `onDismiss` close it. */
@@ -108,6 +153,10 @@ export function openSetupWizard() {
     team: readString("teamNumber", "") || "",
     key: hasRealTbaKey(config) ? config.tbaapikey : "",
     match13key: readString("match13apikey", "") || "",
+    testMode: readString("testMode") === "true",
+    testDate: readString("testDate", "") || "",
+    testEvents: [],
+    testEventKey: "",
     modelFiles: null,
     modelName: "",
     accent: 0,
@@ -130,13 +179,20 @@ export function openSetupWizard() {
   };
   const { dialog, close } = openDialog({ labelId: "wizardTitle", className: "setup-wizard", onDismiss: skip });
 
-  const STEPS = [stepTeam, stepModel, stepLook];
+  const STEPS = [stepTeam, stepModel, stepTestMode, stepLook];
+  const TITLES = ["Your team", "Robot model", "Test mode", "Look & feel"];
 
   async function apply() {
     const team = draft.team.trim();
     const key = draft.key.trim();
     const match13key = draft.match13key.trim();
-    applyBasicSettings({ teamNumber: /^\d{1,5}$/.test(team) ? team : null, tbaKey: key || null, match13Key: match13key });
+    applyBasicSettings({
+      teamNumber: /^\d{1,5}$/.test(team) ? team : null,
+      tbaKey: key || null,
+      match13Key: match13key,
+      testMode: draft.testMode,
+      testDate: draft.testDate,
+    });
     if (draft.modelFiles) {
       try {
         await saveRobotModel(draft.modelFiles);
@@ -148,8 +204,22 @@ export function openSetupWizard() {
     finish("true");
   }
 
+  function advance() {
+    if (STEPS[step] === stepTestMode && draft.testMode && !parseTestDate(draft.testDate)) {
+      const result = dialog.querySelector("#wizardTestModeResult");
+      result.dataset.ok = "false";
+      result.textContent = "Choose an event day before continuing with Test Mode enabled.";
+      return;
+    }
+    if (step === STEPS.length - 1) apply();
+    else {
+      step += 1;
+      render();
+    }
+  }
+
   function render() {
-    const title = ["Your team", "Robot model", "Look & feel"][step];
+    const title = TITLES[step];
     const body = STEPS[step]();
     const last = step === STEPS.length - 1;
     const dots = h("ol", { class: "wizard-steps", "aria-label": `Step ${step + 1} of ${STEPS.length}` }, ...STEPS.map((_, index) => h("li", { class: index === step ? "active" : index < step ? "done" : "" })));
@@ -164,7 +234,7 @@ export function openSetupWizard() {
         h("button", { type: "button", class: "pb-btn pb-btn-link", text: "Skip setup", onclick: skip }),
         h("span", { class: "pb-spacer" }),
         step > 0 ? h("button", { type: "button", class: "pb-btn", text: "Back", onclick: () => { step -= 1; render(); } }) : null,
-        h("button", { type: "button", class: "pb-btn pb-btn-primary", "data-wizard-next": "", text: last ? "Finish" : "Next", onclick: () => (last ? apply() : (step += 1, render())) }),
+        h("button", { type: "button", class: "pb-btn pb-btn-primary", "data-wizard-next": "", text: last ? "Finish" : "Next", onclick: advance }),
       ),
     );
     (dialog.querySelector("input:not([type=file])") || dialog.querySelector("[data-wizard-next]"))?.focus();
@@ -181,6 +251,11 @@ export function openSetupWizard() {
     const tbaResult = h("p", { class: "wizard-result", role: "status", "aria-live": "polite" });
     const match13Result = h("p", { class: "wizard-result", role: "status", "aria-live": "polite" });
     team.addEventListener("input", () => {
+      if (draft.team !== team.value) {
+        draft.testDate = "";
+        draft.testEvents = [];
+        draft.testEventKey = "";
+      }
       draft.team = team.value;
       match13Result.textContent = "";
     });
@@ -278,6 +353,172 @@ export function openSetupWizard() {
       field("Or a whole URDF export folder", folder),
       status,
       h("p", { class: "wizard-skip-note", text: "No model yet? Just press Next. You can load one in the 3D Robot Viewer card any time." }),
+    );
+  }
+
+  function stepTestMode() {
+    const team = h("input", {
+      type: "text",
+      inputmode: "numeric",
+      maxlength: "5",
+      placeholder: "e.g. 7250",
+      value: draft.team,
+      autocomplete: "off",
+    });
+    const enabled = h("input", { type: "checkbox", checked: draft.testMode });
+    const scan = h("button", { type: "button", class: "pb-btn", text: "Find attended events" });
+    const eventsSelect = h("select", { disabled: true });
+    const daySelect = h("select", { disabled: true });
+    const result = h("p", { id: "wizardTestModeResult", class: "wizard-result", role: "status", "aria-live": "polite" });
+
+    function updateDayOptions() {
+      daySelect.replaceChildren();
+      const event = draft.testEvents.find((entry) => entry.key === draft.testEventKey);
+      if (!event) {
+        daySelect.appendChild(h("option", { value: "", text: "Choose an event first" }));
+        daySelect.disabled = true;
+        return;
+      }
+
+      const days = eventDays(event);
+      days.forEach(({ value, label }) => daySelect.appendChild(h("option", { value, text: label })));
+      daySelect.disabled = !days.length;
+      const selectedDate = days.some(({ value }) => value === draft.testDate)
+        ? draft.testDate
+        : days[0]?.value || "";
+      daySelect.value = selectedDate;
+      if (selectedDate) draft.testDate = selectedDate;
+    }
+
+    function updateEventOptions() {
+      eventsSelect.replaceChildren(
+        h("option", {
+          value: "",
+          text: draft.testEvents.length ? "Choose an event" : "Find events first",
+        }),
+        ...draft.testEvents.map((event) =>
+          h("option", {
+            value: event.key,
+            text: `${event.name || event.key} · ${event.start_date}`,
+          }),
+        ),
+      );
+      eventsSelect.disabled = !draft.testEvents.length;
+      if (draft.testEvents.some((event) => event.key === draft.testEventKey)) {
+        eventsSelect.value = draft.testEventKey;
+      } else {
+        eventsSelect.value = "";
+      }
+      updateDayOptions();
+    }
+
+    team.addEventListener("input", () => {
+      if (draft.team === team.value) return;
+      draft.team = team.value;
+      draft.testDate = "";
+      draft.testEvents = [];
+      draft.testEventKey = "";
+      updateEventOptions();
+      result.textContent = "";
+    });
+    enabled.addEventListener("change", () => {
+      draft.testMode = enabled.checked;
+      result.textContent = "";
+    });
+    eventsSelect.addEventListener("change", () => {
+      draft.testEventKey = eventsSelect.value;
+      updateDayOptions();
+      result.textContent = "";
+    });
+    daySelect.addEventListener("change", () => {
+      draft.testDate = daySelect.value;
+      result.dataset.ok = "true";
+      result.textContent = `Test date set to ${draft.testDate}.`;
+    });
+    scan.addEventListener("click", async () => {
+      const teamNumber = team.value.trim();
+      draft.team = teamNumber;
+      if (!/^\d{1,5}$/.test(teamNumber)) {
+        result.dataset.ok = "false";
+        result.textContent = "Enter a valid team number.";
+        return;
+      }
+      const key = draft.key.trim();
+      if (!hasRealTbaKey({ tbaapikey: key })) {
+        result.dataset.ok = "false";
+        result.textContent = "Enter a TBA read API key on the Team page to find events.";
+        return;
+      }
+
+      scan.disabled = true;
+      team.disabled = true;
+      const navigationButtons = dialog.querySelectorAll(".pb-dialog-actions .pb-btn:not(.pb-btn-link)");
+      navigationButtons.forEach((button) => { button.disabled = true; });
+      draft.testEvents = [];
+      draft.testEventKey = "";
+      updateEventOptions();
+      result.dataset.ok = "";
+      result.textContent = "Finding attended events…";
+      try {
+        const years = await fetchTbaJson(`/team/frc${teamNumber}/years_participated`, key);
+        if (!Array.isArray(years)) throw new Error("TBA returned an invalid event history.");
+        if (years.some((year) => !Number.isInteger(year))) {
+          throw new Error("TBA returned an invalid event history.");
+        }
+        const eventLists = await Promise.all(
+          [...new Set(years)].map((year) =>
+            fetchTbaJson(`/team/frc${teamNumber}/events/${year}/simple`, key),
+          ),
+        );
+        if (eventLists.some((events) => !Array.isArray(events))) {
+          throw new Error("TBA returned invalid event data.");
+        }
+        const today = new Date();
+        const todayString = [
+          today.getFullYear(),
+          String(today.getMonth() + 1).padStart(2, "0"),
+          String(today.getDate()).padStart(2, "0"),
+        ].join("-");
+        const seen = new Set();
+        draft.testEvents = eventLists
+          .flat()
+          .filter((event) => {
+            if (!event?.key || !event.start_date || event.start_date > todayString || !eventDays(event).length || seen.has(event.key)) return false;
+            seen.add(event.key);
+            return true;
+          })
+          .sort((a, b) => b.start_date.localeCompare(a.start_date));
+
+        const matchingDate = draft.testEvents.find((event) =>
+          eventDays(event).some(({ value }) => value === draft.testDate),
+        );
+        draft.testEventKey = matchingDate?.key || draft.testEvents[0]?.key || "";
+        updateEventOptions();
+        result.dataset.ok = draft.testEvents.length ? "true" : "false";
+        result.textContent = draft.testEvents.length
+          ? `Found ${draft.testEvents.length} events. Select an event and day.`
+          : "No attended events with dates were found for this team.";
+      } catch (error) {
+        result.dataset.ok = "false";
+        result.textContent = `Could not load team events: ${error.message}`;
+      } finally {
+        scan.disabled = false;
+        team.disabled = false;
+        navigationButtons.forEach((button) => { button.disabled = false; });
+      }
+    });
+
+    updateEventOptions();
+    return h(
+      "div",
+      { class: "wizard-body" },
+      h("p", { class: "wizard-lead", text: "Use a past event day as the app's date for testing. The current time of day is retained." }),
+      field("Team number", team, "This is the same team number used for your display."),
+      field("Enable Test Mode", enabled, "When enabled, PitBeacon uses the selected event day instead of today's date."),
+      h("div", { class: "wizard-inline" }, scan),
+      field("Attended event", eventsSelect),
+      field("Event day", daySelect),
+      result,
     );
   }
 

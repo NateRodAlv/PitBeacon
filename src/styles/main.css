@@ -4091,6 +4091,7 @@ input[type="checkbox"].flag-toggle:checked::after {
 .wizard-lead { margin: 0; color: var(--text-muted); font-size: 0.84rem; line-height: 1.5; }
 .wizard-field { display: flex; flex-direction: column; gap: 5px; font-size: 0.8rem; }
 .wizard-field input[type="text"], .wizard-field input[type="password"] { padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font: inherit; }
+.wizard-field select { box-sizing: border-box; width: 100%; min-width: 0; }
 .wizard-field input[type="file"] { color: var(--text-muted); font-size: 0.78rem; max-width: 100%; }
 .wizard-field small, .wizard-skip-note { color: var(--text-dim); font-size: 0.72rem; line-height: 1.4; margin: 0; }
 .wizard-inline { display: flex; align-items: center; gap: 10px; }
