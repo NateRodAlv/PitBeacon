@@ -1,4 +1,5 @@
 import { setCardAutoScroll } from "./autoScroll.js";
+import { renderEmptyInfo } from "../../ui/emptyState.js";
 
 function formatValue(value, digits = 1) {
   if (typeof value !== "number" || !Number.isFinite(value)) return "–";
@@ -35,6 +36,18 @@ function setMessage(container, message, isError = false) {
   text.className = isError ? "stats-error" : "stats-message";
   text.textContent = message;
   container.appendChild(text);
+}
+
+function setEmpty(container, info) {
+  setCardAutoScroll(container, false);
+  renderEmptyInfo(container, info);
+}
+
+// Team Stats fetches its own data, so it reports its own freshness to the status dot.
+function reportStatus(element, state, lastUpdate = null) {
+  const colors = { fresh: "green", failed: "red", offline: "red", none: "grey" };
+  element._cardStatus = { state, color: colors[state], lastUpdate };
+  window.dispatchEvent(new CustomEvent("pitbeacon:card-status"));
 }
 
 function renderSeason(container, data, teamNumber, year) {
@@ -109,6 +122,7 @@ export function createStatsCard() {
     label: "Team Stats",
     icon: "chart-bar",
     builtin: true,
+    statusSource: "match13",
     settings: {
       autoScroll: {
         type: "checkbox",
@@ -162,11 +176,18 @@ export function createStatsCard() {
 
       const loadData = async () => {
         if (!/^\d+$/.test(teamNumber)) {
-          setMessage(body, "Enter a valid team number in Settings.", true);
+          setEmpty(body, { reason: "no-team", title: "Enter your team number", body: "Team stats need a valid team number. Set it in Settings.", action: "settings" });
+          reportStatus(element, "none");
           return;
         }
         if (!match13ApiKey) {
-          setMessage(body, "Add your Match13 API key in Settings to load team stats.");
+          setEmpty(body, { reason: "no-key", title: "Add your Match13 key", body: "Team stats come from Match13. Create an API key at match13.com/account and paste it in Settings.", action: "settings" });
+          reportStatus(element, "none");
+          return;
+        }
+        if (navigator.onLine === false) {
+          setEmpty(body, { reason: "offline", title: "You're offline", body: "Team stats need a connection. Press Refresh once you're back online.", action: null });
+          reportStatus(element, "offline", element._cardStatus?.lastUpdate ?? null);
           return;
         }
         if (!match13ApiKey.startsWith("m13_live_")) {
@@ -220,6 +241,7 @@ export function createStatsCard() {
             throw new Error("Match13 returned an invalid team stats response.");
           }
           renderSeason(body, responseData, teamNumber, year);
+          reportStatus(element, "fresh", Date.now());
           setCardAutoScroll(
             body,
             cardSettings.autoScroll,
@@ -230,6 +252,7 @@ export function createStatsCard() {
             ? `Could not reach Match13 through PitBeacon's proxy. Please try again later. ${error.message}`
             : error.message || "An unexpected error occurred.";
           setMessage(body, message, true);
+          reportStatus(element, "failed", element._cardStatus?.lastUpdate ?? null);
         } finally {
           refreshButton.disabled = false;
         }

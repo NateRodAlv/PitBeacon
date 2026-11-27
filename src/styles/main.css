@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Rubik:wght@400;500;600;700&display=swap");
 
 /* Themes */
 
@@ -15,6 +14,13 @@
   --text-primary: rgb(240, 240, 240);
   --text-muted: rgb(160, 155, 155);
   --text-dim: rgb(100, 98, 98);
+  --status-ok: rgb(63, 185, 80);
+  --status-warn: rgb(227, 179, 65);
+  --status-bad: rgb(248, 81, 73);
+  --status-idle: rgb(110, 118, 129);
+  --status-info: rgb(111, 168, 255);
+  --alliance-red: rgb(214, 62, 62);
+  --alliance-blue: rgb(52, 108, 214);
   --scrollbar-track: rgba(255, 255, 255, 0.03);
   --scrollbar-thumb: rgba(255, 255, 255, 0.12);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
@@ -22,7 +28,7 @@
 
 * {
   box-sizing: border-box;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* Scrollbars */
@@ -85,7 +91,7 @@ html {
 }
 
 .logo-img {
-  width: calc(500px + 1vw);
+  width: calc(500px + calc(var(--vw, 1vw) * 1));
   max-height: 120px;
   margin: -3rem -3rem 5px -3rem;
   display: flex;
@@ -141,12 +147,10 @@ html {
   animation: duck-poof 0.65s ease-out forwards;
 }
 .easter-egg-duck.duck-poof::after {
-  content: "💥";
+  content: "";
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 46px;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='m24 2 4 10 10-7-2 12 11 2-9 7 8 9-12-1-2 12-7-10-9 8 1-12-12-2 10-7-8-9 12 1z' fill='%23f2bc3e' stroke='%23e67e22' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M24 14v9m0 7h.01' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 @keyframes duck-walk-bob {
   from { margin-bottom: 0; }
@@ -163,7 +167,7 @@ html {
 }
 
 .title {
-  font-family: "Quicksand", sans-serif;
+  font-family: "Quicksand Variable", "Quicksand", sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
   color: #f5d800;
@@ -173,7 +177,7 @@ html {
 }
 
 .beacon {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: royalblue;
   margin-left: -1px;
 }
@@ -182,7 +186,7 @@ html {
   display: block;
   width: 100%;
   text-align: center;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1.1rem;
   color: var(--text-muted);
   font-weight: 500;
@@ -231,8 +235,10 @@ html {
 }
 #hideTopBtn {
   position: fixed;
-  top: 30px;
-  right: 30px;
+  left: var(--hide-top-btn-left, calc(100vw - 44px));
+  top: var(--hide-top-btn-top, 30px);
+  transform: translate(-50%, -50%);
+  transition: opacity 0.2s, background-color 0.2s, color 0.2s;
   z-index: 20;
 }
 .hidden {
@@ -273,14 +279,14 @@ html {
 
 .frc7250 {
   font-size: 0.8rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: var(--text-dim);
   margin: 0;
 }
 
 .version {
   font-size: 0.6rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: var(--text-dim);
   margin: 0;
 }
@@ -314,7 +320,7 @@ html {
   padding: 6px 14px;
   border-radius: 6px;
   border: none;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
@@ -360,7 +366,7 @@ html {
 }
 
 .profile-btn {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   display: flex;
   justify-content: space-between;
   font-size: 0.65rem;
@@ -396,40 +402,68 @@ html {
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
   padding: 0;
-  width: 340px;
+  width: min(820px, calc(calc(var(--vw, 1vw) * 100) - 32px));
   display: none;
   flex-direction: column;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   color: var(--text-muted);
   z-index: 200;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
-  max-height: 80vh;
-  overflow-y: auto;
+  max-height: min(calc(var(--vh, 1vh) * 86), 760px);
+  overflow: hidden;
 }
 
 .settings-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-sizing: border-box;
   background-color: var(--bg-raised);
   width: 100%;
   border-radius: 12px 12px 0 0;
-  padding: 16px 20px;
-  font-size: 1.2rem;
+  padding: 14px 20px;
+  font-size: 1.1rem;
   font-weight: 500;
   margin: 0;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+}
+
+.settings-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  flex: 1 1 auto;
+  gap: 12px;
+  min-height: 0;
+  padding: 14px;
+  overflow-y: auto;
 }
 
 .settingsdiv {
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-base);
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+.settings-more {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
   gap: 14px;
 }
-.settingsdiv:last-of-type {
-  border-bottom: none;
+.settings-subsection {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .settings-section-title {
@@ -437,54 +471,62 @@ html {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-dim);
-  margin: 0 0 8px 0;
+  margin: 0;
   font-weight: 500;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+}
+.settings-subtitle {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 .settings-field {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   justify-content: space-between;
 }
 .settings-field label {
   flex: 1;
-  font-size: 0.85rem;
+  min-width: 0;
+  font-size: 0.8rem;
   color: var(--text-muted);
   text-align: left;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+}
+.settings-field > input:not([type="checkbox"]),
+.settings-field > select {
+  box-sizing: border-box;
+  width: 48%;
+  min-width: 0;
+  max-width: 220px;
 }
 .match13-key-field {
   flex-wrap: wrap;
 }
+.match13-key-field input {
+  flex: 1;
+}
 .match13-key-field small {
   flex-basis: 100%;
-  margin-top: -6px;
+  margin-top: 0;
   color: var(--text-dim);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 .match13-key-field .match13-proxy-notice {
-  margin-top: 0;
-  padding: 9px 10px;
+  padding: 8px 9px;
   color: var(--text-muted);
   background: var(--bg-raised);
   border-left: 3px solid var(--accent);
   border-radius: 4px;
-  line-height: 1.45;
-}
-.settings-description {
-  margin: -8px 0 0;
-  color: var(--text-dim);
-  font-size: 0.78rem;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 .settings-appearance-btn {
   display: flex;
   align-items: center;
   gap: 11px;
   width: 100%;
-  padding: 11px 12px;
+  padding: 9px 10px;
   color: var(--text-primary);
   text-align: left;
   background: var(--bg-raised);
@@ -503,19 +545,39 @@ html {
 .settings-appearance-btn > span:first-child {
   font-size: 1.25rem;
 }
-.settings-appearance-btn > span:nth-child(2) {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 3px;
-}
 .settings-appearance-btn strong {
-  font-size: 0.84rem;
+  flex: 1;
+  font-size: 0.8rem;
   font-weight: 600;
 }
-.settings-appearance-btn small {
+.settings-actions {
+  display: flex;
+  gap: 8px;
+}
+.settings-action-button {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 9px;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.settings-action-button:hover {
+  color: var(--text-primary);
+  border-color: var(--border-accent);
+  background: var(--bg-input);
+}
+.settings-action-danger {
+  color: var(--status-bad);
+}
+.settings-more .settings-description {
+  margin: 0;
   color: var(--text-dim);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
 }
 .settings-appearance-arrow {
   color: var(--text-dim);
@@ -529,7 +591,7 @@ select {
   border: 1px solid var(--border);
   background-color: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   transition: border-color 0.2s;
 }
@@ -592,15 +654,15 @@ input[type="checkbox"]:checked::before {
   background-color: var(--accent);
   color: white;
   border: none;
-  padding: 12px 24px;
-  margin: 20px;
+  padding: 10px 24px;
+  margin: 0 14px 14px;
   border-radius: 6px;
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
-  font-size: 0.95rem;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+  font-size: 0.85rem;
   font-weight: 500;
   transition: background-color 0.2s;
-  width: calc(100% - 40px);
+  flex-shrink: 0;
 }
 .savebutton:hover {
   background-color: var(--accent-hover);
@@ -631,7 +693,7 @@ input[type="checkbox"]:checked::before {
   gap: 10px;
   padding: 8px 14px;
   border-radius: 6px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.82rem;
   color: var(--text-primary);
 }
@@ -649,7 +711,7 @@ input[type="checkbox"]:checked::before {
   margin: 0;
   font-size: 0.75rem;
   transition: color 0.15s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .error-exit:hover {
   color: var(--text-primary);
@@ -677,7 +739,7 @@ input[type="checkbox"]:checked::before {
   text-align: center;
   font-size: 0.75rem;
   color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   position: relative;
 }
 
@@ -725,7 +787,7 @@ input[type="checkbox"]:checked::before {
 .dc-picker-item-label {
   font-weight: 500;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
 }
 
@@ -745,7 +807,7 @@ input[type="checkbox"]:checked::before {
   font-style: italic;
   text-align: center;
   padding: 12px 4px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* Docs modal */
@@ -765,7 +827,7 @@ input[type="checkbox"]:checked::before {
 }
 .docs-shell {
   width: min(900px, 100%);
-  max-height: 90vh;
+  max-height: calc(var(--vh, 1vh) * 90);
   display: flex;
   flex-direction: column;
   background: var(--bg-surface);
@@ -784,7 +846,7 @@ input[type="checkbox"]:checked::before {
 }
 .docs-title {
   margin: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.95rem;
   color: var(--text-primary);
 }
@@ -815,7 +877,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   flex-shrink: 0;
 }
 .match-card {
@@ -827,7 +889,7 @@ input[type="checkbox"]:checked::before {
   margin: 0;
   font-size: 0.88rem;
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .match-title {
   font-size: 1rem;
@@ -835,7 +897,7 @@ input[type="checkbox"]:checked::before {
   margin: 0 0 4px 0;
   color: var(--text-primary);
   letter-spacing: -0.2px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .countdown-warning {
   color: rgb(255, 200, 0);
@@ -896,7 +958,7 @@ input[type="checkbox"]:checked::before {
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .blue {
   color: rgb(80, 80, 200) !important;
@@ -908,7 +970,7 @@ input[type="checkbox"]:checked::before {
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .red.highlight {
   background-color: rgba(200, 80, 80, 0.3) !important;
@@ -945,7 +1007,7 @@ input[type="checkbox"]:checked::before {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .pit-title i {
   font-size: 0.85rem;
@@ -960,7 +1022,7 @@ input[type="checkbox"]:checked::before {
   padding: 4px 10px;
   border-radius: 5px;
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.75rem;
   font-weight: 500;
   transition: background-color 0.15s;
@@ -988,7 +1050,7 @@ input[type="checkbox"]:checked::before {
   padding: 12px 4px;
   margin: 0;
   text-align: center;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* Pit cards */
@@ -1029,7 +1091,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   padding: 4px 7px !important;
   width: 100%;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.83rem;
   resize: none;
   line-height: 1.4;
@@ -1065,7 +1127,7 @@ input[type="checkbox"]:checked::before {
   justify-content: center;
   min-width: 28px;
   height: 28px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .pit-del-btn:hover {
   background: rgba(200, 50, 50, 0.25);
@@ -1084,7 +1146,7 @@ input[type="checkbox"]:checked::before {
   border: 1px solid transparent;
   border-radius: 4px;
   padding: 4px 3px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.72rem;
   font-weight: 500;
   cursor: pointer;
@@ -1120,7 +1182,7 @@ input[type="checkbox"]:checked::before {
 
 /* Flag toggles */
 
-.flag-toggle {
+input[type="checkbox"].flag-toggle {
   appearance: none;
   -webkit-appearance: none;
   width: 20px;
@@ -1135,19 +1197,24 @@ input[type="checkbox"]:checked::before {
   align-items: center;
   justify-content: center;
 }
-.flag-toggle:hover {
+input[type="checkbox"].flag-toggle::before {
+  content: none;
+}
+input[type="checkbox"].flag-toggle:hover {
   border-color: var(--accent);
   background-color: var(--bg-surface);
 }
-.flag-toggle:checked {
+input[type="checkbox"].flag-toggle:checked {
   background-color: #ff6b6b;
   border-color: #ff6b6b;
 }
-.flag-toggle:checked::after {
-  content: "🚩";
-  color: white;
-  font-size: 0.9rem;
-  font-weight: bold;
+input[type="checkbox"].flag-toggle:checked::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  -webkit-mask: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M4 2h2v2h13l-3 5 3 5H6v8H4zm2 4v6h9.5L13.7 9 15.5 6z'/%3E%3C/svg%3E");
+  mask: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M4 2h2v2h13l-3 5 3 5H6v8H4zm2 4v6h9.5L13.7 9 15.5 6z'/%3E%3C/svg%3E");
 }
 
 /* Battery */
@@ -1257,7 +1324,7 @@ input[type="checkbox"]:checked::before {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .qty-ok {
   color: rgb(70, 185, 105);
@@ -1289,7 +1356,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .part-low-badge {
   background: rgba(200, 50, 50, 0.2);
@@ -1315,7 +1382,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .part-micro-label .pit-input {
   width: 100%;
@@ -1355,7 +1422,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.7rem;
   color: var(--text-muted);
   white-space: nowrap;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 .checkin-row {
@@ -1393,7 +1460,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-dim);
   flex-shrink: 0;
   transition: all 0.12s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .checkin-check:hover {
   border-color: var(--accent);
@@ -1446,14 +1513,14 @@ input[type="checkbox"]:checked::before {
   position: sticky;
   top: -10px;
   background-color: var(--bg-surface);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 #card-leaderboard-card .leaderboard-table tbody td {
   text-align: center;
   padding: 7px 8px;
   border-bottom: 1px solid var(--border);
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 #card-leaderboard-card .leaderboard-table tbody tr:last-child td {
   border-bottom: none;
@@ -1488,7 +1555,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-body {
   flex: 1;
@@ -1501,7 +1568,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.85rem;
   text-align: center;
   padding: 14px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-error {
   color: rgb(220, 80, 80);
@@ -1520,7 +1587,7 @@ input[type="checkbox"]:checked::before {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.3px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-year {
   font-size: 0.68rem;
@@ -1530,7 +1597,7 @@ input[type="checkbox"]:checked::before {
   border: 1px solid var(--border);
   border-radius: 99px;
   padding: 2px 7px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 .stats-primary {
@@ -1555,7 +1622,7 @@ input[type="checkbox"]:checked::before {
   letter-spacing: 0.08em;
   color: var(--text-dim);
   margin: 12px 0 5px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-row {
   display: flex;
@@ -1570,12 +1637,12 @@ input[type="checkbox"]:checked::before {
 }
 .stats-label {
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-value {
   color: var(--text-primary);
   font-weight: 600;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-accent {
   color: var(--accent);
@@ -1591,7 +1658,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-dim);
   text-decoration: none;
   transition: color 0.15s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .stats-link:hover {
   color: var(--text-primary);
@@ -1602,7 +1669,7 @@ input[type="checkbox"]:checked::before {
   color: var(--text-dim);
   font-style: italic;
   padding: 20px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 
 /* ─── Fallback Card ──────────────────────────────────────────────────────── */
@@ -1676,7 +1743,7 @@ input[type="checkbox"]:checked::before {
 .fallback-title {
   font-weight: 600;
   color: rgb(220, 80, 80);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .fallback-id {
   font-size: 0.8rem;
@@ -1686,7 +1753,7 @@ input[type="checkbox"]:checked::before {
 .fallback-hint {
   font-size: 0.8rem;
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .fallback-remove {
   background: rgba(200, 50, 50, 0.15);
@@ -1697,7 +1764,7 @@ input[type="checkbox"]:checked::before {
   cursor: pointer;
   font-size: 0.75rem;
   transition: all 0.15s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .fallback-remove:hover {
   background: rgba(200, 50, 50, 0.25);
@@ -1724,7 +1791,7 @@ input[type="checkbox"]:checked::before {
 .card-error-msg {
   font-weight: 500;
   color: rgb(220, 80, 80);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-error-detail {
   font-size: 0.7rem;
@@ -1737,7 +1804,8 @@ input[type="checkbox"]:checked::before {
 .layout-editor-modal {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.78);
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.72);
   display: none;
   z-index: 1000;
   align-items: center;
@@ -1807,130 +1875,146 @@ input[type="checkbox"]:checked::before {
 }
 
 .le-shell {
+  position: relative;
+  z-index: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100% - 40px);
-  max-height: 90vh;
-  width: calc(100% - 40px);
-  max-width: 1200px;
+  height: min(820px, calc(calc(var(--vh, 1vh) * 100) - 32px));
+  width: min(1200px, 100%);
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.48);
 }
 
 .le-title {
-  font-family: "Rubik", sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-  white-space: nowrap;
   letter-spacing: -0.01em;
 }
 
 .le-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 16px;
+  padding: 14px 18px;
   background-color: var(--bg-raised);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
 
-.le-header-left {
+.le-header-copy {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-right: 36px;
 }
 
-.le-header-right {
+.le-description {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.le-header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding-right: 40px;
+}
+
+.le-profile-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.le-profile-controls select,
+.le-profile-controls input {
+  min-width: 0;
+  width: 140px;
+  padding: 6px 8px;
+  color: var(--text-primary);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.le-profile-controls input {
+  width: 120px;
+}
+
+.le-profile-controls .le-action-btn {
+  width: auto;
+  margin: 0;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .le-close-btn {
-  background: none;
-  border: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--text-dim);
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.15s;
-  font-family: "Rubik", sans-serif;
+  padding: 0;
+  border-radius: 6px;
+  transition:
+    color 0.15s,
+    background-color 0.15s,
+    border-color 0.15s;
   line-height: 1;
 }
-.le-close-btn:hover {
+.le-close-btn:hover,
+.le-close-btn:focus-visible {
   color: var(--text-primary);
   background: var(--bg-input);
+  border-color: var(--border);
 }
 
 .le-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
+  gap: 8px;
   align-items: center;
   min-width: 0;
-  font-family: "Rubik", sans-serif;
-  color: var(--text-muted);
-  font-size: 0.8rem;
 }
 
 .le-controls label {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: var(--text-dim);
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 500;
 }
 
 .le-controls input[type="number"] {
-  width: 48px;
-  padding: 3px 5px;
+  width: 58px;
+  min-width: 0;
+  padding: 6px 8px;
   font-size: 0.8rem;
-}
-
-.le-btns {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-.le-btns button {
-  padding: 5px 11px;
-  border: none;
-  border-radius: 5px;
-  font-family: "Rubik", sans-serif;
-  font-size: 0.76rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.13s;
-  white-space: nowrap;
-}
-.btn-export {
-  background: rgb(48, 102, 48);
-  color: #fff;
-}
-.btn-export:hover {
-  background: rgb(62, 122, 62);
-}
-.btn-import {
-  background: rgb(98, 80, 46);
-  color: #fff;
-}
-.btn-import:hover {
-  background: rgb(118, 98, 58);
-}
-.btn-reset {
-  background: rgb(102, 54, 54);
-  color: #fff;
-}
-.btn-reset:hover {
-  background: rgb(122, 70, 70);
+  text-align: center;
 }
 
 .le-body {
@@ -1942,67 +2026,101 @@ input[type="checkbox"]:checked::before {
 
 /* Palette */
 .le-palette {
-  width: 180px;
+  width: 240px;
   flex-shrink: 0;
-  background-color: var(--bg-base);
+  background-color: var(--bg-surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
-.le-palette-title {
-  font-size: 0.63rem;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--text-dim);
-  padding: 9px 11px 7px;
-  font-family: "Rubik", sans-serif;
-  font-weight: 500;
+.le-palette-heading {
   flex-shrink: 0;
+  padding: 14px 14px 12px;
   border-bottom: 1px solid var(--border);
+}
+.le-palette-title {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.le-palette-hint {
+  margin: 5px 0 0;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  line-height: 1.4;
 }
 .le-palette-list {
   flex: 1;
   overflow-y: auto;
-  padding: 7px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 .le-palette-item {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 9px;
-  border-radius: 6px;
+  gap: 8px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
   background: var(--bg-raised);
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
   font-size: 0.78rem;
   cursor: grab;
   user-select: none;
-  transition: all 0.12s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    transform 0.15s;
 }
 .le-palette-item:hover {
   border-color: var(--border-accent);
   color: var(--text-primary);
+  background: var(--bg-input);
 }
 .le-palette-item:active {
   cursor: grabbing;
 }
+.le-palette-item.in-layout {
+  color: var(--text-dim);
+  cursor: default;
+}
+.le-palette-item.in-layout:hover {
+  background: var(--bg-raised);
+}
+.le-added-badge {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(63, 185, 80, 0.12);
+  color: var(--status-ok);
+  font-size: 0.61rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.le-card-label {
+  min-width: 0;
+  flex: 1;
+  font-size: inherit;
+}
 .le-palette-empty {
   color: var(--text-dim);
   font-size: 0.73rem;
-  font-family: "Rubik", sans-serif;
-  padding: 8px 2px;
+  padding: 12px 4px;
   margin: 0;
-  font-style: italic;
   text-align: center;
 }
 .le-settings-btn {
   display: inline-flex;
   align-items: center;
+  justify-self: flex-end;
   justify-content: center;
   flex: 0 0 24px;
   width: 24px;
@@ -2016,6 +2134,9 @@ input[type="checkbox"]:checked::before {
   line-height: 1;
   cursor: pointer;
 }
+.le-palette-item .le-settings-btn {
+  margin-left: auto;
+}
 .le-settings-btn:hover,
 .le-settings-btn:focus-visible {
   color: var(--text-primary);
@@ -2028,77 +2149,143 @@ input[type="checkbox"]:checked::before {
   width: 22px;
   height: 22px;
 }
-.le-card-settings {
-  flex: 0 0 auto;
-  max-height: 42%;
-  overflow-y: auto;
-  margin: 7px;
-  padding: 9px;
+.le-card-settings-content {
+  background: var(--bg-surface);
+}
+.le-card-settings-hint {
+  margin: 0;
+  padding: 12px 16px 0;
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+.le-card-settings-content .card-settings-controls {
+  max-height: none;
+  overflow: visible;
+  gap: 10px;
+  padding: 14px 16px 18px;
+  font-size: 0.8rem;
+}
+.le-card-settings-content .card-settings-controls strong {
+  display: none;
+}
+.le-card-settings-content .card-setting-field {
+  min-height: 36px;
+  gap: 16px;
+}
+.le-card-settings-content .card-setting-field > span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.le-card-settings-content .card-setting-field input,
+.le-card-settings-content .card-setting-field select {
+  width: min(56%, 240px);
+  font-size: 0.8rem;
+}
+.le-card-settings-content .card-setting-field input[type="checkbox"] {
+  margin: 0 0 0 auto;
+}
+.le-actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+.le-actions-title {
+  margin: 0 0 2px;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.le-action-btn {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 10px;
+  color: var(--text-muted);
   background: var(--bg-raised);
   border: 1px solid var(--border);
   border-radius: 7px;
-}
-.le-card-settings[hidden] {
-  display: none;
-}
-.le-card-settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.le-card-settings-header strong {
-  color: var(--text-primary);
-  font-size: 0.78rem;
-}
-.le-card-settings-close {
-  padding: 1px 6px;
-  color: var(--text-dim);
-  background: transparent;
-  border: 0;
-  border-radius: 4px;
-  font-size: 1.1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: left;
   cursor: pointer;
+  transition:
+    color 0.15s,
+    background-color 0.15s,
+    border-color 0.15s;
 }
-.le-card-settings-close:hover {
+.le-action-btn:hover,
+.le-action-btn:focus-visible {
   color: var(--text-primary);
   background: var(--bg-input);
+  border-color: var(--border-accent);
 }
-.le-card-settings-hint {
-  margin: 4px 0 8px;
+.le-action-btn.le-action-primary {
+  color: var(--text-primary);
+  background: var(--accent);
+  border-color: transparent;
+}
+.le-action-btn.le-action-primary:hover,
+.le-action-btn.le-action-primary:focus-visible {
+  background: var(--accent-hover);
+}
+.le-action-btn.le-action-reset {
   color: var(--text-dim);
-  font-size: 0.66rem;
-  line-height: 1.4;
 }
-.le-card-settings .card-settings-controls {
-  max-height: none;
-  overflow: visible;
-}
-.le-card-settings .card-setting-field input[type="checkbox"] {
-  margin: 0 0 0 auto;
+.le-action-btn.le-action-reset:hover,
+.le-action-btn.le-action-reset:focus-visible {
+  color: var(--status-bad);
+  border-color: rgba(248, 81, 73, 0.35);
 }
 
 /* Canvas */
 .le-canvas {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
   overflow: auto;
-  padding: 14px;
+  padding: 16px;
   background-color: var(--bg-base);
+}
+.le-canvas-toolbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  flex-shrink: 0;
+}
+.le-canvas-label {
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.le-canvas-hint {
+  color: var(--text-dim);
+  font-size: 0.7rem;
 }
 
 .layout-grid {
   display: grid;
+  flex: 1;
   gap: 8px;
   width: 100%;
-  height: 100%;
   min-height: 360px;
+  background-color: var(--bg-base);
   background-image:
-    linear-gradient(to right, rgba(47, 48, 112, 0.14) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(47, 48, 112, 0.14) 1px, transparent 1px);
+    linear-gradient(to right, rgba(47, 48, 112, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(47, 48, 112, 0.1) 1px, transparent 1px);
   background-size: calc((100% + 8px) / var(--grid-cols, 3))
     calc((100% + 8px) / var(--grid-rows, 3));
-  border: 1px solid rgba(47, 48, 112, 0.2);
-  border-radius: 6px;
+  border-radius: 9px;
 }
 
 .layout-item {
@@ -2130,9 +2317,9 @@ input[type="checkbox"]:checked::before {
 
 .layout-item-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-weight: 500;
   font-size: 0.8rem;
   color: var(--text-primary);
@@ -2146,6 +2333,10 @@ input[type="checkbox"]:checked::before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.layout-item-header .layout-item-title {
+  flex: 1;
+  min-width: 0;
 }
 
 .le-card-icon {
@@ -2177,7 +2368,8 @@ input[type="checkbox"]:checked::before {
 .layout-item-hint {
   font-size: 0.65rem;
   color: var(--text-dim);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+  letter-spacing: 0.01em;
   flex: 1;
   display: flex;
   align-items: flex-end;
@@ -2275,7 +2467,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   transition: all 0.15s;
 }
 .color-editor-reset:hover {
@@ -2292,7 +2484,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   transition: all 0.12s;
   flex-shrink: 0;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .le-remove-btn:hover {
   color: rgb(215, 75, 75);
@@ -2320,8 +2512,8 @@ input[type="checkbox"]:checked::before {
   border-radius: 12px;
   padding: 0;
   max-width: 760px;
-  width: min(92vw, 760px);
-  max-height: 86vh;
+  width: min(calc(var(--vw, 1vw) * 92), 760px);
+  max-height: calc(var(--vh, 1vh) * 86);
   display: flex;
   flex-direction: column;
 }
@@ -2338,7 +2530,7 @@ input[type="checkbox"]:checked::before {
   flex-shrink: 0;
 }
 .card-manager-title {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -2382,7 +2574,7 @@ input[type="checkbox"]:checked::before {
 .card-manager-section-title {
   margin: 0 0 8px;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -2465,7 +2657,7 @@ input[type="checkbox"]:checked::before {
   gap: 4px;
   color: var(--text-muted);
   font-size: 0.7rem;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-export-select input {
   appearance: none;
@@ -2504,7 +2696,7 @@ input[type="checkbox"]:checked::before {
 .card-manager-item-label {
   font-weight: 500;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-item-badge {
   font-size: 0.6rem;
@@ -2513,7 +2705,7 @@ input[type="checkbox"]:checked::before {
   background: rgba(47, 48, 112, 0.3);
   color: var(--text-muted);
   text-transform: uppercase;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-item-badge.builtin {
   background: rgba(60, 180, 100, 0.2);
@@ -2532,7 +2724,7 @@ input[type="checkbox"]:checked::before {
   font-size: 0.7rem;
   color: var(--text-muted);
   transition: all 0.12s;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-manager-item-actions button:hover {
   background: var(--accent-hover);
@@ -2557,7 +2749,7 @@ input[type="checkbox"]:checked::before {
   background: var(--bg-raised);
   color: var(--text-muted);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.8rem;
   transition: all 0.15s;
 }
@@ -2583,7 +2775,7 @@ input[type="checkbox"]:checked::before {
 }
 .card-catalog-shell {
   width: min(900px, calc(100% - 32px));
-  max-height: 86vh;
+  max-height: calc(var(--vh, 1vh) * 86);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2675,7 +2867,7 @@ input[type="checkbox"]:checked::before {
 }
 .catalog-card-info strong {
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .catalog-card-info span {
   color: var(--text-muted);
@@ -2713,7 +2905,7 @@ input[type="checkbox"]:checked::before {
 }
 .card-settings-controls strong {
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.75rem;
 }
 .card-setting-field {
@@ -2733,7 +2925,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.72rem;
 }
 .card-setting-field input[type="checkbox"] {
@@ -2784,7 +2976,7 @@ input[type="checkbox"]:checked::before {
 }
 .card-catalog-detail-shell {
   width: min(1100px, 100%);
-  max-height: 90vh;
+  max-height: calc(var(--vh, 1vh) * 90);
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg-surface);
@@ -2835,7 +3027,7 @@ input[type="checkbox"]:checked::before {
 .card-catalog-detail-info h2 {
   margin: 0;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1.3rem;
 }
 .card-catalog-detail-info p {
@@ -2874,7 +3066,7 @@ input[type="checkbox"]:checked::before {
   background: var(--accent);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
 }
@@ -2906,7 +3098,7 @@ input[type="checkbox"]:checked::before {
   background: var(--bg-input);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.72rem;
 }
 .catalog-card-save:hover:not(:disabled) {
@@ -2952,7 +3144,7 @@ input[type="checkbox"]:checked::before {
 }
 .card-upload-label {
   color: var(--text-muted);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -2966,7 +3158,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 4px;
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-upload-form select {
   min-width: 0;
@@ -2981,7 +3173,7 @@ input[type="checkbox"]:checked::before {
   background: var(--accent);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-upload-form button:hover {
   background: var(--accent-hover);
@@ -2993,7 +3185,7 @@ input[type="checkbox"]:checked::before {
   background: var(--accent);
   color: var(--text-primary);
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.8rem;
   margin: 0 auto;
   font-weight: 600;
@@ -3033,7 +3225,7 @@ input[type="checkbox"]:checked::before {
 }
 .card-upload-shell {
   width: min(460px, calc(100% - 28px));
-  max-height: 86vh;
+  max-height: calc(var(--vh, 1vh) * 86);
   overflow-y: auto;
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -3084,7 +3276,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 5px;
   background: var(--bg-input);
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .card-update-actions {
   display: flex;
@@ -3096,7 +3288,7 @@ input[type="checkbox"]:checked::before {
   padding: 8px 12px;
   border-radius: 5px;
   cursor: pointer;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.78rem;
 }
 .card-update-cancel {
@@ -3119,7 +3311,7 @@ input[type="checkbox"]:checked::before {
   .card-manager-shell,
   .card-catalog-shell {
     width: calc(100% - 20px);
-    max-height: 92vh;
+    max-height: calc(var(--vh, 1vh) * 92);
   }
   .card-manager-shell {
     padding: 16px;
@@ -3131,8 +3323,8 @@ input[type="checkbox"]:checked::before {
     padding-bottom: 10px;
   }
   .catalog-card-item {
-    width: min(82vw, 340px);
-    min-width: min(82vw, 340px);
+    width: min(calc(var(--vw, 1vw) * 82), 340px);
+    min-width: min(calc(var(--vw, 1vw) * 82), 340px);
   }
   .card-manager-actions {
     flex-direction: column;
@@ -3147,7 +3339,7 @@ input[type="checkbox"]:checked::before {
   .card-catalog-detail-body {
     display: flex;
     flex-direction: column;
-    max-height: calc(92vh - 58px);
+    max-height: calc(calc(var(--vh, 1vh) * 92) - 58px);
     overflow-y: auto;
   }
   .card-catalog-detail-preview,
@@ -3184,7 +3376,7 @@ input[type="checkbox"]:checked::before {
   display: flex;
   flex-direction: column;
   height: calc(100% - 40px);
-  max-height: 90vh;
+  max-height: calc(var(--vh, 1vh) * 90);
   width: calc(100% - 40px);
   max-width: 1200px;
   background-color: var(--bg-surface);
@@ -3202,7 +3394,7 @@ input[type="checkbox"]:checked::before {
   flex-shrink: 0;
 }
 .dev-card-title {
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -3267,7 +3459,7 @@ input[type="checkbox"]:checked::before {
     justify-content: space-between;
     gap: 8px;
     color: var(--text-primary);
-    font-family: "Rubik", sans-serif;
+    font-family: "Rubik Variable", "Rubik", sans-serif;
     font-size: 0.8rem;
     font-weight: 600;
   }
@@ -3279,7 +3471,7 @@ input[type="checkbox"]:checked::before {
     background: var(--bg-input);
     color: var(--text-muted);
     cursor: pointer;
-    font-family: "Rubik", sans-serif;
+    font-family: "Rubik Variable", "Rubik", sans-serif;
     font-size: 0.7rem;
   }
   .card-upload-settings-header button:hover,
@@ -3307,7 +3499,7 @@ input[type="checkbox"]:checked::before {
     border-radius: 4px;
     background: var(--bg-input);
     color: var(--text-primary);
-    font-family: "Rubik", sans-serif;
+    font-family: "Rubik Variable", "Rubik", sans-serif;
     font-size: 0.7rem;
   }
   .card-upload-setting-extra {
@@ -3342,7 +3534,7 @@ input[type="checkbox"]:checked::before {
   border-radius: 6px;
   padding: 6px 10px;
   color: var(--text-primary);
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   resize: vertical;
 }
@@ -3367,7 +3559,7 @@ input[type="checkbox"]:checked::before {
   padding: 6px 16px;
   border-radius: 6px;
   border: none;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -3397,7 +3589,7 @@ input[type="checkbox"]:checked::before {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
 }
 .dev-card-sandbox {
   flex: 1;
@@ -3423,15 +3615,14 @@ input[type="checkbox"]:checked::before {
     min-height: 250px;
   }
   .le-palette {
-    width: 140px;
+    width: 210px;
   }
   .le-header {
-    flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
-  .le-header-left,
-  .le-header-right {
+  .le-header-actions {
     flex-wrap: wrap;
+    justify-content: flex-end;
   }
 }
 
@@ -3452,19 +3643,545 @@ input[type="checkbox"]:checked::before {
     font-size: 1.3rem;
   }
   .settingscontainer {
-    width: 95%;
+    width: calc(calc(var(--vw, 1vw) * 100) - 24px);
+    max-height: calc(var(--vh, 1vh) * 92);
+  }
+  .settings-title {
+    padding: 12px 16px;
+  }
+  .settings-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+  .settingsdiv {
+    padding: 12px;
+  }
+  .settings-more {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .savebutton {
+    margin: 0 10px 10px;
+  }
+  .layout-editor-modal {
+    padding: 8px;
+  }
+  .le-shell {
+    height: calc(calc(var(--vh, 1vh) * 100) - 16px);
+  }
+  .le-header {
+    padding: 12px 14px;
+  }
+  .le-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .le-profile-controls {
+    flex-wrap: wrap;
+  }
+  .le-profile-controls select {
+    flex: 1 1 130px;
+  }
+  .le-body {
+    flex-direction: column;
   }
   .le-palette {
-    width: 120px;
+    width: 100%;
+    max-height: 47%;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .le-palette-heading {
+    padding: 10px 12px 8px;
+  }
+  .le-palette-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-content: start;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .le-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+  }
+  .le-actions-title {
+    width: 100%;
+  }
+  .le-action-btn {
+    flex: 1;
+    width: auto;
+    min-width: 90px;
+    text-align: center;
   }
   .le-palette-item {
     font-size: 0.7rem;
     padding: 4px 6px;
   }
   .le-canvas {
+    flex: 1;
+    min-height: 0;
+  }
+  .le-canvas-hint {
+    font-size: 0.65rem;
+  }
+  .le-canvas {
     padding: 8px;
   }
   .layout-grid {
-    min-height: 200px;
+    min-height: 220px;
   }
+}
+
+
+/* ───────── Cards modal (manage · catalog · create) ───────── */
+.cards-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+}
+.cards-modal.active {
+  display: flex;
+}
+.cards-shell {
+  display: flex;
+  flex-direction: column;
+  width: min(1100px, calc(100% - 32px));
+  height: min(820px, calc(calc(var(--vh, 1vh) * 100) - 32px));
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.cards-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  flex-shrink: 0;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+.cards-title {
+  margin: 0;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.cards-tabs {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+.cards-tab {
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-muted);
+  font: 500 0.9rem "Rubik Variable", "Rubik", sans-serif;
+  cursor: pointer;
+}
+.cards-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.cards-tab[aria-selected="true"] {
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-color: var(--border-accent, var(--border));
+}
+.cards-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.cards-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.cards-panel[hidden] {
+  display: none;
+}
+.cards-panel-create {
+  padding: 0;
+  overflow: hidden;
+}
+.cards-catalog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.cards-catalog-bar .card-catalog-status {
+  margin: 0;
+}
+.cards-panel .card-manager-actions {
+  margin-top: 14px;
+}
+
+/* The card editor, embedded as the "Create" tab instead of its own overlay */
+.dev-card-embed {
+  position: relative;
+  display: flex;
+  height: 100%;
+}
+.dev-card-embed .dev-card-shell {
+  flex: 1;
+  height: 100%;
+  max-height: none;
+  width: 100%;
+  max-width: none;
+  border: none;
+  border-radius: 0;
+}
+
+/* Connection / stale-data chip in the header */
+.net-status {
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  background: #f0b429;
+}
+.net-status[hidden] {
+  display: none;
+}
+
+/* Offline readiness (Settings) */
+.offline-ready-list {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.offline-ready-list li::before {
+  content: "○ ";
+  color: var(--text-dim);
+}
+.offline-ready-list li[data-ok="true"]::before {
+  content: "● ";
+  color: #3fb950;
+}
+.offline-ready-list li[data-ok="false"]::before {
+  content: "● ";
+  color: #f0b429;
+}
+.update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  transform: translateX(-50%);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-accent, var(--border));
+  border-radius: 10px;
+  color: var(--text-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ───────── Pit Notes (merged note card) ───────── */
+.pit-notes-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.pit-notes-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-muted);
+  font: 500 0.78rem "Rubik Variable", "Rubik", sans-serif;
+  cursor: pointer;
+}
+.pit-notes-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-input);
+}
+.pit-notes-tab.active {
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-color: var(--border-accent, var(--border));
+}
+.pit-notes-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.pit-notes-count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.68rem;
+  line-height: 18px;
+  text-align: center;
+}
+.pit-notes-flag {
+  display: inline-flex;
+  color: #f0b429;
+}
+.pit-notes-compact .pit-card,
+.pit-notes-compact .checkin-row {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.pit-notes-compact .pit-status-row {
+  margin-top: 4px;
+}
+.pit-notes .pit-sub {
+  margin-top: 4px;
+}
+.pit-notes .pn-locate {
+  color: var(--accent);
+}
+.pb-icon {
+  flex-shrink: 0;
+  vertical-align: -2px;
+}
+
+/* Robot Viewer card */
+.robot-viewer-frame { display: block; width: 100%; height: 100%; min-height: 240px; border: 0; border-radius: inherit; background: #101722; }
+
+
+/* ───────── Onboarding, status dots, banner, empty states, summary card ───────── */
+
+/* Empty states */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 16px;
+  text-align: center;
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+}
+.empty-state-title { color: var(--text-primary); font-size: 0.9rem; }
+.empty-state-body { margin: 0; max-width: 34ch; color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; }
+.empty-state-action {
+  margin-top: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-accent);
+  background: var(--accent);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.empty-state-action:hover { background: var(--accent-hover); }
+
+/* Card status dot (sits in the card's grid cell, top-right) */
+.card-status-dot {
+  justify-self: end;
+  align-self: start;
+  z-index: 3;
+  width: 10px;
+  height: 10px;
+  margin: 8px 10px 0 0;
+  border-radius: 50%;
+  background: var(--status-idle);
+  box-shadow: 0 0 0 2px var(--bg-surface);
+  cursor: help;
+}
+.card-status-dot[data-color="green"] { background: var(--status-ok); }
+.card-status-dot[data-color="yellow"] { background: var(--status-warn); }
+.card-status-dot[data-color="red"] { background: var(--status-bad); }
+.card-status-dot:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
+/* Next-match banner */
+.nm-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--banner-height, 2.1rem);
+  padding: 0 1.25rem;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  border-left: 5px solid var(--status-idle);
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.nm-banner[hidden] { display: none; }
+.nm-banner[data-alliance="red"] { border-left-color: var(--alliance-red); }
+.nm-banner[data-alliance="blue"] { border-left-color: var(--alliance-blue); }
+.nm-tag { color: var(--text-muted); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.06em; }
+.nm-match { color: var(--text-primary); font-weight: 700; }
+.nm-time { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.nm-alliance { margin-left: auto; color: var(--text-muted); }
+.nm-banner[data-alliance="red"] .nm-alliance { color: var(--alliance-red); }
+.nm-banner[data-alliance="blue"] .nm-alliance { color: var(--alliance-blue); }
+.nm-banner.nm-urgent { background: rgba(248, 81, 73, 0.16); animation: nm-pulse 1.6s ease-in-out infinite; }
+.nm-banner.nm-urgent .nm-tag { color: var(--status-bad); font-weight: 700; }
+@keyframes nm-pulse { 50% { background: rgba(248, 81, 73, 0.3); } }
+@media (prefers-reduced-motion: reduce) { .nm-banner.nm-urgent { animation: none; } }
+@media (max-width: 520px) { .nm-tag { display: none; } .nm-banner { padding: 0 0.75rem; gap: 8px; } }
+
+/* Dialogs: setup wizard and welcome card */
+.pb-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.62);
+}
+.pb-dialog {
+  position: relative;
+  width: min(480px, 100%);
+  max-height: calc(calc(var(--vh, 1vh) * 100) - 32px);
+  overflow: auto;
+  padding: 22px 22px 18px;
+  border-radius: 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-accent);
+  color: var(--text-primary);
+  font-family: "Rubik Variable", "Rubik", sans-serif;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+}
+.pb-eyebrow { margin: 0 0 4px; color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.pb-dialog-title { margin: 0 0 12px; font-size: 1.25rem; }
+.pb-dialog-note { margin: 12px 0 0; color: var(--text-dim); font-size: 0.74rem; }
+.pb-dialog-actions { display: flex; align-items: center; gap: 8px; margin-top: 18px; }
+.pb-spacer { flex: 1; }
+.pb-dialog-x { position: absolute; top: 8px; right: 10px; border: 0; background: transparent; color: var(--text-muted); font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 4px 8px; }
+.pb-btn { padding: 8px 14px; min-height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-raised); color: var(--text-primary); font: inherit; font-size: 0.82rem; cursor: pointer; }
+.pb-btn:hover { border-color: var(--border-accent); }
+.pb-btn-primary { background: var(--accent); border-color: var(--border-accent); }
+.pb-btn-primary:hover { background: var(--accent-hover); }
+.pb-btn-link { border-color: transparent; background: transparent; color: var(--text-muted); text-decoration: underline; padding-left: 0; }
+.pb-btn:focus-visible, .wizard-swatch:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
+.welcome-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.welcome-list li { display: flex; flex-direction: column; gap: 2px; }
+.welcome-list span { color: var(--text-muted); font-size: 0.8rem; line-height: 1.45; }
+
+.wizard-steps { display: flex; gap: 6px; margin: 0 0 14px; padding: 0; list-style: none; }
+.wizard-steps li { flex: 1; height: 4px; border-radius: 2px; background: var(--bg-input); }
+.wizard-steps li.active, .wizard-steps li.done { background: var(--accent-hover); }
+.wizard-body { display: flex; flex-direction: column; gap: 12px; }
+.wizard-lead { margin: 0; color: var(--text-muted); font-size: 0.84rem; line-height: 1.5; }
+.wizard-field { display: flex; flex-direction: column; gap: 5px; font-size: 0.8rem; }
+.wizard-field input[type="text"], .wizard-field input[type="password"] { padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: var(--text-primary); font: inherit; }
+.wizard-field select { box-sizing: border-box; width: 100%; min-width: 0; }
+.wizard-field input[type="file"] { color: var(--text-muted); font-size: 0.78rem; max-width: 100%; }
+.wizard-field small, .wizard-skip-note { color: var(--text-dim); font-size: 0.72rem; line-height: 1.4; margin: 0; }
+.wizard-inline { display: flex; align-items: center; gap: 10px; }
+.wizard-result { margin: 0; font-size: 0.78rem; color: var(--text-muted); }
+.wizard-result[data-ok="true"] { color: var(--status-ok); }
+.wizard-result[data-ok="false"] { color: var(--status-bad); }
+.wizard-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.wizard-swatch { width: 38px; height: 38px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+.wizard-swatch[aria-checked="true"] { border-color: var(--text-primary); box-shadow: 0 0 0 2px var(--bg-surface) inset; }
+
+.pn-flash { animation: pn-flash 1.6s ease-out; }
+@keyframes pn-flash { 0%, 40% { box-shadow: 0 0 0 2px var(--status-info); } 100% { box-shadow: 0 0 0 2px transparent; } }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Portrait mode
+   - html.rotate-cw / html.rotate-ccw: turn the whole page 90deg for a
+     physically rotated monitor that still sends a landscape signal.
+   - html.portrait-layout: the 2-column portrait card layout is active
+     (rotated, or "auto" on a natively portrait screen).
+   --vw / --vh / --view-h are the *visible* viewport units; they swap when the
+   page is rotated so modals and the card grid size correctly.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+html {
+  --vw: 1vw;
+  --vh: 1vh;
+  --view-h: 100vh;
+}
+html.rotate-cw,
+html.rotate-ccw {
+  --vw: 1vh;
+  --vh: 1vw;
+  --view-h: 100vw;
+}
+html.rotate-cw body,
+html.rotate-ccw body {
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin: 0;
+  width: 100vh;
+  height: 100vw;
+  overflow: hidden;
+  transform-origin: 0 0;
+}
+html.rotate-cw body {
+  transform: translateX(100vw) rotate(90deg);
+}
+html.rotate-ccw body {
+  transform: translateY(100vh) rotate(-90deg);
+}
+.mheader-btn.active {
+  opacity: 0.85;
+  background: var(--accent);
+  color: white;
+}
+
+/* Portrait card views: use the extra height instead of stretching wide */
+
+/* Match cards: info on the left, alliances on the right, so more matches fit */
+html.portrait-layout .match-card,
+html.portrait-layout .upcomingmatch-card {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 12px;
+  padding: 10px 12px;
+}
+html.portrait-layout .match-card .upcoming-basicinfo,
+html.portrait-layout .upcomingmatch-card .upcoming-basicinfo {
+  flex: 0 0 42%;
+  justify-content: center;
+}
+html.portrait-layout .match-card .upcoming-teams,
+html.portrait-layout .upcomingmatch-card .upcoming-teams {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0;
+  padding-left: 12px;
+  border-top: none;
+  border-left: 1px solid var(--border);
+  justify-content: center;
+}
+
+/* Stats: full-width cards flow the rows into two columns */
+html.portrait-layout .card-container[data-pspan="2"] .stats-body {
+  column-count: 2;
+  column-gap: 20px;
+}
+html.portrait-layout .card-container[data-pspan="2"] .stats-primary,
+html.portrait-layout .card-container[data-pspan="2"] .stats-row,
+html.portrait-layout .card-container[data-pspan="2"] .stats-team-heading {
+  break-inside: avoid;
 }

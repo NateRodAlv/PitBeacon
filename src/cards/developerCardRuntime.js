@@ -1,4 +1,6 @@
 // src/cards/developerCardRuntime.js
+import { icon } from "../lib/icons.js";
+
 export class DeveloperCardRuntime {
   constructor(registry, sdk) {
     this._registry = registry;
@@ -112,7 +114,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
     const iframe = document.createElement("iframe");
     iframe.style.cssText =
       "width:100%;height:100%;border:none;border-radius:4px;background:var(--bg-surface);";
-    iframe.sandbox = "allow-scripts allow-same-origin";
+    iframe.sandbox = "allow-scripts";
     element.appendChild(iframe);
 
     // Get theme colors from the parent page
@@ -428,7 +430,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
           window.__pitbeaconCardSettings = ${JSON.stringify(def.settingsValues || {}).replace(/</g, "\\u003c")};
           ${def.js || ""}
         })();
-    <\/script>
+    </script>
 </body>
 </html>`;
 
@@ -498,7 +500,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
           break;
         }
         case "storageGet": {
-          const value = sdk.storage.get(e.data.key);
+          const value = sdk.storageFor(id).get(e.data.key);
           iframe.contentWindow.postMessage(
             { type: "storageGetResponse", id: e.data.id, value },
             "*",
@@ -506,7 +508,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
           break;
         }
         case "storageSet": {
-          const success = sdk.storage.set(e.data.key, e.data.value);
+          const success = sdk.storageFor(id).set(e.data.key, e.data.value);
           iframe.contentWindow.postMessage(
             { type: "storageSetResponse", id: e.data.id, success },
             "*",
@@ -514,7 +516,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
           break;
         }
         case "storageDelete": {
-          const success = sdk.storage.delete(e.data.key);
+          const success = sdk.storageFor(id).delete(e.data.key);
           iframe.contentWindow.postMessage(
             { type: "storageDeleteResponse", id: e.data.id, success },
             "*",
@@ -586,182 +588,16 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
 
     this._sandboxes.set(id, { element, iframe, defSignature, cleanup });
   }
-  // Add this as a new method on DeveloperCardRuntime
 
-  _makeCodeEditor(textarea) {
-    if (!textarea || textarea._ideEnhanced) return;
-    textarea._ideEnhanced = true;
-
-    const PAIRS = { "(": ")", "[": "]", "{": "}", '"': '"', "'": "'" };
-    const CLOSERS = new Set(Object.values(PAIRS));
-
-    const getLineStart = (value, pos) => value.lastIndexOf("\n", pos - 1) + 1;
-    const getIndent = (line) => (line.match(/^[ \t]*/) || [""])[0];
-
-    textarea.addEventListener("keydown", (e) => {
-      const { value, selectionStart: start, selectionEnd: end } = textarea;
-      const isCmdSave = (e.metaKey || e.ctrlKey) && e.key === "s";
-      const isCmdRun = (e.metaKey || e.ctrlKey) && e.key === "Enter";
-
-      if (isCmdSave) {
-        e.preventDefault();
-        const saveBtn = textarea
-          .closest(".dev-card-shell")
-          ?.querySelector("#devCardSave");
-        saveBtn?.click();
-        return;
-      }
-      if (isCmdRun) {
-        e.preventDefault();
-        const testBtn = textarea
-          .closest(".dev-card-shell")
-          ?.querySelector("#devCardTest");
-        testBtn?.click();
-        return;
-      }
-
-      // Tab / Shift+Tab — indent or dedent
-      if (e.key === "Tab") {
-        e.preventDefault();
-        const lineStart = getLineStart(value, start);
-
-        if (start === end && !e.shiftKey) {
-          // No selection: just insert two spaces at cursor
-          textarea.value = value.slice(0, start) + "  " + value.slice(end);
-          textarea.selectionStart = textarea.selectionEnd = start + 2;
-        } else {
-          // Selection spanning one or more lines: indent/dedent every line
-          const blockEnd = end;
-          const lines = value.slice(lineStart, blockEnd).split("\n");
-          const changed = lines.map((line) =>
-            e.shiftKey ? line.replace(/^ {1,2}/, "") : "  " + line,
-          );
-          const newBlock = changed.join("\n");
-          textarea.value =
-            value.slice(0, lineStart) + newBlock + value.slice(blockEnd);
-          const delta = newBlock.length - (blockEnd - lineStart);
-          textarea.selectionStart =
-            lineStart === start ? start : start + (e.shiftKey ? -2 : 2);
-          textarea.selectionEnd = blockEnd + delta;
-        }
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-        return;
-      }
-
-      // Enter — auto-indent to match previous line, add extra indent after { [ (
-      if (e.key === "Enter") {
-        const lineStart = getLineStart(value, start);
-        const currentLine = value.slice(lineStart, start);
-        const indent = getIndent(currentLine);
-        const trimmed = currentLine.trim();
-        const opensBlock = /[{[(]$/.test(trimmed);
-        const nextChar = value[start];
-        const closesImmediately = opensBlock && CLOSERS.has(nextChar);
-
-        e.preventDefault();
-        const extra = opensBlock ? indent + "  " : indent;
-        let insert = "\n" + extra;
-        let cursorPos = start + insert.length;
-
-        if (closesImmediately) {
-          // Put closing bracket on its own dedented line below
-          insert += "\n" + indent;
-        }
-
-        textarea.value = value.slice(0, start) + insert + value.slice(end);
-        textarea.selectionStart = textarea.selectionEnd = cursorPos;
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-        return;
-      }
-
-      // Auto-close brackets/quotes
-      if (PAIRS[e.key] && start === end) {
-        e.preventDefault();
-        const close = PAIRS[e.key];
-        textarea.value =
-          value.slice(0, start) + e.key + close + value.slice(end);
-        textarea.selectionStart = textarea.selectionEnd = start + 1;
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-        return;
-      }
-
-      // Skip over an auto-inserted closer instead of duplicating it
-      if (CLOSERS.has(e.key) && start === end && value[start] === e.key) {
-        e.preventDefault();
-        textarea.selectionStart = textarea.selectionEnd = start + 1;
-        return;
-      }
-
-      // Backspace inside an empty pair removes both characters
-      if (e.key === "Backspace" && start === end && start > 0) {
-        const prevChar = value[start - 1];
-        const nextChar = value[start];
-        if (PAIRS[prevChar] === nextChar) {
-          e.preventDefault();
-          textarea.value = value.slice(0, start - 1) + value.slice(start + 1);
-          textarea.selectionStart = textarea.selectionEnd = start - 1;
-          textarea.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-      }
-    });
-
-    textarea.spellcheck = false;
-    textarea.style.tabSize = "2";
-    textarea.style.fontFamily = "'Fira Code', 'Consolas', monospace";
-    textarea.style.whiteSpace = "pre";
-  }
   // ─── Add these methods to DeveloperCardRuntime ─────────────────────────────
 
   _loadCodeMirrorAssets() {
-    if (this._cmAssetsPromise) return this._cmAssetsPromise;
-    const BASE = "https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16";
-
-    this._cmAssetsPromise = new Promise((resolve) => {
-      if (window.CodeMirror) return resolve(true);
-
-      const addCss = (href) => {
-        if (document.querySelector(`link[href="${href}"]`)) return;
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = href;
-        document.head.appendChild(link);
-      };
-      addCss(`${BASE}/codemirror.min.css`);
-      addCss(`${BASE}/theme/dracula.min.css`);
-
-      const scripts = [
-        "codemirror.min.js",
-        "mode/xml/xml.min.js",
-        "mode/css/css.min.js",
-        "mode/javascript/javascript.min.js",
-        "mode/htmlmixed/htmlmixed.min.js",
-        "addon/edit/closebrackets.min.js",
-        "addon/edit/matchbrackets.min.js",
-      ];
-
-      let remaining = scripts.length;
-      let failed = false;
-      const settle = () => {
-        remaining--;
-        if (remaining === 0) resolve(!failed && !!window.CodeMirror);
-      };
-
-      scripts.forEach((path) => {
-        const s = document.createElement("script");
-        s.src = `${BASE}/${path}`;
-        s.async = false;
-        s.onload = settle;
-        s.onerror = () => {
-          failed = true;
-          settle();
-        };
-        document.head.appendChild(s);
-      });
-
-      // Safety net: don't hang forever if a script stalls
-      setTimeout(() => resolve(!!window.CodeMirror), 4000);
-    });
-
+    // CodeMirror is bundled (and split into its own lazy chunk), so the editor works offline.
+    if (!this._cmAssetsPromise) {
+      this._cmAssetsPromise = import("../lib/codemirror.js")
+        .then(() => Boolean(window.CodeMirror))
+        .catch(() => false);
+    }
     return this._cmAssetsPromise;
   }
 
@@ -769,7 +605,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
     if (!textarea || textarea._ideEnhanced) return;
     textarea._ideEnhanced = true;
 
-    let cmReady = false;
+    let cmReady;
     try {
       cmReady = await this._loadCodeMirrorAssets();
     } catch {
@@ -950,7 +786,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
     picker.className = "dc-picker";
     picker.innerHTML = `
     <div class="dc-picker-inner">
-      <button class="vb-btn vb-btn-primary" id="devCardPickerNew">➕ Create New Card</button>
+      <button class="vb-btn vb-btn-primary" id="devCardPickerNew">${icon("plus", 16)} Create New Card</button>
       <div class="dc-picker-divider">or edit an existing card</div>
       <div class="dc-picker-list" id="devCardPickerList"></div>
     </div>
@@ -994,9 +830,11 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
         const item = document.createElement("div");
         item.className = "dc-picker-item";
         item.innerHTML = `
-        <span class="dc-picker-item-label">${def.label || id}</span>
-        <span class="dc-picker-item-id">#${id}</span>
+        <span class="dc-picker-item-label"></span>
+        <span class="dc-picker-item-id"></span>
       `;
+        item.querySelector(".dc-picker-item-label").textContent = def.label || id;
+        item.querySelector(".dc-picker-item-id").textContent = `#${id}`;
         item.addEventListener("click", () => loadCard(id, def));
         list.appendChild(item);
       });
@@ -1022,6 +860,10 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
       updatePreview();
     };
 
+    modal._devCardLoad = (id) => {
+      const def = this._registry.get(id);
+      if (def?.developer) loadCard(id, def);
+    };
     modal
       .querySelector("#devCardPickerNew")
       .addEventListener("click", startNew);
@@ -1057,23 +899,18 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
         return;
       }
 
+      const stored = JSON.parse(localStorage.getItem("developerCards") || "{}");
+      // Keep what the editor does not show (description, icon, version, saved setting values).
       const def = {
+        ...(stored[id] || {}),
         label: label || id,
         html: this._getEditorValue(htmlInput),
         css: this._getEditorValue(cssInput),
         js: this._getEditorValue(jsInput),
       };
-
-      const config = {
-        developerCards: JSON.parse(
-          localStorage.getItem("developerCards") || "{}",
-        ),
-      };
-      config.developerCards[id] = def;
-      localStorage.setItem(
-        "developerCards",
-        JSON.stringify(config.developerCards),
-      );
+      stored[id] = def;
+      localStorage.setItem("developerCards", JSON.stringify(stored));
+      window.dispatchEvent(new CustomEvent("pitbeacon:card-saved", { detail: { id, def } }));
 
       const cardDef = this.createCardDefinition(id, def);
       cardDef.allowOverride = true; // needed to re-save over an id already in the registry
@@ -1081,7 +918,6 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
 
       if (window.displayMessage)
         window.displayMessage(`Card "${id}" saved!`, "message");
-      modal.classList.remove("active");
       if (window._pitbeaconRender) window._pitbeaconRender();
     });
 
@@ -1172,7 +1008,7 @@ document.getElementById('fetchBtn')?.addEventListener('click', async function() 
         (function() {
           ${def.js || ""}
         })();
-    <\/script>
+    </script>
 </body>
 </html>`;
 

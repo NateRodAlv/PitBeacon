@@ -205,6 +205,12 @@ two different cards' `myKey` won't collide. Useful for anything your card
 needs to remember between reloads, e.g. "which matches has this scout
 already submitted."
 
+Cards run in a locked-down sandbox: they cannot read the page, cookies,
+`localStorage` or IndexedDB directly. `sdk.storage` is the only way to keep
+data, and it is limited to your own card (as of the 2027 release; older
+versions shared one storage area between all cards, and a value written
+there is copied into your card the first time it is read).
+
 ### Config
 
 ```js

@@ -1,4 +1,5 @@
 import { setCardAutoScroll } from "./autoScroll.js";
+import { renderEmptyState } from "../../ui/emptyState.js";
 
 // src/cards/builtin/leaderboardCard.js
 export function createLeaderboardCard() {
@@ -7,6 +8,7 @@ export function createLeaderboardCard() {
         label: 'Leaderboard',
         icon: 'trophy',
         builtin: true,
+        statusSource: 'tba',
         settings: {
             autoScroll: {
                 type: 'checkbox',
@@ -35,7 +37,7 @@ export function createLeaderboardCard() {
 
             if (!rankings || !rankings.length) {
                 setCardAutoScroll(element, false);
-                element.innerHTML = `<p class="inactive" style="padding:20px;text-align:center;color:var(--text-dim);font-style:italic;">No rankings available.</p>`;
+                renderEmptyState(element, 'rankings', state);
                 return;
             }
 
