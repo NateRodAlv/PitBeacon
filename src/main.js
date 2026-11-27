@@ -15,7 +15,6 @@ import { createLeaderboardCard } from "./cards/builtin/leaderboardCard.js";
 import { createPitNotesCard } from "./cards/builtin/pitNotesCard.js";
 import { createRobotViewerCard } from "./cards/builtin/robotViewerCard.js";
 import { createStatsCard } from "./cards/builtin/statsCard.js";
-import { createRobotSummaryCard } from "./cards/builtin/robotSummaryCard.js";
 import { installNotificationBridge } from "./core/notifications.js";
 import { startClock } from "./app/clock.js";
 import { installTeamDataBridge, restoreSnapshot, startPolling } from "./app/polling.js";
@@ -45,7 +44,6 @@ registry.register("leaderboard-card", createLeaderboardCard());
 registry.register("pit-notes-card", createPitNotesCard());
 registry.register("robot-viewer-card", createRobotViewerCard());
 registry.register("stats-card", createStatsCard());
-registry.register("robot-summary-card", createRobotSummaryCard());
 registry.register("__fallback__", FallbackCard);
 
 function setupHeader() {

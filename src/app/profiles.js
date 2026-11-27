@@ -66,20 +66,23 @@ export function switchToProfile(name) {
   refreshProfileUI();
 }
 
+export function refreshProfileSelect(sel) {
+  sel.innerHTML = `<option value="Default">Default</option>`;
+  Object.keys(config.layoutProfiles)
+    .filter((name) => name !== "Default")
+    .forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  sel.value = config.activeProfileName || "Default";
+}
+
 export function refreshProfileUI() {
-  const sel = document.getElementById("profileSelect");
-  if (sel) {
-    sel.innerHTML = `<option value="Default">Default</option>`;
-    Object.keys(config.layoutProfiles)
-      .filter((name) => name !== "Default")
-      .forEach((name) => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        sel.appendChild(opt);
-      });
-    sel.value = config.activeProfileName || "Default";
-  }
+  document
+    .querySelectorAll("#profileSelect, #leProfileSelect")
+    .forEach(refreshProfileSelect);
 
   const switcher = document.getElementById("profileSwitcher");
   if (!switcher) return;

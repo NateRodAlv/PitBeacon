@@ -66,7 +66,6 @@ const WHATS_NEW = [
   ["Note Cards", "Merged all pit notes into one comprehensive card. Integrated with the 3D viewer to pin notes to parts."],
   ["Next-match banner", "A slim strip with your next match, the countdown and your alliance color. It turns urgent near the alert time."],
   ["Card status dots", "A dot in each card's corner shows data freshness. Hover it for the last update time."],
-  ["Robot Summary card", "Open and flagged tasks, battery state, low stock and the parts that need attention, with links into the 3D viewer and Pit Notes."],
   ["New 3D viewer", "A new 3D Robot Viewer card to import and view your robot model, pin repair notes to parts, and see the robot in different poses. Export your model from CAD as a .glb, .gltf or .urdf file (with its mesh files) and load it in the card. .urdf files have mate connectors imported with them."],
   ["Helpful empty cards", "Cards with no data now say why and what to do next."],
 ];

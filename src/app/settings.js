@@ -85,6 +85,15 @@ export function loadSettings() {
   config.showCardStatusDots = readString("showCardStatusDots") !== "false";
   $("showCardStatusDots").checked = config.showCardStatusDots;
 
+  config.autoHideTopBar = readString("autoHideTopBar") === "true";
+  config.autoHideTopBarDelay = Math.min(
+    300,
+    Math.max(1, Number.parseInt(readString("autoHideTopBarDelay", "5"), 10) || 5),
+  );
+  $("autoHideTopBar").checked = config.autoHideTopBar;
+  $("autoHideTopBarDelay").value = config.autoHideTopBarDelay;
+  $("autoHideTopBarDelay").disabled = !config.autoHideTopBar;
+
   config.gridCols = Number.parseInt(readString("gridCols", config.gridCols), 10) || config.gridCols;
   config.gridRows = Number.parseInt(readString("gridRows", config.gridRows), 10) || config.gridRows;
   config.gridSize = config.gridCols;
@@ -139,6 +148,12 @@ function saveSettings() {
   config.autoSwapInterval = Number.parseInt($("autoSwapInterval").value, 10) || 30;
   config.showNextMatchBanner = $("showNextMatchBanner").checked;
   config.showCardStatusDots = $("showCardStatusDots").checked;
+  config.autoHideTopBar = $("autoHideTopBar").checked;
+  config.autoHideTopBarDelay = Math.min(
+    300,
+    Math.max(1, Number.parseInt($("autoHideTopBarDelay").value, 10) || 5),
+  );
+  $("autoHideTopBarDelay").value = config.autoHideTopBarDelay;
 
   const testMode = $("testMode").checked;
   const testDate = $("testDate").value.trim();
@@ -162,6 +177,8 @@ function saveSettings() {
   writeString("matchAlarmSound", config.matchAlarmSound);
   writeString("showNextMatchBanner", config.showNextMatchBanner);
   writeString("showCardStatusDots", config.showCardStatusDots);
+  writeString("autoHideTopBar", config.autoHideTopBar);
+  writeString("autoHideTopBarDelay", config.autoHideTopBarDelay);
   writeString("autoSwapEnabled", config.autoSwapEnabled);
   writeString("autoSwapInterval", config.autoSwapInterval);
   writeString("testMode", config.testMode);
@@ -183,6 +200,10 @@ export function setupSettingsListeners() {
   const header = $("header");
   const testMode = $("testMode");
   const testDate = $("testDate");
+  const hideTopButton = $("hideTopBtn");
+  const autoHideTopBar = $("autoHideTopBar");
+  const autoHideTopBarDelay = $("autoHideTopBarDelay");
+  let autoHideTimer = null;
   const syncHeaderPosition = (measureWhenHidden = false) => {
     const hidden = header.classList.contains("hidden");
     if (hidden && !measureWhenHidden) {
@@ -217,6 +238,36 @@ export function setupSettingsListeners() {
     attributeFilter: ["class"],
   });
 
+  const setTopBarHidden = (hidden) => {
+    if (header.classList.contains("hidden") === hidden) return;
+    header.classList.toggle("hidden", hidden);
+    const label = hidden ? "Show Top Bar" : "Hide Top Bar";
+    hideTopButton.title = label;
+    hideTopButton.setAttribute("aria-label", label);
+    syncHeaderPosition();
+  };
+  const scheduleAutoHide = () => {
+    clearTimeout(autoHideTimer);
+    autoHideTimer = null;
+    if (!config.autoHideTopBar || header.classList.contains("hidden")) return;
+    autoHideTimer = setTimeout(
+      () => setTopBarHidden(true),
+      config.autoHideTopBarDelay * 1000,
+    );
+  };
+  const onTopBarActivity = (event) => {
+    if (!config.autoHideTopBar) return;
+    if (event.target instanceof Element && event.target.closest("#hideTopBtn")) return;
+    setTopBarHidden(false);
+    scheduleAutoHide();
+  };
+  ["pointermove", "pointerdown", "keydown", "wheel"].forEach((eventName) => {
+    document.addEventListener(eventName, onTopBarActivity, { passive: true });
+  });
+  autoHideTopBar.addEventListener("change", () => {
+    autoHideTopBarDelay.disabled = !autoHideTopBar.checked;
+  });
+
   testMode.addEventListener("change", () => {
     testDate.style.display = testMode.checked ? "block" : "none";
   });
@@ -233,6 +284,7 @@ export function setupSettingsListeners() {
 
   $("savebutton").addEventListener("click", () => {
     if (!saveSettings()) return;
+    scheduleAutoHide();
     displayMessage("Settings saved.", "message");
     panel.style.display = "none";
     getData();
@@ -265,10 +317,11 @@ export function setupSettingsListeners() {
     }
   });
 
-  $("hideTopBtn").addEventListener("click", () => {
-    header.classList.toggle("hidden");
-    syncHeaderPosition();
+  hideTopButton.addEventListener("click", () => {
+    setTopBarHidden(!header.classList.contains("hidden"));
+    scheduleAutoHide();
   });
+  scheduleAutoHide();
 
   setupCustomColorsEditor($("customColorsModal"));
   $("openCustomColorsBtn")?.addEventListener("click", () => {

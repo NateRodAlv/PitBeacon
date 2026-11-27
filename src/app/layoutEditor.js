@@ -12,6 +12,11 @@ import {
   openFloatingModal,
 } from "../ui/floatingModal.js";
 import { icon } from "../lib/icons.js";
+import {
+  refreshProfileSelect,
+  saveCurrentAsProfile,
+  switchToProfile,
+} from "./profiles.js";
 
 // Layout editor
 
@@ -79,6 +84,11 @@ export function renderLayoutEditor(modal) {
                 <p class="le-description">Arrange the cards shown on your PitBeacon display.</p>
             </div>
             <div class="le-header-actions">
+                <div class="le-profile-controls" role="group" aria-label="Layout profiles">
+                    <select id="leProfileSelect" aria-label="Active profile"></select>
+                    <input type="text" id="leProfileName" aria-label="Profile name" placeholder="Profile name">
+                    <button class="le-action-btn le-action-primary" id="leSaveProfile" type="button">Save profile</button>
+                </div>
                 <div class="le-controls" role="group" aria-label="Display grid size">
                     <label for="leGridCols">Columns <input type="number" id="leGridCols" min="2" max="12" value="${cols}"></label>
                     <label for="leGridRows">Rows <input type="number" id="leGridRows" min="2" max="12" value="${rows}"></label>
@@ -143,11 +153,26 @@ export function renderLayoutEditor(modal) {
     `;
   modal.appendChild(shell);
   layoutEditorState.shell = shell;
+  refreshProfileSelect(shell.querySelector("#leProfileSelect"));
 
   // Grid controls
   const colsInput = shell.querySelector("#leGridCols");
   const rowsInput = shell.querySelector("#leGridRows");
   const grid = shell.querySelector("#leGrid");
+
+  shell.querySelector("#leProfileSelect").addEventListener("change", (event) => {
+    switchToProfile(event.target.value);
+    closeFloatingModals(modal);
+    modal.innerHTML = "";
+    renderLayoutEditor(modal);
+  });
+  shell.querySelector("#leSaveProfile").addEventListener("click", () => {
+    const name = shell.querySelector("#leProfileName").value.trim()
+      || config.activeProfileName
+      || "Default";
+    saveCurrentAsProfile(name);
+    shell.querySelector("#leProfileName").value = "";
+  });
 
   function updateGrid() {
     const newCols = Math.max(2, Math.min(12, parseInt(colsInput.value) || 3));
