@@ -43,10 +43,10 @@
     <!-- Stylesheets and Resources -->
     <link rel="icon" href="favicon.png" type="image/png" />
     <meta name="theme-color" content="#1a1a1a" />
-    <script type="module" crossorigin src="./assets/main-DZogojtF.js"></script>
+    <script type="module" crossorigin src="./assets/main-BVSXrjgO.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/robotParts-qXroFm2z.js">
     <link rel="stylesheet" crossorigin href="./assets/robotParts-C1QrLtVa.css">
-    <link rel="stylesheet" crossorigin href="./assets/main-DJmaj96h.css">
+    <link rel="stylesheet" crossorigin href="./assets/main-DfinzXga.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
     <div class="header" id="header">
@@ -347,6 +347,21 @@
               id="showCardStatusDots"
               name="showCardStatusDots"
               checked
+            />
+          </div>
+          <div class="settings-field">
+            <label for="autoHideTopBar">Auto-hide top bar</label>
+            <input type="checkbox" id="autoHideTopBar" name="autoHideTopBar" />
+          </div>
+          <div class="settings-field">
+            <label for="autoHideTopBarDelay">Hide after (seconds)</label>
+            <input
+              type="number"
+              id="autoHideTopBarDelay"
+              name="autoHideTopBarDelay"
+              min="1"
+              max="300"
+              value="5"
             />
           </div>
           <button class="settings-appearance-btn" id="openCustomColorsBtn">
